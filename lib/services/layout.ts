@@ -1,5 +1,5 @@
 // The widget library (the dashboard modules of spec section 10), the starting layout of each level, and the
-// saved layout. A layout is the ordered list of widget ids shown. The Portfolio tab draws its modules from it in
+// saved layout. No widget is gated by level. A layout is the ordered list of widget ids shown. The Portfolio tab draws its modules from it in
 // that order; the Overview tab shows or hides its panels (its order is fixed): a module left out of the list is hidden.
 
 import { getAppLocale } from '@/i18n/locale';
@@ -10,37 +10,44 @@ import type { Locale } from '@/lib/watchlist/text';
 import { ServiceError } from './errors';
 import { renderText, serviceRef } from './text';
 
-export type Widget = { id: string; title: string; tab: 'portfolio' | 'overview'; fixed: boolean; minLevel: Level };
+// Every widget is available at every level: the level only picks the layout a new user starts with (defaultLayout).
+export type Widget = { id: string; title: string; tab: 'portfolio' | 'overview'; fixed: boolean };
 
 const widgetTitle = (id: string, locale: Locale = 'en') => renderText(serviceRef('svc.layout.widget_title', { id }), locale);
 
 // The modules components/portfolio renders from the layout. The simulated balance is fixed: it cannot be removed.
 // Titles here are English (the agent reads this list); widgetLibrary(locale) gives them in a language.
 export const WIDGET_LIBRARY: Widget[] = [
-    { id: 'total_value', title: widgetTitle('total_value'), tab: 'portfolio', fixed: true, minLevel: 'Novice' },
-    { id: 'performance', title: widgetTitle('performance'), tab: 'portfolio', fixed: false, minLevel: 'Novice' },
-    { id: 'holdings', title: widgetTitle('holdings'), tab: 'portfolio', fixed: false, minLevel: 'Novice' },
-    { id: 'sector_allocation', title: widgetTitle('sector_allocation'), tab: 'portfolio', fixed: false, minLevel: 'Intermediate' },
-    { id: 'xray', title: widgetTitle('xray'), tab: 'portfolio', fixed: false, minLevel: 'Novice' },
-    { id: 'investment_rules', title: widgetTitle('investment_rules'), tab: 'portfolio', fixed: false, minLevel: 'Intermediate' },
+    { id: 'total_value', title: widgetTitle('total_value'), tab: 'portfolio', fixed: true },
+    { id: 'performance', title: widgetTitle('performance'), tab: 'portfolio', fixed: false },
+    { id: 'holdings', title: widgetTitle('holdings'), tab: 'portfolio', fixed: false },
+    { id: 'sector_allocation', title: widgetTitle('sector_allocation'), tab: 'portfolio', fixed: false },
+    { id: 'xray', title: widgetTitle('xray'), tab: 'portfolio', fixed: false },
+    { id: 'investment_rules', title: widgetTitle('investment_rules'), tab: 'portfolio', fixed: false },
     // The panels of the Overview tab. Every level starts with all of them; any may be hidden and shown again.
-    { id: 'overview_watchlist', title: widgetTitle('overview_watchlist'), tab: 'overview', fixed: false, minLevel: 'Novice' },
-    { id: 'overview_pulse', title: widgetTitle('overview_pulse'), tab: 'overview', fixed: false, minLevel: 'Novice' },
-    { id: 'overview_leaders', title: widgetTitle('overview_leaders'), tab: 'overview', fixed: false, minLevel: 'Novice' },
-    { id: 'overview_heatmap', title: widgetTitle('overview_heatmap'), tab: 'overview', fixed: false, minLevel: 'Novice' },
-    { id: 'overview_quotes', title: widgetTitle('overview_quotes'), tab: 'overview', fixed: false, minLevel: 'Novice' },
-    { id: 'overview_news', title: widgetTitle('overview_news'), tab: 'overview', fixed: false, minLevel: 'Novice' },
+    { id: 'overview_watchlist', title: widgetTitle('overview_watchlist'), tab: 'overview', fixed: false },
+    { id: 'overview_pulse', title: widgetTitle('overview_pulse'), tab: 'overview', fixed: false },
+    { id: 'overview_leaders', title: widgetTitle('overview_leaders'), tab: 'overview', fixed: false },
+    { id: 'overview_heatmap', title: widgetTitle('overview_heatmap'), tab: 'overview', fixed: false },
+    { id: 'overview_quotes', title: widgetTitle('overview_quotes'), tab: 'overview', fixed: false },
+    { id: 'overview_news', title: widgetTitle('overview_news'), tab: 'overview', fixed: false },
 ];
 
 /** The widget library with each title in the language. */
 export const widgetLibrary = (locale: Locale): Widget[] => WIDGET_LIBRARY.map((widget) => ({ ...widget, title: widgetTitle(widget.id, locale) }));
 
-const LEVELS: Level[] = ['Novice', 'Intermediate', 'Expert'];
+// The layout a new user starts with, by level: a Novice starts with fewer Portfolio modules. It is only a starting
+// point: any level may show, hide or move any widget, by hand or through the agent.
+const NOVICE_HIDDEN = new Set(['sector_allocation', 'investment_rules']);
+const STARTING_LAYOUT: Record<Level, string[]> = {
+    Novice: WIDGET_LIBRARY.filter((widget) => !NOVICE_HIDDEN.has(widget.id)).map((widget) => widget.id),
+    Intermediate: WIDGET_LIBRARY.map((widget) => widget.id),
+    Expert: WIDGET_LIBRARY.map((widget) => widget.id),
+};
 
-/** The level template: a Novice starts with fewer modules, an Expert with all of them. Any level may add the others. */
+/** The starting layout of a level (a copy). Never a limit: every widget of the library may be added at any level. */
 export function defaultLayout(level: Level): string[] {
-    const rank = LEVELS.indexOf(level);
-    return WIDGET_LIBRARY.filter((widget) => LEVELS.indexOf(widget.minLevel) <= rank).map((widget) => widget.id);
+    return [...(STARTING_LAYOUT[level] ?? STARTING_LAYOUT.Novice)];
 }
 
 function layoutProblems(layout: unknown) {

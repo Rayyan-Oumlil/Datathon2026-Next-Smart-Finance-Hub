@@ -5,7 +5,7 @@ import time
 
 from bedrock_agentcore import BedrockAgentCoreApp
 
-from . import checks, config, orchestrator, prompts, sources, stream, trace
+from . import checks, config, memory, orchestrator, prompts, sources, stream, trace
 
 app = BedrockAgentCoreApp()
 
@@ -35,8 +35,30 @@ def parse_request(payload) -> trace.RequestTrace:
             isinstance(t, dict) and isinstance(t.get("text"), str) and t.get("role") in ("user", "assistant")
             for t in history):
         raise ValueError("history must be a list of {role, text}")
+    conversation_id = payload.get("conversationId")
+    if conversation_id is not None and not (isinstance(conversation_id, str) and 0 < len(conversation_id) <= 100):
+        raise ValueError("conversationId must be a string of 1 to 100 characters")
     return trace.RequestTrace(action_id=payload["actionId"], user_id=payload["userId"],
-                              message=payload["message"], context=context, history=history[-10:])
+                              message=payload["message"], context=context, history=history[-10:],
+                              conversation_id=conversation_id)
+
+
+def use_memory(current: trace.RequestTrace) -> None:
+    """The conversation's last turns from AgentCore Memory replace the history the request carried; when memory
+    is off or fails, the request's history stays. Remembered preferences, when any, are added to the context."""
+    remembered = memory.load_history(current.user_id, current.conversation_id)
+    if remembered is not None:
+        current.history = remembered
+        current.history_source = "memory"
+    preferences = memory.load_preferences(current.user_id, current.message)
+    if preferences:
+        current.context = {**current.context, "rememberedPreferences": preferences}
+
+
+def remember(current: trace.RequestTrace, text: str) -> None:
+    """Stores the user's message and the reply they were shown. Never tool data."""
+    current.memory_saved = memory.save_turn(current.user_id, current.conversation_id, current.message, text,
+                                            current.action_id)
 
 
 def response(current: trace.RequestTrace, text: str, refused: bool, guardrail: list, error: str | None = None) -> dict:
@@ -54,7 +76,9 @@ def response(current: trace.RequestTrace, text: str, refused: bool, guardrail: l
         "trace": {"guardrail": guardrail, "toolCalls": len(current.tool_results),
                   "logRows": current.log_rows, "logErrors": current.log_errors,
                   # True when writes stopped after repeated failures; logSkipped rows were then not attempted.
-                  "logStopped": current.log_stopped, "logSkipped": current.log_skipped},
+                  "logStopped": current.log_stopped, "logSkipped": current.log_skipped,
+                  # Where the conversation's earlier turns came from, and whether this turn was stored in memory
+                  "history": current.history_source, "memorySaved": current.memory_saved},
     }
     if current.proposed and not refused:
         body["proposed"] = current.proposed
@@ -84,6 +108,38 @@ def neutral_summary(action_type: str, locale: str) -> str:
     return f"Proposition : {name} (simulation)." if locale == "fr" else f"Proposed {name} (simulation)."
 
 
+# A reply that goes with one of these proposals is a short sentence about a settings change: there is no market
+# figure to ground, so only its wording is checked (figures quoted from the proposal's own params stay allowed).
+SETTING_TYPES = {"layout_change", "rule_create", "rule_pause", "strategy_propose", "profile_change"}
+# Tools that read or check the user's own settings, never market data. A reply built only from these (a question
+# back such as "which module?", or why a rule cannot be created) is not scored by the contextual grounding check;
+# its figures must still be grounded and its conflicts named.
+SETTING_ENDPOINTS = {"layout", "rules", "validate-rule", "profile-preview"}
+
+
+def reply_kind(current: trace.RequestTrace) -> str | None:
+    """"setting" for a reply that goes with a proposed settings change; "settings_talk" for a reply built only from
+    the settings tools that proposes nothing; None for every other reply, which gets every check
+    (market data, "what do you think of X", a simulated trade)."""
+    if current.proposed and current.proposed.get("type") in SETTING_TYPES:
+        return "setting"
+    if current.proposed:
+        return None
+    endpoints = {item["endpoint"].rsplit("/", 1)[-1] for item in current.tool_results}
+    # The profile-conflict check may come with a rule request ("a rule on MSFT"); market data never does
+    if endpoints & SETTING_ENDPOINTS and endpoints <= SETTING_ENDPOINTS | {"conflict-check"}:
+        return "settings_talk"
+    return None
+
+
+def user_given_names(params: dict | None) -> list[str]:
+    """Names the user gave in a proposal (a strategy name, a rule's own wording), which a reply may quote."""
+    params = params or {}
+    strategy = params.get("strategy") if isinstance(params.get("strategy"), dict) else {}
+    rule = params.get("rule") if isinstance(params.get("rule"), dict) else {}
+    return [value for value in (strategy.get("name"), rule.get("text")) if isinstance(value, str)]
+
+
 def check_reply(current: trace.RequestTrace, text: str, attempt: int) -> tuple[dict, str]:
     """Runs our own check and the Bedrock Guardrail on one reply, and logs both. Returns (result, text)."""
     current.emit("guardrail", "start")
@@ -94,21 +150,27 @@ def check_reply(current: trace.RequestTrace, text: str, attempt: int) -> tuple[d
     # the client-supplied history and message do not.
     proposed_params = current.proposed["params"] if current.proposed else None
     data = [current.tool_results, current.context, proposed_params]
-    own = checks.own_check(text, data, conflicts, current.locale)
+    kind = reply_kind(current)
+    setting = kind == "setting"
+    exempt = checks.quoted_user_text(text, [current.message, *user_given_names(proposed_params)]) if kind else []
+    own = checks.own_check(text, data, conflicts, current.locale, setting=setting, exempt=exempt)
     proposal_words = checks.find_never_words(current.proposed["summary"]) if current.proposed else []
     if proposal_words:
         # The summary is shown in the preview; a fixed neutral sentence replaces one that breaks the word rule.
         current.proposed["summary"] = neutral_summary(current.proposed["type"], current.locale)
     try:
+        words_passed = not own["neverWords"] and not own["judgementWords"]
         guardrail = checks.bedrock_check(text, checks.grounding_text(current.tool_results, current.context, proposed_params),
-                                         current.message) if not own["empty"] else {"passed": False, "skipped": "empty"}
+                                         current.message, check_grounding=kind is None,
+                                         words_checked=bool(kind) and words_passed) \
+            if not own["empty"] else {"passed": False, "skipped": "empty"}
     except Exception as exc:  # a guardrail that cannot be reached is a failed check, not a pass
         guardrail = {"passed": False, "error": f"{type(exc).__name__}: {str(exc)[:200]}"}
     passed = own["passed"] and guardrail["passed"]
     if passed and guardrail.get("maskedText"):
         text = guardrail["maskedText"]
     result = {"attempt": attempt, "passed": passed, "own": own, "bedrock": guardrail,
-              "summaryReplaced": bool(proposal_words)}
+              "summaryReplaced": bool(proposal_words), "replyKind": kind or "data", "exempt": exempt}
     current.log("guardrail_check", "writer", awsRequestId=guardrail.get("awsRequestId"),
                 replySha256=trace.sha256(text), result=result)
     current.emit("guardrail", "done", attempt=attempt, passed=passed, ms=int((time.monotonic() - started) * 1000))
@@ -127,11 +189,13 @@ def handle(payload, on_event=None) -> dict:
     token = trace.start(current)
     guardrail_results = []
     try:
+        use_memory(current)
         system_prompt = prompts.render("orchestrator", current.context)
         current.log("prompt_built", "writer", promptSha256=trace.sha256(system_prompt), dataUsed={
             "level": current.context.get("level"), "risk": current.context.get("risk"), "locale": current.locale,
             "agentStyle": current.context.get("agentStyle"), "contextKeys": sorted(current.context),
-            "historyTurns": len(current.history), "messageSha256": trace.sha256(current.message)})
+            "historyTurns": len(current.history), "historySource": current.history_source,
+            "messageSha256": trace.sha256(current.message)})
         agent = orchestrator.build(current)
         with current.stage("orchestrator"):
             text = orchestrator.ask(agent, current.message)
@@ -139,11 +203,13 @@ def handle(payload, on_event=None) -> dict:
             result, text = check_reply(current, text, attempt)
             guardrail_results.append(result)
             if result["passed"]:
+                remember(current, text)
                 return response(current, text, False, guardrail_results)
             if attempt < config.MAX_GUARDRAIL_FAILURES:
                 with current.stage("retry"):
                     text = orchestrator.ask(agent, checks.corrective_instruction(result["own"], result["bedrock"],
                                                                                  current.locale))
+        remember(current, checks.safe_refusal(current.locale))
         return response(current, checks.safe_refusal(current.locale), True, guardrail_results)
     except Exception as exc:
         error = f"{type(exc).__name__}: {str(exc)[:300]}"

@@ -88,7 +88,7 @@ describe('preview, apply, undo', () => {
         const after = ['holdings', 'total_value'];
         const routed = await preview('l1', 'layout_change', { layout: after });
         expect(routed.preview).toMatchObject({ before, after });
-        expect(routed.preview.summary).toContain('removes Performance chart');
+        expect(routed.preview.summary).toContain('hides Performance chart');
         expect((await getLayout()).saved).toBe(false);          // a preview changes nothing
 
         expect(await apply('l1')).toMatchObject({ applied: true, undoable: true, before, after });
@@ -104,7 +104,7 @@ describe('preview, apply, undo', () => {
         const without = all.filter((id) => id !== 'overview_heatmap');
 
         const hide = await preview('h1', 'layout_change', { layout: without });
-        expect(hide.preview.summary).toContain('removes Heatmap (Overview)');
+        expect(hide.preview.summary).toContain('hides Heatmap (Overview)');
         expect(hide.preview.rows.find((row) => row.label === 'Overview tab')?.after).not.toContain('Heatmap');
         expect(hide.preview.rows.find((row) => row.label === 'Overview tab')?.before).toContain('Heatmap');
         expect((await getLayout()).layout).toContain('overview_heatmap');          // a preview changes nothing
@@ -112,7 +112,7 @@ describe('preview, apply, undo', () => {
         expect((await getLayout()).layout).not.toContain('overview_heatmap');
 
         const show = await preview('h2', 'layout_change', { layout: all });
-        expect(show.preview.summary).toContain('adds Heatmap (Overview)');
+        expect(show.preview.summary).toContain('shows Heatmap (Overview)');
         await apply('h2');
         expect((await getLayout()).layout).toContain('overview_heatmap');
 

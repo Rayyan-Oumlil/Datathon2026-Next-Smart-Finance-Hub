@@ -195,14 +195,20 @@ MAX_NAME_CHARS = 60
 MAX_NAME_WORDS = 6
 
 
+# Keys whose short string values are names the reply may quote as they are: company and asset names ("name"),
+# and the app's own widget titles as the layout tool gives them ("title").
+NAME_KEYS = ("name", "title")
+
+
 def quoted_names(data) -> list[str]:
-    """Company and asset names held under a "name" key in the data: these may be quoted as they are."""
+    """Company and asset names held under a "name" key, and widget titles under a "title" key, in the data: these
+    may be quoted as they are."""
     found = set()
 
     def walk(node):
         if isinstance(node, dict):
             for key, value in node.items():
-                if key == "name" and isinstance(value, str):
+                if key in NAME_KEYS and isinstance(value, str):
                     name = " ".join(nfc(value).split())
                     if 2 <= len(name.split()) <= MAX_NAME_WORDS and len(name) <= MAX_NAME_CHARS:
                         found.add(name)
@@ -216,12 +222,33 @@ def quoted_names(data) -> list[str]:
     return sorted(found, key=len, reverse=True)
 
 
-def without_quoted_names(text: str, data) -> str:
-    """The text with each exact name from the data taken out, so a listed word inside a name is not counted."""
+def without_quoted_names(text: str, data, extra: list[str] | tuple = ()) -> str:
+    """The text with each exact name from the data (and each extra text) taken out, so a listed word inside a name
+    is not counted."""
     text = nfc(text)
-    for name in quoted_names(data):
+    names = sorted({*quoted_names(data), *(nfc(item) for item in extra if item)}, key=len, reverse=True)
+    for name in names:
         text = re.sub(rf"(?<!\w){re.escape(name)}(?!\w)", " ", text, flags=re.IGNORECASE)
     return text
+
+
+# Text between quotation marks in a reply: «…», “…”, "…", ‘…’ and '…'.
+_QUOTED = re.compile(r"«\s*([^«»]{1,80}?)\s*»|“([^“”]{1,80}?)”|\"([^\"]{1,80}?)\"|‘([^‘’]{1,80}?)’|(?<!\w)'([^']{1,80}?)'(?!\w)")
+
+
+def quoted_user_text(reply: str, sources: list[str]) -> list[str]:
+    """Quoted parts of the reply that repeat, word for word, a short piece of the user's own text or of a name the
+    user gave (a strategy name, a rule's wording). A configuration reply may echo them: "Your strategy « Bon départ »".
+    Only short quotes count (MAX_NAME_WORDS words, MAX_NAME_CHARS characters), so a long instruction is still checked."""
+    haystack = [" ".join(nfc(source).split()).casefold() for source in sources if isinstance(source, str) and source]
+    found = []
+    for match in _QUOTED.finditer(nfc(reply)):
+        quote = " ".join(next(group for group in match.groups() if group).split())
+        if not quote or len(quote) > MAX_NAME_CHARS or len(quote.split()) > MAX_NAME_WORDS:
+            continue
+        if any(quote.casefold() in source for source in haystack):
+            found.append(quote)
+    return found
 
 
 # ---------------------------------------------------------------- numbers
@@ -310,13 +337,17 @@ def unnamed_conflicts(reply: str, conflicts: list[dict], locale: str = "en") -> 
     return missing
 
 
-def own_check(reply: str, data, conflicts: list[dict], locale: str = "en") -> dict:
-    words_text = without_quoted_names(reply, data)
+def own_check(reply: str, data, conflicts: list[dict], locale: str = "en", *, setting: bool = False,
+              exempt: list[str] | tuple = ()) -> dict:
+    """setting: the reply goes with a proposed settings change (layout, rule, strategy, profile). It states no market
+    figure, so only the wording is checked: the grounded-numbers and conflicts-named checks are skipped.
+    exempt: extra texts the wording check leaves out (quoted user text, names the user gave)."""
+    words_text = without_quoted_names(reply, data, exempt)
     result = {
         "neverWords": find_never_words(words_text),
         "judgementWords": find_judgement_words(words_text),
-        "ungroundedNumbers": ungrounded_numbers(reply, data, locale),
-        "conflictsNotNamed": unnamed_conflicts(reply, conflicts, locale),
+        "ungroundedNumbers": [] if setting else ungrounded_numbers(reply, data, locale),
+        "conflictsNotNamed": [] if setting else unnamed_conflicts(reply, conflicts, locale),
         "empty": not reply.strip(),
         # A longer reply would leave its tail unchecked by the Bedrock Guardrail.
         "tooLong": len(reply) > MAX_REPLY_CHARS,
@@ -327,21 +358,34 @@ def own_check(reply: str, data, conflicts: list[dict], locale: str = "en") -> di
 
 # ---------------------------------------------------------------- Bedrock Guardrail
 
-def bedrock_check(reply: str, grounding_source: str, query: str) -> dict:
-    """ApplyGuardrail on the reply (source OUTPUT). Returns what was blocked and the masked text, if any."""
+# Contextual grounding policies: they score a reply against the facts it should restate.
+GROUNDING_POLICIES = ("grounding", "relevance")
+
+
+def bedrock_check(reply: str, grounding_source: str, query: str, *, check_grounding: bool = True,
+                  words_checked: bool = False) -> dict:
+    """ApplyGuardrail on the reply (source OUTPUT). Returns what was blocked and the masked text, if any.
+
+    check_grounding=False (a short sentence about a settings change, or a question back about one): no grounding source
+    or query is sent, so the contextual grounding check does not run, and a grounding or relevance block is only
+    reported. words_checked=True: our own wording check already passed this reply with its quoted names and user
+    text left out, so a word-filter block (which cannot tell a quoted name from advice) is only reported."""
     guardrail_id = config.env("GUARDRAIL_ID")
     if not guardrail_id:
         return {"passed": True, "skipped": "GUARDRAIL_ID not set"}
+    content = [{"text": {"text": reply[:MAX_REPLY_CHARS], "qualifiers": ["guard_content"]}}]
+    if check_grounding:
+        content = [
+            {"text": {"text": grounding_source[:95000], "qualifiers": ["grounding_source"]}},
+            {"text": {"text": query[:1000], "qualifiers": ["query"]}},
+            *content,
+        ]
     response = bedrock.runtime_client().apply_guardrail(
         guardrailIdentifier=guardrail_id,
         guardrailVersion=config.env("GUARDRAIL_VERSION", "DRAFT"),
         source="OUTPUT",
         outputScope="FULL",
-        content=[
-            {"text": {"text": grounding_source[:95000], "qualifiers": ["grounding_source"]}},
-            {"text": {"text": query[:1000], "qualifiers": ["query"]}},
-            {"text": {"text": reply[:MAX_REPLY_CHARS], "qualifiers": ["guard_content"]}},
-        ],
+        content=content,
     )
     blocked, scores, masked = [], {}, False
     for assessment in response.get("assessments", []):
@@ -366,6 +410,10 @@ def bedrock_check(reply: str, grounding_source: str, query: str) -> dict:
                 blocked.append(f"{item.get('type', '').lower()}:{item.get('score')}")
     # GUARDRAIL_REPORT_ONLY (empty by default) names policies whose blocks are logged but do not fail the reply.
     report_only = {name.strip().lower() for name in config.env("GUARDRAIL_REPORT_ONLY").split(",") if name.strip()}
+    if not check_grounding:
+        report_only |= set(GROUNDING_POLICIES)
+    if words_checked:
+        report_only.add("word")
     reported = [item for item in blocked if item.split(":")[0] in report_only]
     blocked = [item for item in blocked if item not in reported]
     result = {

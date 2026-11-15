@@ -10,7 +10,8 @@ import type { VoiceError, VoiceState, VoiceSupport } from '@/hooks/useVoiceInput
 
 type VoiceButtonProps = { state: VoiceState; support: VoiceSupport; onStart: () => void; onStop: () => void };
 
-// The microphone next to Send: tap to start, tap again to send. Alt+V does the same while held.
+// The microphone next to Send: tap to start dictating into the box, tap again to stop. Alt+V does the same while held.
+// Nothing is sent until Enter or Send.
 // Not shown at all while the server's answer is pending or when the server does not offer voice (VOICE_ENABLED).
 export const VoiceButton = ({ state, support, onStart, onStop }: VoiceButtonProps) => {
     const t = useTranslations('AgentPanel.voice');

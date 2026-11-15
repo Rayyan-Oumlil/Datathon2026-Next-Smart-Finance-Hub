@@ -47,8 +47,8 @@ const en = {
     sameLayout: 'The proposed layout is the same as the current one.',
     none: 'none',
     layoutSummary: (removed: string[], added: string[]) => {
-        const parts = [removed.length > 0 ? `removes ${removed.join(', ')}` : '', added.length > 0 ? `adds ${added.join(', ')}` : ''].filter(Boolean);
-        return `Dashboard layout: ${parts.length > 0 ? parts.join('; ') : 'changes the order of the widgets'}.`;
+        const parts = [removed.length > 0 ? `hides ${removed.join(', ')}` : '', added.length > 0 ? `shows ${added.join(', ')}` : ''].filter(Boolean);
+        return `Layout: ${parts.length > 0 ? parts.join('; ') : 'new order of the modules'}.`;
     },
     portfolioTab: 'Portfolio tab',
     overviewTab: 'Overview tab',
@@ -149,8 +149,8 @@ const fr: AgentText = {
     sameLayout: 'La disposition proposée est identique à la disposition actuelle.',
     none: 'aucun',
     layoutSummary: (removed, added) => {
-        const parts = [removed.length > 0 ? `retire ${removed.join(', ')}` : '', added.length > 0 ? `ajoute ${added.join(', ')}` : ''].filter(Boolean);
-        return `Disposition du tableau de bord : ${parts.length > 0 ? parts.join('; ') : 'modifie l’ordre des modules'}.`;
+        const parts = [removed.length > 0 ? `masque ${removed.join(', ')}` : '', added.length > 0 ? `affiche ${added.join(', ')}` : ''].filter(Boolean);
+        return `Disposition : ${parts.length > 0 ? parts.join('; ') : 'nouvel ordre des modules'}.`;
     },
     portfolioTab: 'Onglet Portefeuille',
     overviewTab: 'Onglet Aperçu',

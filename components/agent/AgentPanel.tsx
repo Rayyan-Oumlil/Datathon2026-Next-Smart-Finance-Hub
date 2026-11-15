@@ -10,7 +10,7 @@ import type { Locale } from "@/i18n/config";
 import { formatNumber, formatDateTime } from "@/i18n/format";
 import { formatMoment, sourceLabel } from "@/components/agent/time";
 import AgentText from "@/components/agent/AgentText";
-import StageList, { stageFailed, stageText } from "@/components/agent/StageList";
+import StageList, { reworded, stageFailed, stageText } from "@/components/agent/StageList";
 import Timeline from "@/components/agent/Timeline";
 import Link from "next/link";
 import { rowsForStage } from "@/lib/agent/stage-rows";
@@ -152,7 +152,7 @@ const Trace = ({ actionId, steps }: { actionId: string; steps?: StageLine[] }) =
                                 return (
                                     <li key={line.key}>
                                         <button type="button" aria-expanded={open} onClick={() => setSelected(open ? null : index)}
-                                            className={cn('flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-start hover:bg-hover', stageFailed(line) ? 'text-down' : 'text-muted-foreground', open && 'bg-hover')}>
+                                            className={cn('flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-start hover:bg-hover', stageFailed(line) && !reworded(line) ? 'text-down' : 'text-muted-foreground', open && 'bg-hover')}>
                                             <span className="flex-1 text-foreground">{stageText(t, line)}</span>
                                             {line.ms !== undefined && <span className="num text-[11px] text-faint">{t('stages.took', { ms: line.ms })}</span>}
                                         </button>
@@ -401,7 +401,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
         inputRef.current?.focus();
         const onKey = (event: KeyboardEvent) => {
             if (event.key !== 'Escape') return;
-            if (voiceRef.current.active) { voiceRef.current.cancel(); setDraft(voiceBase.current); }
+            if (voiceRef.current.active) { sendWhenHeard.current = false; voiceRef.current.cancel(); setDraft(voiceBase.current); }
             else if (speechRef.current.speaking) speechRef.current.stop();
             else onOpenChange(false);
         };
@@ -415,20 +415,36 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
     speechRef.current = speech;
     useEffect(() => { if (!open) speechRef.current.stop(); }, [open]);
 
-    // Dictation: the live text fills the box after whatever was typed, and the finished text is sent like a typed message
+    // Dictation: the live text fills the box after whatever was typed. When the microphone stops, the text stays in the
+    // box, editable; nothing is sent until Enter or Send. Starting the microphone again appends to what is there.
     const voiceBase = useRef('');
+    const dictated = useRef(false);          // the box holds dictated text: its reply is read aloud, as for a spoken question
+    const sendWhenHeard = useRef(false);     // Enter or Send pressed while dictating: send once the last words are in
     const withBase = (text: string) => [voiceBase.current, text].filter(Boolean).join(' ').slice(0, 2000);
     const voice = useVoiceInput({
         enabled: open,
         onStart: () => { speechRef.current.stop(); speechRef.current.prime(); voiceBase.current = draft.trim(); },
         onText: (text) => setDraft(withBase(text)),
-        // A reply still being written must not swallow the question: keep it in the box instead
-        onFinal: (text) => { if (waiting) setDraft(withBase(text)); else void send(withBase(text), true); },
+        onFinal: (text) => {
+            const full = withBase(text);
+            dictated.current = true;
+            setDraft(full);
+            if (sendWhenHeard.current && !waiting) void send(full, true);
+            sendWhenHeard.current = false;
+            inputRef.current?.focus();
+        },
+        onEnd: () => { if (sendWhenHeard.current) { sendWhenHeard.current = false; void send(draftRef.current, dictated.current); } },
     });
     const voiceRef = useRef(voice);
     voiceRef.current = voice;
-    // Send or Enter while dictating ends the dictation (which then sends); it never sends the half-heard text as well
-    const submit = () => { if (voiceRef.current.active) voiceRef.current.stop(); else void send(draft); };
+    const draftRef = useRef(draft);
+    draftRef.current = draft;
+    // Send or Enter while dictating ends the dictation and sends the text once its last words are in; otherwise the
+    // text in the box is sent as it is (a reply to dictated text is read aloud)
+    const submit = () => {
+        if (voiceRef.current.active) { sendWhenHeard.current = true; voiceRef.current.stop(); return; }
+        void send(draft, dictated.current);
+    };
 
     const patch = (id: string, change: Partial<Message>) => setMessages((list) => list.map((message) => (message.id === id ? { ...message, ...change } : message)));
     const notice = (text: string) => setMessages((list) => [...list, { id: newId(), role: 'assistant', text, failed: true }]);
@@ -445,6 +461,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
         const history = messages.filter((m) => !m.failed).slice(-HISTORY_TURNS).map(({ role, text: turn }) => ({ role, text: turn }));
         setMessages((list) => [...list, { id: newId(), role: 'user', text: message }]);
         setDraft('');
+        dictated.current = false;
         setWaiting(true);
         try {
             const { reply, steps } = await ask<Reply & { text: string; proposed?: { type: string } }>({ message, history, conversationId, page: { path: pathname, ...getPageDetail() } }, t('errors.request'));
@@ -522,6 +539,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
 
     const reset = () => {
         speechRef.current.stop();
+        dictated.current = false;
         conversationRun.current += 1;
         setWaiting(false);
         setMessages([]);
@@ -594,7 +612,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
                                                             ))}
                                                         </ul>
                                                     )}
-                                                    {message.reply.sources.length === 0 && !message.reply.refused && <p className="mt-2 text-[11px] text-faint">{t('noSource')}</p>}
+                                                    {message.reply.sources.length === 0 && !message.reply.refused && !message.reply.preview && <p className="mt-2 text-[11px] text-faint">{t('noSource')}</p>}
                                                     {message.reply.conflict && message.reply.conflict.checks.length > 0 && <ConflictBlock conflict={message.reply.conflict} />}
                                                     {message.reply.notice && <p className="mt-2 text-[13px] text-muted-foreground">{message.reply.notice}</p>}
                                                     {message.reply.preview && (
@@ -629,7 +647,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
                                 maxLength={2000}
                                 readOnly={voice.active}
                                 value={draft}
-                                onChange={(event) => setDraft(event.target.value)}
+                                onChange={(event) => { setDraft(event.target.value); if (!event.target.value.trim()) dictated.current = false; }}
                                 onKeyDown={(event) => {
                                     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
                                         event.preventDefault();

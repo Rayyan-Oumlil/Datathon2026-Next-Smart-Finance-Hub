@@ -15,8 +15,10 @@ type Options = {
     enabled: boolean;
     /** The text so far, while the person is still talking. */
     onText: (text: string) => void;
-    /** The finished text, once the person stops. */
+    /** The finished text, once the microphone stops. It is for the input box: nothing here sends it. */
     onFinal: (text: string) => void;
+    /** Called once a dictation is over, whether or not it gave text (after onFinal, after an error or a cancel). */
+    onEnd?: () => void;
     /** Called when a dictation begins, before any text. */
     onStart?: () => void;
 };
@@ -96,16 +98,17 @@ const detect = (): VoiceSupport => {
 /**
  * Dictation through Amazon Transcribe streaming: microphone audio goes straight to the service over a WebSocket
  * (the URL comes from /api/voice/token, so no credentials reach the browser) and the text comes back as it is said.
- * Hold Alt+V to talk, or tap start and stop; the finished text goes to onFinal.
+ * Hold Alt+V to talk, or tap start and stop; the finished text goes to onFinal, for the input box. The hook never
+ * sends anything: the person reads or edits the text and sends it with Enter or the Send button.
  */
-export function useVoiceInput({ enabled, onText, onFinal, onStart }: Options) {
+export function useVoiceInput({ enabled, onText, onFinal, onStart, onEnd }: Options) {
     const [state, setState] = useState<VoiceState>('idle');
     const [error, setError] = useState<VoiceError | null>(null);
     const [support, setSupport] = useState<VoiceSupport>('checking');
 
     // The newest callbacks, so a long dictation never calls a stale closure
-    const callbacks = useRef({ onText, onFinal, onStart });
-    callbacks.current = { onText, onFinal, onStart };
+    const callbacks = useRef({ onText, onFinal, onStart, onEnd });
+    callbacks.current = { onText, onFinal, onStart, onEnd };
 
     const stateRef = useRef<VoiceState>('idle');
     const run = useRef(0);
@@ -129,6 +132,7 @@ export function useVoiceInput({ enabled, onText, onFinal, onStart }: Options) {
         setError(kind);
         clearTimeout(errorTimer.current);
         errorTimer.current = setTimeout(() => setError(null), ERROR_VISIBLE_MS);
+        callbacks.current.onEnd?.();
     }, [move, teardown]);
 
     useEffect(() => {
@@ -151,7 +155,9 @@ export function useVoiceInput({ enabled, onText, onFinal, onStart }: Options) {
             session.current = null;
             move('idle');
             const heard = text.trim();
-            if (heard) callbacks.current.onFinal(heard); else fail('no-speech');
+            if (!heard) { fail('no-speech'); return; }
+            callbacks.current.onFinal(heard);
+            callbacks.current.onEnd?.();
         }, () => { if (mine === run.current) fail('failed'); });
     }, [fail, move]);
 
@@ -194,9 +200,10 @@ export function useVoiceInput({ enabled, onText, onFinal, onStart }: Options) {
         teardown();
         stopWanted.current = false;
         move('idle');
+        callbacks.current.onEnd?.();
     }, [move, teardown]);
 
-    // Hold Alt+V to talk, release to send. Key repeat is ignored, and losing focus counts as a release.
+    // Hold Alt+V to talk; releasing it stops the microphone and leaves the text in the box (nothing is sent). Key repeat is ignored, and losing focus counts as a release.
     useEffect(() => {
         if (!enabled || support !== 'yes') return;
         let held = false;

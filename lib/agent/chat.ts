@@ -15,7 +15,8 @@ import { ServiceError } from '@/lib/services/errors';
 import { currentScope, type Scope } from '@/lib/session';
 import { apply, cancel, getAction, route, undo, type Preview } from './router';
 import { agentText } from './text';
-import { failsWordCheck } from './wording';
+import { failsWordCheck, quotedUserText } from './wording';
+import { widgetLibrary } from '@/lib/services/layout';
 
 export type Turn = { role: 'user' | 'assistant'; text: string };
 export type ChatInput = { message: string; history?: Turn[]; conversationId?: string; page?: PageInput };
@@ -37,6 +38,22 @@ const MAX_TURNS = 10;
 const MAX_TURN_CHARS = 4000;
 const sha256 = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
 type StepArgs = Parameters<typeof writeStep> extends [unknown, ...infer Rest] ? Rest : never;
+
+// A reply that goes with one of these proposals is a short sentence about a settings change (agent/app/main.py SETTING_TYPES)
+const SETTING_TYPES = new Set(['layout_change', 'rule_create', 'rule_pause', 'strategy_propose', 'profile_change']);
+const WIDGET_TITLES = [...widgetLibrary('en'), ...widgetLibrary('fr')].map((widget) => widget.title);
+
+/**
+ * The names the wording check leaves out of a reply: the watchlist picks, the app's own widget titles in both
+ * languages and, for a reply about a settings change, the names the user gave (strategy name, rule wording) and short
+ * quotes of the user's own message.
+ */
+function quotableNames(reply: AgentServiceReply, message: string, watchlist: string[]): string[] {
+    const proposed = (reply.proposed ?? null) as { type?: string; params?: { strategy?: { name?: unknown }; rule?: { text?: unknown } } } | null;
+    if (!proposed?.type || !SETTING_TYPES.has(proposed.type)) return [...watchlist, ...WIDGET_TITLES];
+    const given = [proposed.params?.strategy?.name, proposed.params?.rule?.text].filter((value): value is string => typeof value === 'string');
+    return [...watchlist, ...WIDGET_TITLES, ...given, ...quotedUserText(reply.text, [message, ...given])];
+}
 
 /** Shown in place of a reply that holds a never-word or judgement word, in the request's language. */
 export const NEUTRAL_REPLY = agentText('en').neutralReply;
@@ -85,7 +102,7 @@ export async function chat(input: ChatInput, onProgress?: (event: AgentProgress)
         reply = { ...cached.value, modelCalls: [] };          // this request made no model call
     } else {
         try {
-            reply = await callAgent({ actionId, userId: s.scopeId, message: input.message, history, context }, input.conversationId, onProgress);
+            reply = await callAgent({ actionId, userId: s.scopeId, message: input.message, history, context, ...(input.conversationId ? { conversationId: input.conversationId } : {}) }, input.conversationId, onProgress);
         } catch (error) {
             await logStep(actionId, 'result', { result: { error: error instanceof Error ? error.message : 'agent call failed' } });
             throw error;
@@ -94,7 +111,7 @@ export async function chat(input: ChatInput, onProgress?: (event: AgentProgress)
 
     // Last wording check, after the agent service's own: a reply with a never-word or a judgement word (English or
     // French) is not shown at all. Names of the app's own assets and of the watchlist picks may be quoted.
-    const withheld = failsWordCheck(reply.text, context.watchlist.map((pick) => pick.name));
+    const withheld = failsWordCheck(reply.text, quotableNames(reply, input.message, context.watchlist.map((pick) => pick.name)));
     const refused = reply.refused || withheld;
     const text = withheld ? words.neutralReply : reply.text;
 

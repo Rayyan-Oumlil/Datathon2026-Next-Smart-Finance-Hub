@@ -12,7 +12,7 @@ REPO_DIR = AGENT_DIR.parent
 load_dotenv(AGENT_DIR / ".env")
 load_dotenv(REPO_DIR / ".env")
 
-PROMPT_VERSION = "p7"
+PROMPT_VERSION = "p8"
 
 
 # The two languages of the app. The web app sends one as context.locale; anything else is refused.

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { AlertTriangle, Check, Loader2, Square } from 'lucide-react';
+import { AlertTriangle, Check, Loader2, PenLine, Square } from 'lucide-react';
 import type { StageLine } from '@/lib/agent/stages';
 
 type Translator = ReturnType<typeof useTranslations<'AgentPanel'>>;
@@ -21,6 +21,9 @@ export const stageText = (t: Translator, line: StageLine): string => {
 };
 
 export const stageFailed = (line: StageLine): boolean => line.state === 'done' && (!line.ok || line.passed === false);
+
+/** A reply check that sent the wording back for a rewrite: a normal step, not an error (the rewrite is checked again). */
+export const reworded = (line: StageLine): boolean => line.stage === 'guardrail' && line.state === 'done' && line.passed === false;
 
 /** A tool call is shown under the specialist that precedes it, until the check or a rewrite begins. */
 export const nest = (stages: StageLine[]): Array<{ line: StageLine; child: boolean }> => {
@@ -45,6 +48,8 @@ const StageList = ({ stages, onStop }: { stages: StageLine[]; onStop: () => void
                             <li key={line.key} className={`flex items-center gap-2 text-muted-foreground ${child ? 'ms-5 text-[12px]' : ''}`}>
                                 {line.state === 'running'
                                     ? <Loader2 className="h-3.5 w-3.5 flex-none animate-spin motion-reduce:animate-none" aria-hidden />
+                                    : reworded(line)
+                                        ? <PenLine className="h-3.5 w-3.5 flex-none text-faint" aria-hidden />
                                     : stageFailed(line)
                                         ? <AlertTriangle className="h-3.5 w-3.5 flex-none text-down" aria-hidden />
                                         : <Check className="h-3.5 w-3.5 flex-none text-up" aria-hidden />}

@@ -263,7 +263,7 @@ REPEATS_AMOUNT = ("I prepared a simulated purchase of 500 CAD of TSLA. TSLA: vol
 
 def test_the_amount_of_the_action_proposed_in_this_request_grounds_the_reply(monkeypatch, table, stub):
     sent = []
-    monkeypatch.setattr(checks, "bedrock_check", lambda reply, grounding, query: sent.append(grounding) or {"passed": True})
+    monkeypatch.setattr(checks, "bedrock_check", lambda reply, grounding, query, **flags: sent.append(grounding) or {"passed": True})
     asked = scripted(monkeypatch, table, [REPEATS_AMOUNT, "never used"], conflict_then_propose)
     reply = main.invoke(PAYLOAD)
     assert reply["refused"] is False and reply["text"] == REPEATS_AMOUNT and len(asked) == 1
@@ -282,7 +282,7 @@ def test_the_message_alone_still_does_not_ground_the_amount(monkeypatch, table, 
 
 def test_the_guardrail_grounding_source_holds_no_history(monkeypatch, table, stub):
     sent = []
-    monkeypatch.setattr(checks, "bedrock_check", lambda reply, grounding, query: sent.append(grounding) or {"passed": True})
+    monkeypatch.setattr(checks, "bedrock_check", lambda reply, grounding, query, **flags: sent.append(grounding) or {"passed": True})
     scripted(monkeypatch, table, ["Hello."])
     main.invoke({**PAYLOAD, "history": [{"role": "user", "text": "secret figure 777.77"}], "message": "hi"})
     assert sent and "777.77" not in sent[0]
@@ -316,3 +316,56 @@ def test_the_page_the_user_is_on_reaches_the_orchestrator_and_the_portfolio_spec
 def test_stray_markdown_bold_is_dropped_from_a_reply():
     assert orchestrator.plain("- **Concentration:** AAPL is 25%. **Risk**") == "- Concentration: AAPL is 25%. Risk"
     assert orchestrator.plain("no markers *here*") == "no markers *here*"
+
+
+# ---- replies about a settings change
+
+def propose_layout(current):
+    note = orchestrator.record_proposal(current, "layout_change", "Hide the heatmap.", {"layout": ["total_value"]})
+    assert note.startswith("Recorded")
+
+
+def test_a_layout_reply_goes_through_with_its_preview_and_no_grounding_check(monkeypatch, table, stub):
+    flags = []
+    monkeypatch.setattr(checks, "bedrock_check", lambda reply, grounding, query, **f: flags.append(f) or {"passed": True})
+    asked = scripted(monkeypatch, table, ["The heatmap comes off the Overview page; 11 modules stay.", "never used"],
+                     propose_layout)
+    reply = main.invoke({**PAYLOAD, "message": "hide the heatmap"})
+    assert reply["refused"] is False and len(asked) == 1 and reply["proposed"]["type"] == "layout_change"
+    check = reply["trace"]["guardrail"][0]
+    assert check["replyKind"] == "setting" and check["own"]["ungroundedNumbers"] == []
+    assert flags == [{"check_grounding": False, "words_checked": True}]
+
+
+def test_a_layout_reply_with_advice_wording_is_still_rewritten(monkeypatch, table, stub):
+    monkeypatch.setattr(checks, "bedrock_check", lambda reply, grounding, query, **f: {"passed": True})
+    asked = scripted(monkeypatch, table, ["You should buy more after this.", "The heatmap comes off the Overview page."],
+                     propose_layout)
+    reply = main.invoke({**PAYLOAD, "message": "hide the heatmap"})
+    assert reply["refused"] is False and len(asked) == 2
+    assert reply["trace"]["guardrail"][0]["own"]["neverWords"]
+
+
+def test_a_market_data_reply_keeps_every_check(monkeypatch, table, stub):
+    flags = []
+    monkeypatch.setattr(checks, "bedrock_check", lambda reply, grounding, query, **f: flags.append(f) or {"passed": True})
+    scripted(monkeypatch, table, ["TSLA was at 999.99.", "never used"],
+             lambda current: orchestrator.check_profile_conflict(symbol="TSLA"))
+    reply = main.invoke({**PAYLOAD, "message": "what do you think of TSLA?"})
+    check = reply["trace"]["guardrail"][0]
+    assert check["replyKind"] == "data" and check["own"]["ungroundedNumbers"] == ["999.99"]
+    assert flags[0] == {"check_grounding": True, "words_checked": False}
+
+
+def test_a_rule_that_cannot_be_created_is_not_scored_for_grounding(monkeypatch, table, stub):
+    flags = []
+    monkeypatch.setattr(checks, "bedrock_check", lambda reply, grounding, query, **f: flags.append(f) or {"passed": True})
+
+    def rule_tools(current):
+        orchestrator.check_profile_conflict(symbol="ENB")          # no conflict for ENB in the stub
+        current.record_tool("/api/internal/tools/validate-rule", {}, {"ok": False, "errors": ["no position"]}, 200, 1)
+
+    scripted(monkeypatch, table, ["The rule was not created: the simulated portfolio holds no ENB.", "never used"], rule_tools)
+    reply = main.invoke({**PAYLOAD, "message": "create a rule on ENB"})
+    assert reply["refused"] is False and reply["trace"]["guardrail"][0]["replyKind"] == "settings_talk"
+    assert flags[0]["check_grounding"] is False

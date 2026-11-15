@@ -116,3 +116,24 @@ export function failsWordCheck(text: string, names: string[] = []): boolean {
     const cleaned = withoutNames(nfc(text), [...assetNames, ...names.filter(isQuotable)]).replace(exempt, ' ');
     return containsNeverWord(cleaned) || listed.test(cleaned);
 }
+
+// Text between quotation marks in a reply: «…», “…”, "…", ‘…’ and '…'.
+const QUOTED = /«\s*([^«»]{1,80}?)\s*»|“([^“”]{1,80}?)”|"([^"]{1,80}?)"|‘([^‘’]{1,80}?)’|(?<![\p{L}\p{N}_])'([^']{1,80}?)'(?![\p{L}\p{N}_])/gu;
+const squash = (text: string) => nfc(text).trim().split(/\s+/).join(' ');
+
+/**
+ * Quoted parts of a reply that repeat, word for word, a short piece of the user's own text or a name the user gave
+ * (a strategy name, a rule's wording). A reply about a settings change may echo them ("Your strategy « Bon départ »").
+ * Only short quotes count (2 to 6 words, at most 60 characters), as for the quotable names. The same rule as
+ * agent/app/checks.py quoted_user_text.
+ */
+export function quotedUserText(reply: string, sources: string[]): string[] {
+    const haystack = sources.filter((source) => typeof source === 'string' && source).map((source) => squash(source).toLocaleLowerCase());
+    const found: string[] = [];
+    for (const match of nfc(reply).matchAll(QUOTED)) {
+        const quote = squash(match.slice(1).find(Boolean) ?? '');
+        if (!quote || quote.length > MAX_NAME_CHARS || quote.split(' ').length > MAX_NAME_WORDS) continue;
+        if (haystack.some((source) => source.includes(quote.toLocaleLowerCase()))) found.push(quote);
+    }
+    return found;
+}

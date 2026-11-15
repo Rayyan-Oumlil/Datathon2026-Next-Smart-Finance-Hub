@@ -4,6 +4,8 @@ import pytest
 
 # Unit tests never reach AWS or the real table.
 os.environ["GUARDRAIL_ID"] = ""
+os.environ["MEMORY_ID"] = ""
+os.environ["MEMORY_PREFERENCES"] = ""
 os.environ["AWS_EC2_METADATA_DISABLED"] = "true"
 
 from app import trace  # noqa: E402

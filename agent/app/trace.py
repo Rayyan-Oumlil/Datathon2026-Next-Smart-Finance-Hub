@@ -27,6 +27,9 @@ class RequestTrace:
     message: str
     context: dict
     history: list = field(default_factory=list)
+    conversation_id: str | None = None                   # the web app's conversation id: the memory session
+    history_source: str = "request"                      # "memory" when the turns came from AgentCore Memory
+    memory_saved: bool = False                           # this turn was stored in AgentCore Memory
     tool_results: list = field(default_factory=list)     # {"endpoint", "result"} for every successful tool call
     model_calls: list = field(default_factory=list)      # the response's modelCalls
     conflict_checks: dict = field(default_factory=dict)  # symbol -> conflict-check result

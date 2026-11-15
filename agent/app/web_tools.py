@@ -27,20 +27,23 @@ def call_web(name: str, body: dict | None = None) -> Any:
     started = time.monotonic()
     status = None
     current.emit("tool", "start", name)
-    try:
-        response = _client().post(
+    def post():
+        return _client().post(
             config.web_url() + endpoint,
             json={**(body or {}), "userId": current.user_id},
             headers={"x-internal-token": config.env("INTERNAL_API_TOKEN"), "x-action-id": current.action_id},
         )
+
+    def is_json(response) -> bool:
+        return "json" in response.headers.get("content-type", "")
+
+    try:
+        response = post()
         status = response.status_code
-        if status == 404 and "text/html" in response.headers.get("content-type", ""):
-            # The Next dev server sometimes answers a route it is recompiling with its HTML 404 page: asked again once
-            response = _client().post(
-                config.web_url() + endpoint,
-                json={**(body or {}), "userId": current.user_id},
-                headers={"x-internal-token": config.env("INTERNAL_API_TOKEN"), "x-action-id": current.action_id},
-            )
+        if (status == 404 or status < 300) and not is_json(response):
+            # The Next dev server sometimes answers a route it is recompiling with an HTML page (404, or 200 while
+            # it reloads): asked again once
+            response = post()
             status = response.status_code
         if status >= 400:
             result = {"error": f"HTTP {status}", "endpoint": endpoint}

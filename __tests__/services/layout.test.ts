@@ -12,10 +12,20 @@ vi.mock('@/lib/services/quotes', async (original) => (await import('./market-stu
 beforeEach(() => freshWorld(false));
 
 describe('layout', () => {
-    it('gives a Novice fewer modules and an Expert all of them', () => {
+    it('starts a Novice with fewer modules and an Expert with all of them', () => {
         expect(defaultLayout('Novice')).toEqual(['total_value', 'performance', 'holdings', 'xray', ...OVERVIEW]);
         expect(defaultLayout('Intermediate').length).toBeGreaterThan(defaultLayout('Novice').length);
         expect(defaultLayout('Expert')).toEqual(WIDGET_LIBRARY.map((widget) => widget.id));
+    });
+
+    it('gates no widget by level: the library has no minimum level and any level may save any widget', async () => {
+        expect(WIDGET_LIBRARY.every((widget) => !('minLevel' in widget))).toBe(true);
+        expect(validateLayout(WIDGET_LIBRARY.map((widget) => widget.id))).toEqual([]);
+        // A Novice starts without them, and may still add them
+        await putProfile(buildProfile(TEST_SCOPE.profileUserId, answers(), NOW));
+        const all = WIDGET_LIBRARY.map((widget) => widget.id);
+        expect(await putLayout(all)).toEqual({ layout: all });
+        expect(await getLayout()).toMatchObject({ layout: all, saved: true });
     });
 
     it('starts from the level template of the profile, Novice when there is none', async () => {

@@ -81,9 +81,9 @@
   "stages": {
     "title": "Ce que fait l’agent",
     "orchestrator": "Lecture de votre demande",
-    "retry": "Reformulation de la réponse après une vérification",
+    "retry": "Ajustement de la formulation",
     "guardrail": "Vérification des chiffres et du vocabulaire",
-    "guardrailFailed": "La vérification a relevé un problème",
+    "guardrailFailed": "Formulation ajustée avant l’affichage de la réponse",
     "cache": "Réponse tirée d’une réponse précédente qui a passé toutes les vérifications",
     "took": "{ms, number} ms",
     "subagent": {
@@ -119,7 +119,7 @@
     },
     "less": {
       "label": "Afficher moins",
-      "message": "Afficher moins : masquer chaque composant dont minLevel est supérieur à Novice, conserver les autres dans leur ordre"
+      "message": "Afficher moins : masquer la Répartition par secteur et les Règles de placement dans l’onglet Portefeuille, garder les autres dans leur ordre"
     },
     "etf": {
       "label": "Qu’est-ce qu’un FNB?",
@@ -223,10 +223,10 @@
   },
   "voice": {
     "start": "Parler à l’agent",
-    "stop": "Arrêter et envoyer",
+    "stop": "Arrêter la dictée",
     "hint": "Maintenez Alt+V pour parler",
     "processing": "Fin de la transcription",
-    "listening": "À l’écoute… relâchez Alt+V ou touchez le microphone pour envoyer. Échap annule.",
+    "listening": "À l’écoute… le texte s’ajoute dans la zone de saisie. Relâchez Alt+V ou touchez le microphone pour arrêter, puis appuyez sur Entrée pour envoyer. Échap annule.",
     "starting": "Démarrage du microphone…",
     "unsupported": "La saisie vocale n’est pas disponible dans ce navigateur. Utilisez Chrome, Edge ou Safari.",
     "insecure": "La saisie vocale nécessite une connexion sécurisée (HTTPS).",

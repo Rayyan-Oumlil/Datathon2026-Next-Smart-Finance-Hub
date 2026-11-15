@@ -160,7 +160,7 @@ describe('chat in French', () => {
     it('words the preview, the notice and the confirm and undo messages in French', async () => {
         agent.mockResolvedValue(answer({ text: 'Voici une disposition plus courte.', proposed: { type: 'layout_change', summary: 's', params: { layout: ['total_value', 'holdings'] } } }));
         const reply = await chat({ message: 'montrez-m’en moins' });
-        expect(reply.preview!.summary).toMatch(/^Disposition du tableau de bord : retire /);
+        expect(reply.preview!.summary).toMatch(/^Disposition : masque /);
         expect(reply.preview!.rows[0].label).toBe('Onglet Portefeuille');
         expect(await confirm(reply.actionId, true)).toMatchObject({ applied: true, message: 'La disposition du tableau de bord a été modifiée.' });
         expect(await undoAction(reply.actionId)).toMatchObject({ restored: true, message: 'La disposition précédente du tableau de bord est rétablie.' });

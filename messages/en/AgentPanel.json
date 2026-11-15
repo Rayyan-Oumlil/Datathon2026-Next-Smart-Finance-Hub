@@ -81,9 +81,9 @@
   "stages": {
     "title": "What the agent is doing",
     "orchestrator": "Reading your request",
-    "retry": "Rewriting the reply after a check",
+    "retry": "Adjusting the wording",
     "guardrail": "Checking figures and wording",
-    "guardrailFailed": "The check found a problem",
+    "guardrailFailed": "Wording adjusted before showing the reply",
     "cache": "Answered from an earlier reply that passed every check",
     "took": "{ms, number} ms",
     "subagent": {
@@ -119,7 +119,7 @@
     },
     "less": {
       "label": "Show me less",
-      "message": "Show me less: hide every widget whose minLevel is above Novice, keep the others in their order"
+      "message": "Show me less: hide Sector allocation and Investment rules on the Portfolio tab, keep the others in their order"
     },
     "etf": {
       "label": "What is an ETF?",
@@ -223,10 +223,10 @@
   },
   "voice": {
     "start": "Talk to the agent",
-    "stop": "Stop and send",
+    "stop": "Stop dictating",
     "hint": "Hold Alt+V to talk",
     "processing": "Finishing the transcription",
-    "listening": "Listening… release Alt+V or tap the microphone to send. Esc cancels.",
+    "listening": "Listening… the text goes into the box. Release Alt+V or tap the microphone to stop, then press Enter to send. Esc cancels.",
     "starting": "Starting the microphone…",
     "unsupported": "Voice input is not available in this browser. Use Chrome, Edge or Safari.",
     "insecure": "Voice input needs a secure (HTTPS) connection.",

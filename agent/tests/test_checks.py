@@ -190,3 +190,39 @@ def test_contracted_form_is_found_and_a_long_reply_fails():
     assert checks.find_never_words("You shouldn't do that.") == ["shouldn't"]
     assert checks.own_check("word " * 1200, [], [])["tooLong"] is True
     assert checks.own_check("Short reply.", [], [])["passed"] is True
+
+
+# ---- replies about a settings change (layout, rule, strategy, profile)
+
+def test_a_settings_reply_is_checked_for_wording_only():
+    # A short confirmation with a figure from nowhere: no market figure is stated, so it is not a grounding failure
+    own = checks.own_check("I set the cap at 20% for 3 holdings.", [[], {}, None], [], "en", setting=True)
+    assert own["passed"] and own["ungroundedNumbers"] == []
+    # The wording still counts
+    assert not checks.own_check("Now you should buy more.", [[], {}, None], [], "en", setting=True)["passed"]
+    # Without the flag the same figures must be grounded
+    assert checks.own_check("I set the cap at 20% for 3 holdings.", [[], {}, None], [], "en")["ungroundedNumbers"] == ["20%"]
+
+
+def test_widget_titles_and_quoted_user_text_are_not_judged():
+    layout = [{"endpoint": "/api/internal/tools/layout", "result": {"library": [{"id": "x", "title": "Best and worst movers"}]}}]
+    assert checks.own_check("Best and worst movers is now hidden.", [layout, {}, None], [], "en", setting=True)["passed"]
+    quoted = checks.quoted_user_text("Your strategy « Bon départ » is ready.", ["Crée la stratégie Bon départ"])
+    assert quoted == ["Bon départ"]
+    assert checks.own_check("Your strategy « Bon départ » is ready.", [[], {}, None], [], "fr", setting=True,
+                            exempt=quoted)["passed"]
+    # A quote the user never wrote, or a long one, is still checked
+    assert checks.quoted_user_text("« you should buy » it", ["hello"]) == []
+    assert checks.quoted_user_text('"buy it now and then keep buying every single day"', ["buy it now and then keep buying every single day"]) == []
+
+
+def test_a_settings_reply_skips_the_contextual_grounding_check(monkeypatch):
+    client = FakeGuardrailClient(BLOCKING)
+    monkeypatch.setenv("GUARDRAIL_ID", "gr-test")
+    monkeypatch.setenv("GUARDRAIL_REPORT_ONLY", "")
+    monkeypatch.setattr(checks.bedrock, "runtime_client", lambda: client)
+    result = checks.bedrock_check("the reply", "facts", "question", check_grounding=False, words_checked=True)
+    assert [c["text"]["qualifiers"] for c in client.request["content"]] == [["guard_content"]]
+    # The advice topic still blocks; grounding and the word filter (already checked by our own lists) are reported only
+    assert result["blocked"] == ["topic:InvestmentAdvice"]
+    assert result["reportedOnly"] == ["word:buy", "grounding:0.4"]

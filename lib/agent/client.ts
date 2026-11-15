@@ -18,6 +18,8 @@ export type AgentPayload = {
     message: string;
     history: Array<{ role: 'user' | 'assistant'; text: string }>;
     context: AgentContext;
+    /** The panel's conversation id: the agent's memory session (with userId). A reset starts a new one. */
+    conversationId?: string;
 };
 
 const TIMEOUT_MS = 120_000;     // one request can be several model calls and two guardrail passes

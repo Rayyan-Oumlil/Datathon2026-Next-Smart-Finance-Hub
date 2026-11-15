@@ -13,7 +13,7 @@ import { loadMessages } from '@/i18n/messages';
 import type { AgentActionType, FilterCheck, InvestmentRule, OnboardingAnswers, ProposedAction, Sourced } from '@/lib/domain/types';
 import { RULES } from '@/lib/rules';
 import { ServiceError, round2 } from '@/lib/services/errors';
-import { WIDGET_LIBRARY, getLayout, putLayout, validateLayout } from '@/lib/services/layout';
+import { WIDGET_LIBRARY, getLayout, putLayout, validateLayout, widgetLibrary } from '@/lib/services/layout';
 import { getPortfolioState, simulateTrade } from '@/lib/services/portfolio';
 import { editProfile, getProfile, previewProfileEdit } from '@/lib/services/profile';
 import { fxUsdCad, isTradable, liveQuote, signalsFor, toCad } from '@/lib/services/quotes';
@@ -96,7 +96,9 @@ const priceFact = (label: string, price: Sourced, locale: Locale): PreviewFact =
 async function widgetTitles(locale: Locale): Promise<(id: string) => string> {
     const messages = (await loadMessages(locale).catch(() => ({}))) as { Portfolio?: { modules?: Record<string, string> } };
     const modules = messages.Portfolio?.modules ?? {};
-    return (id: string) => modules[id] ?? WIDGET_LIBRARY.find((widget) => widget.id === id)?.title ?? id;
+    // The Overview panels have no Portfolio message: the library's own title in the language
+    const own = new Map(widgetLibrary(locale).map((widget) => [widget.id, widget.title]));
+    return (id: string) => modules[id] ?? own.get(id) ?? id;
 }
 
 /** The onboarding wording in this language, for the profile preview's questions and answers. */
@@ -124,10 +126,11 @@ async function layoutPreview(after: string[], locale: Locale, scope: Scope): Pro
     return {
         before, after,
         summary: text.layoutSummary(removed, added),
+        // A light card: only the tab that changes is shown, before and after
         rows: [
             { label: text.portfolioTab, before: onTab(before, 'portfolio'), after: onTab(after, 'portfolio') },
             { label: text.overviewTab, before: onTab(before, 'overview'), after: onTab(after, 'overview') },
-        ],
+        ].filter((row) => row.before !== row.after),
         facts: [],
     };
 }
