@@ -9,6 +9,7 @@ import { AlertTriangle, MessageSquareText, RotateCcw, SendHorizontal, Undo2, X }
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/i18n/config";
 import { formatNumber, formatDateTime } from "@/i18n/format";
+import { shownChecks } from "@/components/watchlist/format";
 import { formatMoment, sourceLabel } from "@/components/agent/time";
 import AgentText from "@/components/agent/AgentText";
 import StageList, { reworded, stageFailed, stageText } from "@/components/agent/StageList";
@@ -23,6 +24,7 @@ import { useVoiceInput } from "@/hooks/useVoiceInput";
 import PreviewDetails, { timesText, type PreviewData } from "@/components/agent/PreviewDetails";
 import ProposalDock, { type DockKind } from "@/components/agent/ProposalDock";
 import { PROPOSAL_CHANGED_EVENT, PROPOSAL_DECIDE_EVENT } from "@/hooks/usePendingProposal";
+import { DATA_CHANGED_EVENT } from "@/hooks/useDataChanged";
 import { toast } from "sonner";
 import { KEY_STEP, PANEL_DEFAULT, PANEL_MAX, PANEL_MIN, stepWidth, swipeOf, widthFromDrag } from "@/components/agent/panel-width";
 
@@ -171,7 +173,7 @@ const ConflictBlock = ({ conflict }: { conflict: NonNullable<Reply['conflict']> 
             {t('conflict.title', { symbol: conflict.symbol })}
         </p>
         <ul className="mt-1 list-disc ps-5 text-foreground">
-            {conflict.checks.map((check, index) => <li key={`${check.filter}-${index}`}>{check.detail}</li>)}
+            {shownChecks(conflict.checks).map((check, index) => <li key={`${check.filter}-${index}`}>{check.detail}</li>)}
         </ul>
         <p className="mt-1 text-muted-foreground">{t('conflict.note')}</p>
     </div>
@@ -229,10 +231,12 @@ export const PreviewCard = ({ message, busy, onDecide, onUndo, where = 'chat' }:
 import { AGENT_ASK_EVENT, getPageDetail } from "@/lib/agent/page-detail";
 
 // width and onResize: the panel's width on a wide screen (px); final is true when a drag or swipe ends, to keep the value
-type AgentPanelProps = { open: boolean; onOpenChange: (open: boolean) => void; onDataChanged?: () => void; width?: number; onResize?: (width: number, final: boolean) => void };
+type AgentPanelProps = { open: boolean; onOpenChange: (open: boolean) => void; width?: number; onResize?: (width: number, final: boolean) => void; owner?: string };
 
 // The agent: it explains data and proposes changes. A change is shown as a preview and runs only after Confirm.
-const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, onResize }: AgentPanelProps) => {
+const AgentPanel = ({ open, onOpenChange, width = PANEL_DEFAULT, onResize, owner = '' }: AgentPanelProps) => {
+    // One stored conversation per profile, so switching profile never shows another profile's exchange
+    const storeKey = owner ? `${STORE_KEY}:${owner}` : STORE_KEY;
     const t = useTranslations('AgentPanel');
     // The page a proposed change is saved on shows it in a slot the shell provides; this panel fills the slot
     const [slot, setSlot] = useState<HTMLElement | null>(null);
@@ -294,27 +298,31 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
     useEffect(() => {
         let stored: { conversationId?: string; messages?: Message[] } = {};
         try {
-            stored = JSON.parse(window.sessionStorage.getItem(STORE_KEY) ?? '{}');
+            stored = JSON.parse(window.sessionStorage.getItem(storeKey) ?? '{}');
         } catch { /* an unreadable entry starts a new conversation */ }
         setConversationId(stored.conversationId || newId());
         setMessages(Array.isArray(stored.messages) ? stored.messages : []);
         setLoaded(true);
-    }, []);
+    }, [storeKey]);
 
     useEffect(() => {
         if (!loaded) return;
         try {
-            window.sessionStorage.setItem(STORE_KEY, JSON.stringify({ conversationId, messages }));
+            window.sessionStorage.setItem(storeKey, JSON.stringify({ conversationId, messages }));
         } catch { /* storage full or blocked: the conversation stays in memory */ }
-    }, [loaded, conversationId, messages]);
+    }, [loaded, conversationId, messages, storeKey]);
 
+    // The conversation follows a new message or a reply being written. Only its own list scrolls (never the page), and
+    // a message that only changes state (Save, Cancel, Undo on an earlier reply) leaves the list where it is.
+    const messageCount = messages.length;
     useEffect(() => {
-        if (open) endRef.current?.scrollIntoView({ block: 'end' });
-    }, [open, messages, waiting, stages, revealing]);
+        const log = endRef.current?.parentElement;
+        if (open && log) log.scrollTop = log.scrollHeight;
+    }, [open, messageCount, waiting, stages, revealing]);
 
     useEffect(() => {
         if (!open) return;
-        inputRef.current?.focus();
+        inputRef.current?.focus({ preventScroll: true });
         const onKey = (event: KeyboardEvent) => {
             if (event.key !== 'Escape') return;
             if (voiceRef.current.active) { sendWhenHeard.current = false; voiceRef.current.cancel(); setDraft(voiceBase.current); }
@@ -347,7 +355,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
             setDraft(full);
             if (sendWhenHeard.current && !waiting) void send(full, true);
             sendWhenHeard.current = false;
-            inputRef.current?.focus();
+            inputRef.current?.focus({ preventScroll: true });
         },
         onEnd: () => { if (sendWhenHeard.current) { sendWhenHeard.current = false; void send(draftRef.current, dictated.current); } },
     });
@@ -419,11 +427,11 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
         return () => window.removeEventListener(AGENT_ASK_EVENT, onAsk);
     }, [onOpenChange]);
 
-    // Pages read their data on the server or on their own; both are told that something changed
+    // Pages read their data on the server or on their own; both are told that something changed. Neither is mounted
+    // again: what is on screen stays (and so does the scroll position) until the new data is there.
     const dataChanged = () => {
         router.refresh();
-        onDataChanged?.();
-        window.dispatchEvent(new CustomEvent('agent:data-changed'));
+        window.dispatchEvent(new CustomEvent(DATA_CHANGED_EVENT));
     };
 
     const decide = async (message: Message, accept: boolean) => {
@@ -496,7 +504,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
                     const outcome = await post<{ applied: boolean; message?: string }>('/api/agent/confirm', { actionId, accept: Boolean(accept), language: locale }, t('errors.apply'));
                     router.refresh();
                     window.dispatchEvent(new CustomEvent(PROPOSAL_CHANGED_EVENT));
-                    if (outcome.applied) window.dispatchEvent(new CustomEvent('agent:data-changed'));
+                    if (outcome.applied) window.dispatchEvent(new CustomEvent(DATA_CHANGED_EVENT));
                     toast(outcome.applied ? outcome.message || t('preview.saved') : t('preview.cancelled'));
                 } catch (error) {
                     toast.error(error instanceof Error ? error.message : t('errors.apply'));
@@ -524,7 +532,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
     const quick = (id: QuickAction) => {
         if (id === 'rule' || id === 'strategy') {
             setDraft(t(`quick.${id}.message`));
-            inputRef.current?.focus();
+            inputRef.current?.focus({ preventScroll: true });
         } else void send(t(`quick.${id}.message`));
     };
 
@@ -607,7 +615,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
                                                         </ul>
                                                     )}
                                                     {message.reply.sources.length === 0 && !message.reply.refused && !message.reply.preview && /\d/.test(message.text) && <p className="mt-2 text-[11px] text-faint">{t('noSource')}</p>}
-                                                    {message.reply.conflict && message.reply.conflict.checks.length > 0 && <ConflictBlock conflict={message.reply.conflict} />}
+                                                    {message.reply.conflict && shownChecks(message.reply.conflict.checks).length > 0 && <ConflictBlock conflict={message.reply.conflict} />}
                                                     {message.reply.notice && <p className="mt-2 text-[13px] text-muted-foreground">{message.reply.notice}</p>}
                                                     {message.reply.preview && (
                                                         <PreviewCard message={message} busy={busyAction === message.reply.actionId} onDecide={(accept) => void decide(message, accept)} onUndo={() => void undo(message)} />

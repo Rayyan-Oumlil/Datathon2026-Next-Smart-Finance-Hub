@@ -6,7 +6,7 @@ import { PERSONAS, type PersonaName } from '@/lib/personas/presets';
 import { useReplayFmt } from './useReplayFmt';
 
 export const START_CHIPS = ['2021-01-04', '2022-01-03', '2023-01-03'] as const;
-export const PERSONA_NAMES: PersonaName[] = ['amira', 'mateo', 'robert'];
+export const PERSONA_NAMES: PersonaName[] = ['amira', 'mateo', 'robert', 'novice', 'expert'];
 
 export type StrategyOption = { id: string; name: string; ruleCount: number };
 export type ModelOption = { id: string; name: string; weights: Array<{ symbol: string; weightPct: number }> };

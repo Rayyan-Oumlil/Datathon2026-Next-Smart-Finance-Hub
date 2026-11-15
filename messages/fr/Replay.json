@@ -20,7 +20,9 @@
     "personas": {
       "amira": "Exemple : {name} (croissance)",
       "mateo": "Exemple : {name} (équilibre, ESG)",
-      "robert": "Exemple : {name} (préservation du capital)"
+      "robert": "Exemple : {name} (préservation du capital)",
+      "novice": "Exemple : {name} (FNB indiciels et encaisse)",
+      "expert": "Exemple : {name} (actions, un FNB et bitcoin)"
     },
     "models": "Portefeuilles proposés",
     "strategy": "Stratégie",

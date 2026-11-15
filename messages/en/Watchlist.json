@@ -24,7 +24,6 @@
     "volatility": "Volatility cap",
     "market_cap_floor": "Market cap floor",
     "liquidity": "Traded value per day",
-    "esg": "ESG tag (demo data)",
     "novice": "Novice rule",
     "low_risk_etf": "Low-risk ETF rule",
     "crypto_risk": "Crypto rule",
@@ -75,15 +74,6 @@
     "seed": "On your brands list, and it passed every filter",
     "incumbent": "Already listed in the previous run",
     "new": "New in this run"
-  },
-  "esg": {
-    "screened": "screened",
-    "not screened": "not screened",
-    "controversy": "controversy"
-  },
-  "esgChip": {
-    "label": "ESG: {tag} · demo data",
-    "title": "Hand-set tag, not from a data provider"
   },
   "source": {
     "line": "{source} · fetched {time}{hasProvider, select, true { · provider time {providerTime}} other {}}",
@@ -195,7 +185,7 @@
     "title": "How the score works",
     "intro": "Fixed rules ({version}), written in one rules file and run as plain code. Same inputs, same list. Not investment advice.",
     "filtersHead": "1. Filters.",
-    "filtersBody": " An asset is left out when it fails a pass-or-fail check of your profile (avoid list, markets, volatility cap, market cap floor, traded value, ESG tag as demo data).",
+    "filtersBody": " An asset is left out when it fails a pass-or-fail check of your profile (avoid list, markets, volatility cap, market cap floor, traded value).",
     "scoreHead": "2. Score.",
     "scoreBody": " Each remaining asset gets four factors from 0 to 100, with fixed weights:",
     "total": "Total = {formula}.",
@@ -244,8 +234,6 @@
     "note": "Note",
     "stale": " · stale",
     "missingInputs": "Not available from any source, and not replaced by a placeholder: {list}.",
-    "esgTag": "ESG tag: ",
-    "esgValue": "{tag} (demo data, set by hand)",
     "niche": "Niche: ",
     "listedFrom": "Listed in the asset universe from: ",
     "loadingInputs": "Loading the inputs…",

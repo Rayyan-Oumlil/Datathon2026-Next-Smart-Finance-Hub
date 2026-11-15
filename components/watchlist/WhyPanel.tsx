@@ -11,7 +11,7 @@ import type { AssetClass, FactorDetail, FilterCheck, Pick, SignalSet, Sourced } 
 import { cn } from "@/lib/utils";
 import { formatNumber, formatPercent } from "@/i18n/format";
 import {
-    FACTOR_KEYS, SIGNAL_KEYS, esgLabel, factorLabel, filterLabel, keptLabel, missingLabel, notAvailable, signalLabel,
+    FACTOR_KEYS, SIGNAL_KEYS, factorLabel, filterLabel, keptLabel, shownChecks, missingLabel, notAvailable, signalLabel,
     formatSignal, formatTime, isStale, kindLabel, type FactorKey, type Translate, type WatchlistRulesView,
 } from "./format";
 
@@ -94,6 +94,8 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
     const factors = pick?.factors ?? data?.candidate?.factors;
     const total = pick?.total ?? data?.candidate?.total;
     const filters = data?.candidate?.filters ?? extra?.filters ?? null;
+    // The ESG check is not shown: the heading counts only the reasons listed under it
+    const rejected = shownChecks(data?.rejected ?? []);
     const signals: SignalSet | null = pick?.signals ?? extra?.signals ?? null;
     const logoClass: AssetClass | undefined = pick?.assetClass ?? signals?.entry.assetClass;
     const logoName = pick?.name ?? signals?.entry.name;
@@ -130,11 +132,11 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
                             </button>
                         </div>
                         {data.note && <p className="text-sm text-foreground">{data.note}</p>}
-                        {data.rejected && data.rejected.length > 0 && (
+                        {rejected.length > 0 && (
                             <div role="note" className="rounded-xl border border-line bg-brand-soft p-3 text-sm text-foreground">
-                                <p className="font-bold text-brand-ink">{t('why.leftOut', { count: data.rejected.length })}</p>
+                                <p className="font-bold text-brand-ink">{t('why.leftOut', { count: rejected.length })}</p>
                                 <ul className="mt-1 flex flex-col gap-1">
-                                    {data.rejected.map((check) => <li key={check.filter}>{t('labelColon', { label: filterLabel(t, check.filter) })} {check.detail}</li>)}
+                                    {rejected.map((check) => <li key={check.filter}>{t('labelColon', { label: filterLabel(t, check.filter) })} {check.detail}</li>)}
                                 </ul>
                             </div>
                         )}
@@ -186,7 +188,7 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
                         <Section {...fold('filters')} title={t('why.filterTitle')} sub={t('why.filterSub', { version: data.ruleVersions.filters ?? notAvailable(t) })}>
                             {filters ? (
                                 <ul className="flex flex-col gap-2">
-                                    {filters.map((check) => (
+                                    {shownChecks(filters).map((check) => (
                                         <li key={check.filter} className="flex gap-2 text-sm">
                                             {check.pass ? <CircleCheck aria-hidden className="mt-0.5 size-4 flex-none text-up" /> : <CircleX aria-hidden className="mt-0.5 size-4 flex-none text-down" />}
                                             <div className="min-w-0">
@@ -228,7 +230,6 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
                                     </ul>
                                     {signals.missing.length > 0 && <p className="text-[12.5px] text-warn">{t('why.missingInputs', { list: signals.missing.map((m) => missingLabel(t, m)).join(', ') })}</p>}
                                     <dl className="grid gap-1 text-[12.5px] text-muted-foreground">
-                                        <div><dt className="inline font-semibold">{t('why.esgTag')}</dt><dd className="inline">{t('why.esgValue', { tag: esgLabel(t, signals.entry.esg) })}</dd></div>
                                         {signals.entry.subIndustry && <div><dt className="inline font-semibold">{t('why.niche')}</dt><dd className="inline">{signals.entry.subIndustry}</dd></div>}
                                         <div><dt className="inline font-semibold">{t('why.listedFrom')}</dt><dd className="inline break-words">{signals.entry.listSource}</dd></div>
                                     </dl>

@@ -4,10 +4,10 @@ import { useId, useState } from "react";
 import { Clock } from "lucide-react";
 import { sourceLabel } from "@/lib/source-label";
 import { useLocale, useTranslations } from "next-intl";
-import type { EsgTag, Sourced } from "@/lib/domain/types";
+import type { Sourced } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
 import { formatDateTime, formatNumber } from "@/i18n/format";
-import { esgLabel, formatTime } from "./format";
+import { formatTime } from "./format";
 import type { SourceLegendEntry } from "./sources";
 
 /** Geometry of the sparkline in a 0-100 box: x and y in percent, y measured from the top. Pure, so it can be tested. */
@@ -75,12 +75,6 @@ export function Sparkline({ closes, dates, label, currency }: { closes: number[]
             </div>
         </div>
     );
-}
-
-// The ESG tag is hand-set mock data: it never appears without its "demo data" label.
-export function EsgChip({ tag }: { tag: EsgTag }) {
-    const t = useTranslations('Watchlist');
-    return <span className="pill" title={t('esgChip.title')}>{t('esgChip.label', { tag: esgLabel(t, tag) })}</span>;
 }
 
 export function StaleChip({ children }: { children: React.ReactNode }) {

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { askAgent } from '@/lib/agent/page-detail';
 import { api } from '@/components/portfolio/logic';
 import { useFmt } from '@/components/portfolio/useFmt';
+import { useDataChanged } from '@/hooks/useDataChanged';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatDateTime, formatMoney, formatNumber, formatPercent } from '@/i18n/format';
 import { LIMITS, type AllocationTarget, type RuleKind, type StrategyRule } from '@/lib/strategy/types';
@@ -22,6 +23,7 @@ import { StrategySuggestions, type SuggestionsResponse } from './Suggestions';
 import { ViewToggle, useRuleView } from './ViewToggle';
 import { OrderNote } from './StrategySummary';
 import { FIELD } from './Chip';
+import { forgetKeptScroll } from '@/hooks/useKeepScroll';
 
 type PortfolioInfo = { holdings: Holding[]; cashCad: number; valueCad: number | null };
 type PortfolioResponse = {
@@ -72,14 +74,13 @@ export default function StrategyBuilder() {
     useEffect(() => {
         api<SuggestionsResponse>('/api/strategy/suggestions').then(setSuggestions).catch(() => setSuggestions(null));
     }, []);
-    // The agent can create or change a strategy: read the list again when it says something changed
-    useEffect(() => {
-        const onChange = () => { void api<{ strategies: StoredStrategy[] }>('/api/strategy').then((list) => setStrategies(list.strategies)).catch(() => undefined); };
-        window.addEventListener('agent:data-changed', onChange);
-        return () => window.removeEventListener('agent:data-changed', onChange);
-    }, []);
+    // The agent can create or change a strategy (or the portfolio): read both again, in place, when it says something changed
+    useDataChanged(() => void load());
 
-    const open = (id: string | null) => router.push(id ? `/strategy?id=${encodeURIComponent(id)}` : '/strategy', { scroll: true });
+    const open = (id: string | null) => {
+        forgetKeptScroll();
+        router.push(id ? `/strategy?id=${encodeURIComponent(id)}` : '/strategy', { scroll: true });
+    };
 
     const head = (
         <header className="page-head">
@@ -282,6 +283,18 @@ function StrategyEditor({ stored, portfolio, suggested, onBack, onSaved }: { sto
     const [draft, setDraft] = useState<StrategyDraft>(() => fromStored(stored));
     const [busy, setBusy] = useState(false);
     const [issues, setIssues] = useState<ServerIssue[]>([]);
+    // A newer version from the server that was not saved here (a change applied or undone by the agent) is shown in
+    // place: the editor is not mounted again, so its checks and its history preview stay on screen
+    const [received, setReceived] = useState(stored);
+    if (received !== stored) {
+        setReceived(stored);
+        if (stored.version !== baseline.version || stored.updatedAt !== received.updatedAt) {
+            const next = fromStored(stored);
+            setBaseline(next);
+            setDraft(next);
+            setIssues([]);
+        }
+    }
     const [failure, setFailure] = useState<string | null>(null);
     const [adding, setAdding] = useState(false);
     const [view, setView] = useRuleView();

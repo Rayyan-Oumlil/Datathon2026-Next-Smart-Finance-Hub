@@ -5,6 +5,7 @@ import { RefreshCw } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { DecisionLogEntry, FilterCheck, Sourced } from '@/lib/domain/types';
 import Panel from '@/components/Panel';
+import { useDataChanged } from '@/hooks/useDataChanged';
 import { formatDateTime, formatMoney, formatNumber } from '@/i18n/format';
 import { sourceLabel } from '@/lib/source-label';
 import { cn } from '@/lib/utils';
@@ -108,10 +109,13 @@ export default function History() {
     const when = (iso: string) => formatDateTime(iso, locale);
     const [entries, setEntries] = useState<DecisionLogEntry[] | null>(null);
     const [failed, setFailed] = useState(false);
+    const [reading, setReading] = useState(false);
     const [shown, setShown] = useState<Kind | 'all'>('all');
 
+    // The entries on screen stay while the log is read again: an emptied list would shorten the page under the reader
     const load = useCallback(async () => {
         setFailed(false);
+        setReading(true);
         try {
             const lists = await Promise.all(KINDS.map(async ({ kind }) => {
                 const res = await fetch(`/api/decisions?kind=${kind}&limit=40`, { cache: 'no-store' });
@@ -121,12 +125,16 @@ export default function History() {
             setEntries(lists.flat().sort((a, b) => b.id.localeCompare(a.id)));
         } catch {
             setFailed(true);
+        } finally {
+            setReading(false);
         }
     }, []);
 
     useEffect(() => {
         void load();
     }, [load]);
+    // A change saved by the agent adds entries
+    useDataChanged(() => void load());
 
     const visible = (entries ?? []).filter((entry) => shown === 'all' || entry.kind === shown);
 
@@ -135,8 +143,8 @@ export default function History() {
             title={t('history.title')}
             sub={t('history.subtitle')}
             action={(
-                <button type="button" className="btn btn-ghost" onClick={() => { setEntries(null); void load(); }}>
-                    <RefreshCw aria-hidden /> {t('history.reload')}
+                <button type="button" className="btn btn-ghost" disabled={reading} onClick={() => void load()}>
+                    <RefreshCw aria-hidden className={cn(reading && 'animate-spin')} /> {t('history.reload')}
                 </button>
             )}
             bodyClassName="flex flex-col"
@@ -169,7 +177,7 @@ export default function History() {
                 </div>
             )}
 
-            <ol className="flex flex-col divide-y divide-line">
+            <ol aria-busy={reading} className={cn('flex flex-col divide-y divide-line transition-opacity', reading && entries !== null && 'opacity-60')}>
                 {!failed && visible.map((entry) => {
                     const { tag, title, why, facts } = describe(entry, t, locale);
                     const versions = Object.entries(entry.ruleVersions ?? {});

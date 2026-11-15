@@ -1,4 +1,4 @@
-// Seeding the stored example users (hidden addresses /u/amira, /u/mateo, /u/robert). Everything goes through the
+// Seeding the stored example users (addresses /u/amira, /u/mateo, /u/robert, /u/demo-novice, /u/demo-expert). Everything goes through the
 // normal services: the onboarding answers through saveOnboarding (so level and risk are computed by rules/v1.json),
 // the starting portfolio through simulateTrade at the current prices. A holding with no price (or not in the
 // universe yet) is skipped and the reason is logged; no price is ever invented.
@@ -12,7 +12,7 @@ import { appendDecision } from '@/lib/store';
 import { getEntry } from '@/lib/universe';
 import { PERSONAS, type PersonaName } from './presets';
 
-export { PERSONAS, isPersonaName, type PersonaName, type PersonaPreset } from './presets';
+export { PERSONAS, PERSONA_ALIASES, isPersonaName, personaOfAddress, type PersonaName, type PersonaPreset } from './presets';
 
 export type SeedResult = {
     persona: PersonaName;

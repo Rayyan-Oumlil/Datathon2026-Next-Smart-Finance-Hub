@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { formatNumber } from '@/i18n/format';
+import { shownChecks } from '@/components/watchlist/format';
 import type { XrayView, XrayWhatIf } from '@/lib/services/portfolio-xray';
 import type { WindowId } from '@/lib/xray/types';
 import { api } from '../logic';
@@ -167,11 +168,11 @@ export default function WhatIf({ view, windowId, preset }: Props) {
                     {mode === 'add' && (
                         <div>
                             <p className="kicker">{t('whatIf.conflictsTitle')}</p>
-                            {result.conflicts.length === 0 ? (
+                            {shownChecks(result.conflicts).length === 0 ? (
                                 <p className="mt-1 text-[13px] text-muted-foreground">{t('whatIf.noConflicts')}</p>
                             ) : (
                                 <ul className="mt-1 flex flex-col gap-1.5">
-                                    {result.conflicts.map((conflict) => <li key={conflict.filter} className="rounded-[10px] bg-brand-soft px-3 py-2 text-[13px] text-foreground">{conflict.detail}</li>)}
+                                    {shownChecks(result.conflicts).map((conflict) => <li key={conflict.filter} className="rounded-[10px] bg-brand-soft px-3 py-2 text-[13px] text-foreground">{conflict.detail}</li>)}
                                 </ul>
                             )}
                         </div>

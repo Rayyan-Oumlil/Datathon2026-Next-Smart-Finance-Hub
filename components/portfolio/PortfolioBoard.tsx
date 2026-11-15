@@ -11,7 +11,9 @@ import type { RuleCheck } from '@/lib/services/rules-engine';
 import Panel from '@/components/Panel';
 import DraftFrame from '@/components/agent/DraftFrame';
 import ScrollToDraft from '@/components/agent/ScrollToDraft';
+import { useDataChanged } from '@/hooks/useDataChanged';
 import { usePendingProposal } from '@/hooks/usePendingProposal';
+import type { PendingProposal } from '@/lib/agent/proposal';
 import RulesModule from '@/components/rules/RulesModule';
 import Holdings from './Holdings';
 import PerformanceChart from './PerformanceChart';
@@ -42,7 +44,12 @@ export default function PortfolioBoard() {
     const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
     const [checkError, setCheckError] = useState<{ failure: unknown } | null>(null);
     // A layout change the agent proposed, still waiting for Save: its modules are previewed in place
-    const proposal = usePendingProposal('/portfolio');
+    const pending = usePendingProposal('/portfolio');
+    // After Save, the previewed modules stay on screen until the saved layout has been read: they never drop out and come back
+    const [held, setHeld] = useState<PendingProposal | null>(null);
+    const proposal = held ?? pending;
+    const pendingRef = useRef(pending);
+    pendingRef.current = pending;
 
     const tRef = useRef(t);
     tRef.current = t;
@@ -61,15 +68,27 @@ export default function PortfolioBoard() {
         }
     }, []);
 
-    useEffect(() => {
-        refresh();
+    // The saved layout and the profile. When they cannot be read, what is on screen stays (the defaults on a first load).
+    const loadSettings = useCallback(() => Promise.all([
         api<{ layout: string[]; library: LibraryItem[] }>('/api/layout')
             .then((saved) => { setLayout(saved.layout); setLibrary(saved.library); })
-            .catch(() => setLayout([...PORTFOLIO_MODULES]));
+            .catch(() => setLayout((current) => (current.length > 0 ? current : [...PORTFOLIO_MODULES]))),
         api<{ profile: ProfileConfig | null }>('/api/profile')
             .then((got) => setProfile(got.profile))
-            .catch(() => setProfile(null));
-    }, [refresh]);
+            .catch(() => setProfile((current) => current ?? null)),
+    ]), []);
+
+    useEffect(() => {
+        refresh();
+        void loadSettings();
+    }, [refresh, loadSettings]);
+
+    // A change saved or undone by the agent (layout, rule, profile, simulated trade): everything is read again in place.
+    // The modules stay mounted, so the page keeps its height and its scroll position.
+    useDataChanged(() => {
+        setHeld(pendingRef.current);
+        void Promise.allSettled([refresh(), loadSettings()]).then(() => setHeld(null));
+    });
 
     // The rules engine runs on the server; this tab asks it to check now, then every 60 s while it is visible
     useEffect(() => {

@@ -14,7 +14,7 @@ import {
     FACTOR_KEYS, factorShort, signalLabel,
     formatSignal, formatTime, isStale, kindLabel, signedPct, staleSummary, type SignalKey, type WatchlistRulesView,
 } from "./format";
-import { EsgChip, Mark, SourceLine, Sparkline, StaleChip } from "./parts";
+import { Mark, SourceLine, Sparkline, StaleChip } from "./parts";
 import type { MarkOf } from "./sources";
 
 type Props = {
@@ -149,7 +149,6 @@ export default function PickCard({ pick, level, pinned, busy, compact, rules, ru
             <p className="truncate text-sm text-foreground" title={fact}>{fact}</p>
 
             <div className="flex flex-wrap items-center gap-1.5">
-                <EsgChip tag={signals.entry.esg} />
                 {/* One short marker; the exact times are in its tooltip and in "Data freshness" */}
                 {(stale.quote || stale.daily) && (
                     <span title={staleTitle}>

@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import AssetLogo from "@/components/AssetLogo";
 import type { AssetClass, FilterCheck, SimulatedTrade } from "@/lib/domain/types";
 import { formatMoney, formatNumber } from "@/i18n/format";
-import { filterLabel, formatTime } from "./format";
+import { filterLabel, formatTime, shownChecks } from "./format";
 
 // An unknown currency code is shown as given next to the plain number
 function money(amount: number, currency: string, locale: string): string {
@@ -30,8 +30,8 @@ export default function TradeDialog({ symbol, name, assetClass, onClose }: { sym
     const amountCad = Number(amount);
     const valid = Number.isFinite(amountCad) && amountCad > 0;
 
-    async function submit(acknowledgeConflict: boolean) {
-        if (!valid || busy) return;
+    async function submit(acknowledgeConflict: boolean, silent = false) {
+        if (!valid || (busy && !silent)) return;
         setBusy(true);
         setError(null);
         try {
@@ -42,12 +42,15 @@ export default function TradeDialog({ symbol, name, assetClass, onClose }: { sym
             });
             const body = await res.json().catch(() => ({}));
             if (res.status === 409 && Array.isArray(body.conflicts)) {
-                setConflict({ conflicts: body.conflicts, message: body.message ?? '' });
+                const shown = shownChecks(body.conflicts as FilterCheck[]);
+                // Only checks that are not shown (ESG) failed: nothing to tell the visitor, record the simulated trade
+                if (shown.length === 0 && !acknowledgeConflict) { await submit(true, true); return; }
+                setConflict({ conflicts: shown, message: body.message ?? '' });
             } else if (!res.ok) {
                 setError(typeof body.error === 'string' ? body.error : t('trade.failed'));
             } else {
                 setConflict(null);
-                setDone({ trade: body.trade, cashCad: body.portfolio?.cashCad, acknowledged: acknowledgeConflict });
+                setDone({ trade: body.trade, cashCad: body.portfolio?.cashCad, acknowledged: acknowledgeConflict && !silent });
                 toast.success(t('trade.toast', { symbol }));
             }
         } catch {

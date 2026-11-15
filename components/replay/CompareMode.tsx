@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { forgetKeptScroll } from '@/hooks/useKeepScroll';
 import Link from 'next/link';
 import { ExternalLink, GitCompareArrows, Loader2, Plus, Scale, TriangleAlert, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -352,7 +353,7 @@ export default function CompareMode({ strategies, models, window }: Props) {
 
                             <div className="flex flex-wrap gap-2 px-1">
                                 {replayed.map(({ s, slot }) => (
-                                    <Link key={s.replayId} href={`/time-machine?replay=${encodeURIComponent(s.replayId)}`} className="btn btn-ghost h-8 gap-1.5 px-3 text-[12.5px]">
+                                    <Link key={s.replayId} href={`/time-machine?replay=${encodeURIComponent(s.replayId)}`} onClick={forgetKeptScroll} className="btn btn-ghost h-8 gap-1.5 px-3 text-[12.5px]">
                                         <span className="inline-block h-[3px] w-3.5 rounded" style={{ background: seriesColor(slot) }} />
                                         {t('multi.openFullOf', { label: s.label })}
                                         <ExternalLink className="size-3.5" />
