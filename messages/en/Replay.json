@@ -20,7 +20,9 @@
     "personas": {
       "amira": "Example: {name} (growth)",
       "mateo": "Example: {name} (balance, ESG)",
-      "robert": "Example: {name} (capital preservation)"
+      "robert": "Example: {name} (capital preservation)",
+      "novice": "Example: {name} (index ETFs and cash)",
+      "expert": "Example: {name} (stocks, one ETF and bitcoin)"
     },
     "models": "Suggested portfolios",
     "strategy": "Strategy",

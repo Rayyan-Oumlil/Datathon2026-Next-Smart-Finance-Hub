@@ -10,5 +10,10 @@
     "about": "About",
     "terms": "Terms"
   },
-  "signOut": "Sign out"
+  "signOut": "Sign out",
+  "profiles": {
+    "switchLabel": "Switch profile (current profile: {name})",
+    "meta": "{level, select, Novice {Novice} Intermediate {Intermediate} Expert {Expert} other {Unknown}} level · {risk, select, Low {low} Medium {medium} High {high} other {unknown}} risk",
+    "newVisitor": "New visitor"
+  }
 }

@@ -10,5 +10,10 @@
     "about": "À propos",
     "terms": "Conditions d’utilisation"
   },
-  "signOut": "Se déconnecter"
+  "signOut": "Se déconnecter",
+  "profiles": {
+    "switchLabel": "Changer de profil (profil actuel : {name})",
+    "meta": "Niveau {level, select, Novice {novice} Intermediate {intermédiaire} Expert {expert} other {inconnu}} · risque {risk, select, Low {faible} Medium {moyen} High {élevé} other {inconnu}}",
+    "newVisitor": "Nouveau visiteur"
+  }
 }

@@ -5,6 +5,7 @@ import HtmlLang from "@/components/HtmlLang";
 import AppShell from "@/components/shell/AppShell";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
 import { displayUser } from "@/lib/demo-user";
+import { personaOfSession } from "@/lib/personas";
 import { warmModelPortfolios } from "@/lib/services/model-portfolio";
 import { getProfile } from "@/lib/services/profile";
 import { getSession } from "@/lib/session";
@@ -29,7 +30,7 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
     return (
         <NextIntlClientProvider>
             <HtmlLang locale={locale} />
-            <AppShell user={displayUser(session.sessionId)} initialStocks={initialStocks}>
+            <AppShell user={displayUser(session.sessionId)} persona={personaOfSession(session.sessionId)} initialStocks={initialStocks}>
                 {children}
             </AppShell>
         </NextIntlClientProvider>
