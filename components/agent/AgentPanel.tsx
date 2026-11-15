@@ -7,7 +7,8 @@ import { AlertTriangle, MessageSquareText, RotateCcw, SendHorizontal, Undo2, X }
 import { cn } from "@/lib/utils";
 import { formatNumber, formatDateTime } from "@/i18n/format";
 import { formatMoment, sourceLabel } from "@/components/agent/time";
-import { VoiceButton, VoiceStatus } from "@/components/agent/Voice";
+import { SpeakerButton, VoiceButton, VoiceStatus } from "@/components/agent/Voice";
+import { useSpeech } from "@/hooks/useSpeech";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 
 type Source = { label: string; source: string; fetchedAt?: string; asOf?: string };
@@ -232,21 +233,29 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
         inputRef.current?.focus();
         const onKey = (event: KeyboardEvent) => {
             if (event.key !== 'Escape') return;
-            if (voiceRef.current.active) { voiceRef.current.cancel(); setDraft(voiceBase.current); } else onOpenChange(false);
+            if (voiceRef.current.active) { voiceRef.current.cancel(); setDraft(voiceBase.current); }
+            else if (speechRef.current.speaking) speechRef.current.stop();
+            else onOpenChange(false);
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
     }, [open, onOpenChange]);
+
+    // A reply to a spoken question is read aloud. Asking again, closing the panel or starting over cuts it off.
+    const speech = useSpeech();
+    const speechRef = useRef(speech);
+    speechRef.current = speech;
+    useEffect(() => { if (!open) speechRef.current.stop(); }, [open]);
 
     // Dictation: the live text fills the box after whatever was typed, and the finished text is sent like a typed message
     const voiceBase = useRef('');
     const withBase = (text: string) => [voiceBase.current, text].filter(Boolean).join(' ').slice(0, 2000);
     const voice = useVoiceInput({
         enabled: open,
-        onStart: () => { voiceBase.current = draft.trim(); },
+        onStart: () => { speechRef.current.stop(); voiceBase.current = draft.trim(); },
         onText: (text) => setDraft(withBase(text)),
         // A reply still being written must not swallow the question: keep it in the box instead
-        onFinal: (text) => { if (waiting) setDraft(withBase(text)); else void send(withBase(text)); },
+        onFinal: (text) => { if (waiting) setDraft(withBase(text)); else void send(withBase(text), true); },
     });
     const voiceRef = useRef(voice);
     voiceRef.current = voice;
@@ -256,7 +265,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
     const patch = (id: string, change: Partial<Message>) => setMessages((list) => list.map((message) => (message.id === id ? { ...message, ...change } : message)));
     const notice = (text: string) => setMessages((list) => [...list, { id: newId(), role: 'assistant', text, failed: true }]);
 
-    const send = async (text: string) => {
+    const send = async (text: string, viaVoice = false) => {
         const message = text.trim();
         if (!message || waiting) return;
         const history = messages.filter((m) => !m.failed).slice(-HISTORY_TURNS).map(({ role, text: turn }) => ({ role, text: turn }));
@@ -269,6 +278,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                 id: newId(), role: 'assistant', text: reply.text, change: reply.preview ? 'pending' : undefined,
                 reply: { actionId: reply.actionId, sources: reply.sources ?? [], refused: reply.refused, notice: reply.notice, conflict: reply.conflict, preview: reply.preview, proposedType: reply.proposed?.type },
             }]);
+            if (viaVoice && !speechRef.current.muted) void speechRef.current.speak(reply.text);
         } catch (error) {
             notice(error instanceof Error ? error.message : t('errors.request'));
         } finally {
@@ -319,6 +329,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
     };
 
     const reset = () => {
+        speechRef.current.stop();
         setMessages([]);
         setConversationId(newId());
     };
@@ -346,6 +357,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                             <h2 className="section-title">{t('title')}</h2>
                         </div>
                         <div className="flex flex-none gap-1">
+                            <SpeakerButton state={speech.state} muted={speech.muted} onToggleMuted={speech.toggleMuted} onStop={speech.stop} />
                             <button type="button" className="icon-btn" onClick={reset} aria-label={t('newConversation')} title={t('newConversation')}><RotateCcw aria-hidden /></button>
                             <button type="button" className="icon-btn" onClick={() => onOpenChange(false)} aria-label={t('closePanel')} title={t('closeTitle')}><X aria-hidden /></button>
                         </div>
@@ -402,7 +414,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                                 <button key={id} type="button" className="btn btn-ghost h-8 px-2.5 text-xs" disabled={waiting} onClick={() => quick(id)}>{t(`quick.${id}.label`)}</button>
                             ))}
                         </div>
-                        <VoiceStatus state={voice.state} error={voice.error} />
+                        <VoiceStatus state={voice.state} error={voice.error} speechFailed={speech.failed} />
                         <form className="flex items-end gap-2" onSubmit={(event) => { event.preventDefault(); submit(); }}>
                             <label htmlFor="agent-input" className="sr-only">{t('inputLabel')}</label>
                             <textarea

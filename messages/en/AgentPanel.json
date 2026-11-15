@@ -111,7 +111,14 @@
       "denied": "Microphone access is blocked. Allow it in your browser's site settings.",
       "noSpeech": "Nothing was heard. Try again.",
       "unavailable": "The transcription service is not available right now. Type your message instead.",
-      "failed": "Voice input stopped working. Type your message instead."
+      "failed": "Voice input stopped working. Type your message instead.",
+      "speech": "The reply could not be read aloud."
+    },
+    "speak": {
+      "on": "Turn off spoken replies",
+      "off": "Turn on spoken replies",
+      "stop": "Stop reading",
+      "hint": "Replies to questions you ask by voice are read aloud"
     }
   }
 }

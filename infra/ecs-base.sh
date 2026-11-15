@@ -40,7 +40,8 @@ cat > "$TMP/task.json" <<JSON
  {"Sid":"Profile","Effect":"Allow","Action":["dynamodb:GetItem","dynamodb:PutItem","dynamodb:Query"],"Resource":"arn:aws:dynamodb:${REGION}:${ACCOUNT}:table/profile_config"},
  {"Sid":"AppendOnlyLogs","Effect":"Allow","Action":["dynamodb:GetItem","dynamodb:PutItem","dynamodb:Query"],"Resource":["arn:aws:dynamodb:${REGION}:${ACCOUNT}:table/decision_log","arn:aws:dynamodb:${REGION}:${ACCOUNT}:table/agent_action_log","arn:aws:dynamodb:${REGION}:${ACCOUNT}:table/agent_action_log/index/*"]},
  {"Sid":"Agent","Effect":"Allow","Action":["bedrock-agentcore:InvokeAgentRuntime"],"Resource":"*"},
- {"Sid":"VoiceInput","Effect":"Allow","Action":["transcribe:StartStreamTranscriptionWebSocket"],"Resource":"*"}]}
+ {"Sid":"VoiceInput","Effect":"Allow","Action":["transcribe:StartStreamTranscriptionWebSocket"],"Resource":"*"},
+ {"Sid":"VoiceOutput","Effect":"Allow","Action":["polly:SynthesizeSpeech"],"Resource":"*"}]}
 JSON
 aws iam put-role-policy --role-name "${NAME}-web-task" --policy-name app --policy-document "file://$TMP/task.json"
 

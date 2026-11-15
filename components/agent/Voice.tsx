@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2, Mic, MicOff } from 'lucide-react';
+import { Loader2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { SpeechState } from '@/hooks/useSpeech';
 import type { VoiceError, VoiceState, VoiceSupport } from '@/hooks/useVoiceInput';
 
 type VoiceButtonProps = { state: VoiceState; support: VoiceSupport; onStart: () => void; onStop: () => void };
@@ -32,7 +33,27 @@ export const VoiceButton = ({ state, support, onStart, onStop }: VoiceButtonProp
     );
 };
 
-type VoiceStatusProps = { state: VoiceState; error: VoiceError | null };
+type SpeakerButtonProps = { state: SpeechState; muted: boolean; onToggleMuted: () => void; onStop: () => void };
+
+// In the panel header: turns spoken replies on or off, and cuts a reply short while it is being read.
+export const SpeakerButton = ({ state, muted, onToggleMuted, onStop }: SpeakerButtonProps) => {
+    const t = useTranslations('AgentPanel.voice.speak');
+    const speaking = state !== 'idle';
+    const label = speaking ? t('stop') : muted ? t('off') : t('on');
+    return (
+        <button
+            type="button"
+            className={cn('icon-btn', speaking && 'text-brand')}
+            aria-label={label}
+            title={`${label} · ${t('hint')}`}
+            onClick={speaking ? onStop : onToggleMuted}
+        >
+            {muted ? <VolumeX aria-hidden /> : <Volume2 aria-hidden className={cn(speaking && 'motion-safe:animate-pulse')} />}
+        </button>
+    );
+};
+
+type VoiceStatusProps = { state: VoiceState; error: VoiceError | null; speechFailed?: boolean };
 
 const ERROR_KEYS: Record<VoiceError, 'denied' | 'noSpeech' | 'unavailable' | 'failed'> = {
     denied: 'denied',
@@ -42,12 +63,17 @@ const ERROR_KEYS: Record<VoiceError, 'denied' | 'noSpeech' | 'unavailable' | 'fa
 };
 
 // One quiet line above the input, only while something is happening or went wrong
-export const VoiceStatus = ({ state, error }: VoiceStatusProps) => {
+export const VoiceStatus = ({ state, error, speechFailed }: VoiceStatusProps) => {
     const t = useTranslations('AgentPanel.voice');
-    const text = error ? t(`errors.${ERROR_KEYS[error]}`) : state === 'starting' ? t('starting') : state === 'listening' ? t('listening') : state === 'processing' ? t('processing') : '';
+    const failed = !!error || !!speechFailed;
+    const text = error ? t(`errors.${ERROR_KEYS[error]}`)
+        : state === 'starting' ? t('starting')
+        : state === 'listening' ? t('listening')
+        : state === 'processing' ? t('processing')
+        : speechFailed ? t('errors.speech') : '';
     return (
         // Always rendered, so a screen reader announces the text when it appears
-        <p role="status" aria-live="polite" className={cn('text-xs', text && 'mb-2', error ? 'text-down' : 'text-faint')}>
+        <p role="status" aria-live="polite" className={cn('text-xs', text && 'mb-2', failed && state === 'idle' ? 'text-down' : 'text-faint')}>
             {text}
         </p>
     );
