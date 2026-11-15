@@ -4,11 +4,12 @@
 // A full cold pass takes several minutes: Finnhub allows 60 calls a minute and a US stock needs 4.
 import 'dotenv/config';
 import { build } from 'esbuild';
+import { fileURLToPath } from 'node:url';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 process.chdir(root);
 
 // The source modules are TypeScript with '@/' imports: bundle them once, then load the bundle.
