@@ -1,0 +1,43 @@
+# Checks every push: type-check and tests for the web app, tests for the agent service.
+# Nothing is deployed from GitHub: deployment runs from a developer machine with the scripts in infra/
+# (see README, "Deploy to AWS"), because it needs AWS credentials that are not stored here.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx tsc --noEmit
+      # The stores use their in-memory backend under the test runner, so no AWS access is needed
+      - run: npm test
+
+  agent:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv venv --python 3.13
+      - run: uv pip install -e ".[dev]"
+      - run: .venv/bin/python -m pytest -q
