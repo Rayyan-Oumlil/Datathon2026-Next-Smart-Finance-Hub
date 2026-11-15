@@ -39,6 +39,12 @@ The daily snapshot (`lib/sources/daily-signals.ts`) is one file per Toronto day,
 - **Labels in the UI:** source "Finnhub" with the fetch time. Sector is shown as "Finnhub industry" because it is Finnhub's own classification, not GICS. The news count is shown on the card and never scored; news text is untrusted input.
 - **Known gaps:** `/stock/profile2` answers `{}` for a fund (tested with SPY), so it is not called for ETFs. The `/quote` answer names no currency (the free key only prices US listings, so USD is recorded). The news endpoint appears to cap its answer (248 rows for AAPL over 7 days), so a very large count may be understated.
 
+### Logos
+
+- **Where they come from:** the `logo` field of `/stock/profile2` (an image on `static2.finnhub.io`), read through `profile()`. The browser never loads it from there: `GET /api/logo/{SYMBOL}` fetches it on the server (Finnhub static hosts only, https, PNG / JPEG / WebP / SVG whose bytes match the type, 300 KB, 5 s, no redirect elsewhere) and caches it for 30 days in memory and under `.data/cache/logos`. A symbol without a logo is a cached 404 (1 day; 10 minutes when the provider failed).
+- **Coverage:** US stocks, and Toronto names whose base ticker answers as the same company (`RY` gives `RY.TO`, `SHOP` gives Shopify; `T` is AT&T, so TELUS gets none). No call for ETFs (no fund profile on the free key), crypto, gold or yields: the `AssetLogo` component draws a monogram, a class icon, or a plain letter mark for BTC and ETH.
+- **Terms:** the same Finnhub personal-use terms as above apply; the logos are the companies' trademarks, shown only to identify them in this non-commercial demo.
+
 ## TMX Money
 
 - **Used for:** Canadian stocks and ETFs: price, % change, market cap, P/E, beta, 10-day average volume, sector, and about one year of daily closes (for the 1-year volatility and the 1-month sparkline). Also used as the fallback for US daily closes when Yahoo refuses (symbol form `AAPL:US`).
