@@ -1,12 +1,14 @@
 import type { UniverseEntry } from '@/lib/domain/types';
-import { normalize, type ProfileView } from '@/lib/watchlist/format';
+import { isEsgTheme, normalize, type ProfileView } from '@/lib/watchlist/format';
 
 /**
  * Stage A. Candidates are:
  *  - seed tickers: every universe entry named on the brands list, whatever its market
  *    (a seed outside the picked markets is then rejected by the market filter, with the reason shown);
  *  - stocks and ETFs in the picked markets whose sector, sub-industry or one theme was picked;
- *    with no sector, niche or theme picked at all ("no preference"), every stock and ETF in those markets;
+ *    with no sector, niche or theme picked at all ("no preference"), every stock and ETF in those markets.
+ *    ESG does not count as a picked theme here: it is a filter only (rules filters.esg), so ESG alone means
+ *    every stock and ETF in those markets, and the ESG filter then keeps only the 'screened' ones;
  *  - every blue-chip (broad-index) ETF in the picked markets, whatever was picked: a broad fund belongs to no
  *    single sector, and it is the only kind of fund a Novice or a Low-risk profile may see;
  *  - every crypto, gold and bond-yield entry (the filters decide who may see them).
@@ -17,7 +19,7 @@ export function selectCandidates(universe: UniverseEntry[], profile: ProfileView
     const brands = new Set(answers.brands.map(normalize));
     const sectors = new Set(answers.sectors.map(normalize));
     const niches = new Set(answers.niches.map(normalize));
-    const themes = new Set(answers.themes.map(normalize));
+    const themes = new Set(answers.themes.filter((theme) => !isEsgTheme(theme)).map(normalize));
     const noPreference = sectors.size === 0 && niches.size === 0 && themes.size === 0;
 
     const bySymbol = new Map<string, UniverseEntry>();

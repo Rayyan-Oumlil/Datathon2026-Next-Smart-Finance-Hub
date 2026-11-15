@@ -42,7 +42,7 @@ SIGNALS = {"TSLA": TSLA, "ENB": ENB, "AAPL": AAPL, "NVDA": NVDA, "XYZ": XYZ}
 def explain_pick(body):
     if body.get("symbol") != "ENB":
         return {"listed": False, "rejected": [], "snapshotId": "snap_stub", "computedAt": FETCHED,
-                "ruleVersions": {"filters": "filters-v1", "score": "score-v1"}}
+                "ruleVersions": {"filters": "filters-v1", "score": "score-v1.1"}}
     factors = {
         "profile_fit": {"score": 80, "detail": "sector Energy is one of your picked sectors"},
         "risk_fit": {"score": 74, "detail": "volatility 16.2% vs cap 35.0% (Medium)"},
@@ -55,7 +55,7 @@ def explain_pick(body):
                        "sources": ["Profile config"]},
             "kept": "new", "signals": ENB}
     return {"listed": True, "pick": pick, "snapshotId": "snap_stub", "computedAt": FETCHED,
-            "ruleVersions": {"filters": "filters-v1", "score": "score-v1", "selection": "selection-v1",
+            "ruleVersions": {"filters": "filters-v1", "score": "score-v1.1", "selection": "selection-v1",
                              "reasons": "reasons-v1"}}
 
 
@@ -65,8 +65,9 @@ def conflict_check(body):
     if symbol == "TSLA":
         conflicts = [{"filter": "volatility", "pass": False, "detail": "volatility 58.4% vs cap 35.0% (Medium)",
                       "value": 0.584, "limit": 0.35}]
-    return {"symbol": symbol, "conflicts": conflicts, "signals": SIGNALS.get(symbol, {"symbol": symbol, "missing": ["all"]}),
-            "level": "Intermediate", "risk": "Medium"}
+    # Like the web app: only the values behind the conflicts, never the full signal set
+    found = {"volatility1y": SIGNALS[symbol]["volatility1y"]} if conflicts else {}
+    return {"symbol": symbol, "conflicts": conflicts, "sources": found, "level": "Intermediate", "risk": "Medium"}
 
 
 def validate_rule(body):

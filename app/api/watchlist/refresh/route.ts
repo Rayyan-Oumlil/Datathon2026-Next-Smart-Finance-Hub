@@ -1,7 +1,5 @@
 import { respond } from '@/lib/services/http';
-import { buildWatchlist } from '@/lib/services/watchlist';
+import { refreshWatchlist } from '@/lib/services/watchlist';
 
-export const POST = () => respond(async () => {
-    await buildWatchlist();
-    return { started: true };
-});
+// Once a day: { started: false, reason } when today's run for the current profile already exists
+export const POST = () => respond(() => refreshWatchlist());

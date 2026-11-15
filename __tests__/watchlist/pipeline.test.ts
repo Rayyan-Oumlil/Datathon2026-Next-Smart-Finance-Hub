@@ -80,7 +80,7 @@ describe('pipeline: full run on the hand-built snapshot', () => {
         expect(result.computedAt).toBe(NOW);
         expect(result.level).toBe('Intermediate');
         expect(result.risk).toBe('Medium');
-        expect(result.ruleVersions).toEqual({ filters: 'filters-v1', score: 'score-v1', selection: 'selection-v1', reasons: 'reasons-v1' });
+        expect(result.ruleVersions).toEqual({ filters: 'filters-v1', score: RULES.score.version, selection: 'selection-v1', reasons: 'reasons-v1' });
     });
 
     it('builds the candidate list: 26 rows minus the 3 nobody asked for', () => {

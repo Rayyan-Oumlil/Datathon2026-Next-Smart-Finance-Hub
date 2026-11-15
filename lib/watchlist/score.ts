@@ -1,6 +1,6 @@
 import type { FactorDetail, FactorScores, HoldingsSummary, SignalSet } from '@/lib/domain/types';
 import type { Rules } from '@/lib/rules';
-import { formatPercent, formatPercentPair, normalize, numberOf, own, round1, type ProfileView } from '@/lib/watchlist/format';
+import { formatPercent, formatPercentPair, isEsgTheme, normalize, numberOf, own, round1, type ProfileView } from '@/lib/watchlist/format';
 
 export type Factors = Record<keyof FactorScores, FactorDetail>;
 export type SectorMedians = Record<string, { median: number; count: number }>;
@@ -36,7 +36,8 @@ function profileFit(signals: SignalSet, profile: ProfileView, rules: Rules): Fac
     const { answers } = profile;
     const { parts } = rules.score.factor_formulas.profile_fit;
     const has = (list: string[], value: string | undefined) => value !== undefined && list.some((item) => normalize(item) === normalize(value));
-    const matchedTheme = entry.themes.find((theme) => has(answers.themes, theme));
+    // ESG is a filter only: it never counts as a theme match
+    const matchedTheme = entry.themes.find((theme) => !isEsgTheme(theme) && has(answers.themes, theme));
 
     const facts: string[] = [];
     let sum = 0;
@@ -102,29 +103,22 @@ function fundamentals(signals: SignalSet, medians: SectorMedians): FactorDetail 
 }
 
 /**
- * Implemented exactly as the rules file words it:
- *   100 if neither the sector nor the asset class is held; 50 if the sector is held and is under 20% of the
- *   portfolio value; 0 otherwise.
- * "Held" means a value above 0 in the holdings summary. An asset with no sector (ETF, crypto) can never take the
- * 50 branch, and a stock in a new sector scores 0 once any stock is held, because its asset class is then held.
+ * Implemented as the rules file words it (score-v1.1). The group is the asset's sector, or its asset class when it
+ * has no sector (ETF, crypto):
+ *   100 if the group is not held; 50 if it is held and is under 20% of the portfolio value; 0 otherwise.
+ * "Held" means a value above 0 in the holdings summary.
  */
 function diversification(signals: SignalSet, holdings: HoldingsSummary): FactorDetail {
     const { sector, assetClass } = signals.entry;
-    const sectorValue = sector !== undefined ? own(holdings.bySector, sector) ?? 0 : 0;
-    const classValue = own(holdings.byAssetClass, assetClass) ?? 0;
-    const sectorText = sector ?? 'no sector';
+    const group = sector !== undefined ? `sector ${sector}` : `asset class ${assetClass} (no sector)`;
+    const value = (sector !== undefined ? own(holdings.bySector, sector) : own(holdings.byAssetClass, assetClass)) ?? 0;
 
-    if (sectorValue <= 0 && classValue <= 0) {
-        return { score: 100, detail: `neither its sector (${sectorText}) nor its asset class (${assetClass}) is in the simulated holdings: 100` };
-    }
-    if (sectorValue > 0) {
-        if (!(holdings.totalValueCad > 0)) return { score: 0, detail: `${sector} is held but the portfolio value is not known, so its share cannot be shown to be under 20%: 0` };
-        const share = sectorValue / holdings.totalValueCad;
-        const [shareText] = formatPercentPair(share, 0.2);
-        if (share < 0.2) return { score: 50, detail: `${sector} is held and is ${shareText} of the portfolio value, under 20%: 50` };
-        return { score: 0, detail: `${sector} is held and is ${shareText} of the portfolio value, not under 20%: 0` };
-    }
-    return { score: 0, detail: `its sector (${sectorText}) is not held but its asset class (${assetClass}) already is: 0` };
+    if (value <= 0) return { score: 100, detail: `its ${group} is not in the simulated holdings: 100` };
+    if (!(holdings.totalValueCad > 0)) return { score: 0, detail: `its ${group} is held but the portfolio value is not known, so its share cannot be shown to be under 20%: 0` };
+    const share = value / holdings.totalValueCad;
+    const [shareText] = formatPercentPair(share, 0.2);
+    if (share < 0.2) return { score: 50, detail: `its ${group} is held and is ${shareText} of the portfolio value, under 20%: 50` };
+    return { score: 0, detail: `its ${group} is held and is ${shareText} of the portfolio value, not under 20%: 0` };
 }
 
 /** The two factors with the largest weighted contribution (weight x score); equal contributions keep FACTOR_ORDER. */

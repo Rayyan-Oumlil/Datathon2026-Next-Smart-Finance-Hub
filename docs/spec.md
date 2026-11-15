@@ -380,7 +380,27 @@ F also holds a case review against the datathon brief (criteria weights, the Ami
 
 Nothing on either board was unreadable at 2× zoom. One note is uncertain: free text on F in the widgets frame reads "Style BNCD ROUGE BLANC" (last letter could be D or O). T confirms "red and white".
 
-## 16. Still open
+## 16. What changed during the build (2026-11-14 and 15)
+
+Where this section and an earlier one disagree, this section describes what was built.
+
+- **Onboarding length.** 15 questions for someone who has traded and 13 for someone who has not (one fewer when the picked sectors have no niches), not 13 and 11.
+- **Result screen.** The profile is computed and saved by the server, then the result screen shows it with an edit link. Nothing is scored in the browser.
+- **Glossary.** Creating a Bedrock Knowledge Base is denied on the workshop account. The Glossary subagent reads the vetted files in `agent/glossary/` and quotes and cites them; setting `KNOWLEDGE_BASE_ID` switches to a Knowledge Base.
+- **Guardrail.** The Bedrock Guardrail blocks the forbidden words and replies that are not grounded in the data supplied. Its "investment advice" topic and its relevance check only detect and log: set to block, they refused correct factual replies. Judgement and prediction wording is blocked by a second word list in our own code.
+- **Agent whitelist.** Two more actions exist, both only after the user confirms a preview: simulate a trade, and change the profile.
+- **Profile-conflict check.** Built: the conflict is named with its actual values, the user may still proceed in simulation, and both are logged. The orchestrator's conflict tool returns the conflicts only, not the asset's data.
+- **Blue-chip ETFs** are always candidates in the markets picked, and at most one fund per tracked index is listed.
+- **Diversification factor.** A new sector scores highest (see `rules/v1.json`, score version `score-v1.1`).
+- **ESG** is a filter only: it adds no candidate and no fit points.
+- **Stock page.** The technical-analysis widget was removed; the Adanos sentiment card takes its place, labelled display only.
+- **Not built:** price alerts, the earnings calendar, layout editing on the Overview tab, drag-and-drop widget editing, AgentCore Memory, Gateway and Code Interpreter.
+- **Gold** has no value: the only free source found refused the calls. The card says "not available".
+- **State kept in the container** (layout, rules, pins, the watchlist's listed-since dates) is lost on restart; see the README.
+- **Deployment.** Web app on ECS Fargate behind a load balancer; agent service on AgentCore Runtime; region `us-east-1`. Audit trail verified on the live system: one reply traced by request id from `agent_action_log` to CloudTrail to the Bedrock invocation log, with identical token counts.
+
+## 17. Still open
+
 
 1. **Data-source terms** (section 5.1): which of the personal-use sources to accept for the demo, and whether to write to Finnhub for permission.
 2. **GDELT DOC 2.0:** named by the owner without a purpose. If it is for news headlines it sits beside Finnhub news on the cards; its tone scores are sentiment and would be display-only.

@@ -12,7 +12,7 @@ REPO_DIR = AGENT_DIR.parent
 load_dotenv(AGENT_DIR / ".env")
 load_dotenv(REPO_DIR / ".env")
 
-PROMPT_VERSION = "p1"
+PROMPT_VERSION = "p2"
 
 
 def env(name: str, default: str = "") -> str:

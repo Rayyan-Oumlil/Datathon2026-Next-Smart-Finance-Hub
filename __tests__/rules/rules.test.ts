@@ -3,7 +3,7 @@ import type { Level, OnboardingAnswers, Risk } from '@/lib/domain/types';
 import { noviceStockFloorUsd, RULES, RULE_VERSIONS, RULES_VERSION } from '@/lib/rules';
 import { computeLevel } from '@/lib/rules/level';
 import { buildProfile } from '@/lib/rules/profile';
-import { computeRisk } from '@/lib/rules/risk';
+import { computeRisk, overrideCapRefusal } from '@/lib/rules/risk';
 
 const base: OnboardingAnswers = {
     goal: 'learn',
@@ -28,8 +28,13 @@ describe('rules file', () => {
     it('exposes the versions', () => {
         expect(RULES_VERSION).toBe('v1');
         expect(RULE_VERSIONS).toEqual({
-            level: 'level-v1', risk: 'risk-v1', filters: 'filters-v1', score: 'score-v1', selection: 'selection-v1', reasons: 'reasons-v1',
+            level: 'level-v1', risk: 'risk-v1', filters: 'filters-v1', score: RULES.score.version, selection: 'selection-v1', reasons: 'reasons-v1',
         });
+    });
+
+    it('names what changed in the score version', () => {
+        expect(RULES.score.version).toBe('score-v1.1');
+        expect(RULES.score.changed).toContain('diversification');
     });
 
     it('reads the Novice stock floor from the rule sentence', () => {
@@ -149,6 +154,14 @@ describe('computeRisk', () => {
             differsFromSelfRating: true,
             ruleVersion: 'risk-v1',
         });
+    });
+
+    it('refuses a risk chosen by hand above the cap, naming the answer that limits it', () => {
+        const sell = answers({ drop20: 'sell' });
+        expect(overrideCapRefusal('High', sell)).toBe('High is not available: you answered "reduce my position" to the 20% drop question, which limits the risk profile to Medium.');
+        expect(overrideCapRefusal('Medium', sell)).toBeUndefined();
+        expect(overrideCapRefusal('Low', sell)).toBeUndefined();
+        expect(overrideCapRefusal('High', answers({ drop20: 'wait' }))).toBeUndefined();
     });
 
     it('does not mention the cap when "sell" would not have reached High anyway', () => {

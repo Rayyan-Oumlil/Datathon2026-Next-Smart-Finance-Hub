@@ -11,7 +11,7 @@ import { getEntry, getUniverse } from '@/lib/universe';
 import { runPipeline } from '@/lib/watchlist/pipeline';
 import { selectCandidates } from '@/lib/watchlist/universe-select';
 import { ServiceError } from './errors';
-import { holdingsSummary } from './portfolio';
+import { holdingsWithDetail, type HoldingDetail } from './portfolio';
 
 export type WatchlistAction = 'add' | 'dismiss' | 'pin' | 'unpin';
 export type BuildProgress = { startedAt: string; stage: 'signals' | 'ranking' | 'logging'; done: number; total: number; symbol?: string };
@@ -24,6 +24,7 @@ type RunPayload = {
     signalsStale: boolean;
     seeds: string[];
     snapshot: Snapshot;
+    holdingsDetail: HoldingDetail[];  // how each position in snapshot.holdings was valued (last price or cost)
     candidates: RunCandidate[];
     result: WatchlistResult;
     pickDecisionIds: Record<string, string>;
@@ -93,12 +94,13 @@ async function build(profile: ProfileConfig, progress: BuildProgress): Promise<v
     progress.stage = 'ranking';
     const now = new Date().toISOString();
     const date = marketDate(new Date(now));
+    const holdings = await holdingsWithDetail();
     const snapshot: Snapshot = {
         id: `snap_${date}_${randomBytes(4).toString('hex')}`,
         takenAt: now,
         userId: DEMO_USER.id,
         profile: { level: profile.level, risk: profile.risk, answers: profile.answers, ruleVersions: profile.ruleVersions },
-        holdings: await holdingsSummary(),
+        holdings: holdings.summary,
         fxUsdCad: daily.fxUsdCad,
         signals: daily.signals,
     };
@@ -126,6 +128,7 @@ async function build(profile: ProfileConfig, progress: BuildProgress): Promise<v
         signalsStale: daily.stale,
         seeds,
         snapshot,
+        holdingsDetail: holdings.detail,
         candidates: candidates.map(({ symbol, filters, passed, factors, total }) => ({ symbol, filters, passed, factors, total })),
         result,
         pickDecisionIds,
@@ -168,6 +171,26 @@ export async function buildWatchlist(): Promise<{ started: boolean; done: Promis
         });
     holder.__watchlistBuild = { promise, progress };
     return { started: true, done: promise };
+}
+
+/**
+ * The refresh request: the list is recomputed once a day (selection.slow_moving.recompute). Nothing is started
+ * when a logged run already holds today's signals for the current profile; a profile change or a missing run
+ * (or a run on an earlier day's signals) starts a build.
+ */
+export async function refreshWatchlist(): Promise<{ started: boolean; reason?: string }> {
+    const profile = await getProfile(DEMO_USER.id);
+    if (!profile) throw new ServiceError(409, 'No profile exists yet. Complete onboarding first.');
+    const today = marketDate();
+    const pointer = ((await readState()).watchlist as StoredWatchlist).lastRun;
+    if (pointer && pointer.date === today && pointer.profileHash === profileHash(profile)) {
+        const payload = (await lastRun())?.payload as RunPayload | undefined;
+        if (payload && payload.signalsDate === today) {
+            return { started: false, reason: `The list is recomputed once a day: today's run (signals of ${today}) for the current profile already exists.` };
+        }
+    }
+    const { started } = await buildWatchlist();
+    return started ? { started } : { started, reason: 'A computation is already in progress.' };
 }
 
 /** Today's run for the current profile, from the decision log. When there is none, a build is started. */

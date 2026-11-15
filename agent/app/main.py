@@ -40,6 +40,8 @@ def response(current: trace.RequestTrace, text: str, refused: bool, guardrail: l
         "refused": refused,
         "promptVersion": config.PROMPT_VERSION,
         "modelCalls": current.model_calls,
+        # False when a row of this request could not be written to the action log, even after a retry.
+        "logComplete": not current.log_errors,
         # Not in the contract's example: what the checks found and whether the action log could be written.
         "trace": {"guardrail": guardrail, "toolCalls": len(current.tool_results),
                   "logRows": current.log_rows, "logErrors": current.log_errors},
@@ -58,7 +60,9 @@ def response(current: trace.RequestTrace, text: str, refused: bool, guardrail: l
 def check_reply(current: trace.RequestTrace, text: str, attempt: int) -> tuple[dict, str]:
     """Runs our own check and the Bedrock Guardrail on one reply, and logs both. Returns (result, text)."""
     conflicts = [c for result in current.conflict_checks.values() for c in (result.get("conflicts") or [])]
-    data = [current.tool_results, current.context, current.message, current.history]
+    # Only what this request's tools returned and the context the web app built ground a figure; the
+    # client-supplied history and message do not.
+    data = [current.tool_results, current.context]
     own = checks.own_check(text, data, conflicts)
     proposal_words = checks.find_never_words(current.proposed["summary"]) if current.proposed else []
     if proposal_words:

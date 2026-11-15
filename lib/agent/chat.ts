@@ -18,6 +18,7 @@ export type ChatReply = AgentReply & {
     notice?: string;                // why a proposed action was not shown
     promptVersion?: string;
     modelCalls: AgentServiceReply['modelCalls'];
+    logComplete?: boolean;          // false when the agent service could not write every row of its action log
 };
 
 const MAX_TURNS = 10;
@@ -82,6 +83,7 @@ export async function chat(input: ChatInput): Promise<ChatReply> {
         ...(conflict ? { conflict } : {}),
         promptVersion: reply.promptVersion,
         modelCalls: reply.modelCalls,
+        ...(reply.logComplete !== undefined ? { logComplete: reply.logComplete } : {}),
     };
     await logStep(actionId, 'result', {
         promptVersion: reply.promptVersion,
@@ -89,6 +91,7 @@ export async function chat(input: ChatInput): Promise<ChatReply> {
         result: {
             refused, withheldByWordCheck: withheld, sources: out.sources.length, proposed: out.proposed?.type ?? null,
             pendingConfirm: routed.outcome === 'preview', conflict: Boolean(conflict), modelCalls: reply.modelCalls.length,
+            agentLogComplete: reply.logComplete ?? null,
         },
         statedReason: withheld ? 'The reply held a word from the never-list and was replaced by the fixed neutral sentence.' : undefined,
     });

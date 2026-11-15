@@ -3,7 +3,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
-from . import config
+from . import checks, config
 
 PROMPT_DIR = Path(__file__).parent / "prompts"
 
@@ -48,7 +48,8 @@ def tone(context: dict) -> str:
 def render(agent: str, context: dict) -> str:
     """The system prompt of one agent for one request."""
     visible = context if agent == "orchestrator" else {k: context[k] for k in CONTEXT_SLICE[agent] if k in context}
-    rules = _template("_rules").replace("{{never_words}}", ", ".join(config.NEVER_WORDS))
+    rules = (_template("_rules").replace("{{never_words}}", ", ".join(config.NEVER_WORDS))
+             .replace("{{judgement_words}}", ", ".join(checks.JUDGEMENT_WORDS)))
     return (_template(agent)
             .replace("{{rules}}", rules)
             .replace("{{tone}}", tone(context))

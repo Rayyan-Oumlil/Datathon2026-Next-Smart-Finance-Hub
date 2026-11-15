@@ -4,6 +4,7 @@
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { DEMO_USER } from '@/lib/demo-user';
+import { RULES, RULES_VERSION } from '@/lib/rules';
 import type { InvestmentRule, SimulatedTrade, Sourced } from '@/lib/domain/types';
 import { marketDate } from '@/lib/sources/daily-signals';
 import { appendDecision, readState, updateState } from '@/lib/store';
@@ -80,7 +81,7 @@ export async function validateRule(input: unknown): Promise<RuleValidation> {
 }
 
 const logRuleAction = (rule: InvestmentRule, action: string) =>
-    appendDecision({ userId: DEMO_USER.id, kind: 'user_action', symbol: rule.symbol, payload: { action, rule, simulated: true } });
+    appendDecision({ userId: DEMO_USER.id, kind: 'user_action', symbol: rule.symbol, ruleVersions: { rules: RULES_VERSION, filters: RULES.filters.version }, payload: { action, rule, simulated: true } });
 
 export async function createRule(input: unknown): Promise<InvestmentRule> {
     const checked = await validateRule(input);

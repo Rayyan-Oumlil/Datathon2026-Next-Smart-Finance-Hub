@@ -1,6 +1,7 @@
 import { DEMO_USER } from '@/lib/demo-user';
 import type { Level, OnboardingAnswers, ProfileConfig, Risk } from '@/lib/domain/types';
 import { buildProfile } from '@/lib/rules/profile';
+import { overrideCapRefusal } from '@/lib/rules/risk';
 import { appendDecision, getProfile as readProfile, putProfile } from '@/lib/store';
 import { ServiceError } from './errors';
 
@@ -58,9 +59,13 @@ export async function previewProfileEdit(patch: ProfilePatch): Promise<ProfileEd
     }
     const keep = <T>(given: T | null | undefined, overridden: boolean, stored: T): T | undefined =>
         given === null ? undefined : given ?? (overridden ? stored : undefined);
+    const risk = keep(patch.risk, existing.riskOverridden, existing.risk);
+    // The risk caps hold for a risk chosen by hand too
+    const refusal = risk && overrideCapRefusal(risk, answers);
+    if (refusal) throw new ServiceError(400, refusal);
     const profile = buildProfile(DEMO_USER.id, answers, new Date().toISOString(), {
         level: keep(patch.level, existing.levelOverridden, existing.level),
-        risk: keep(patch.risk, existing.riskOverridden, existing.risk),
+        risk,
         createdAt: existing.createdAt,
     });
     return { profile, before: levelAndRisk(existing), after: levelAndRisk(profile) };

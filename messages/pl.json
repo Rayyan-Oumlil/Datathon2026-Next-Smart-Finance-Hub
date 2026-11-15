@@ -230,7 +230,7 @@
     "title": "Rynki",
     "pulseTitle": "Puls",
     "pulseSubFinnhub": "Wspólne notowania z Finnhub",
-    "pulseSubYahoo": "Opóźnione notowania z serwisu Yahoo Finance",
+    "pulseSubYahoo": "Opóźnione notowania z Yahoo chart (unofficial)",
     "moversTitle": "Największe zmiany",
     "moversSub": "Największe zmiany dzisiaj",
     "leadersTitle": "Liderzy",
@@ -262,8 +262,8 @@
   "YahooQuotes": {
     "changePercent": "Zmiana %",
     "unavailable": "Notowania są obecnie niedostępne.",
-    "source": "Ceny w {currency} z Yahoo Finance, opóźnione o około 15 minut.",
-    "sourceNoCurrency": "Ceny z Yahoo Finance, opóźnione o około 15 minut."
+    "source": "Ceny w {currency} z Yahoo chart (unofficial), opóźnione o około 15 minut.",
+    "sourceNoCurrency": "Ceny z Yahoo chart (unofficial), opóźnione o około 15 minut."
   },
   "TradingViewWidget": {
     "fullScreen": "Pełny ekran",
@@ -297,62 +297,7 @@
     "companyNews": "Aktualności firmy",
     "marketNews": "Wiadomości rynkowe"
   },
-  "Emails": {
-    "common": {
-      "logoAlt": "Logo OpenStock",
-      "unsubscribe": "Wypisz się",
-      "visitOpenstock": "Odwiedź OpenStock"
-    },
-    "welcome": {
-      "subject": "Witaj w OpenStock – twoim zestawie narzędzi open source do obsługi rynku akcji!",
-      "text": "Dzięki za dołączenie do OpenStock, inicjatywy stowarzyszenia Open Dev Society",
-      "title": "Witaj w OpenStock",
-      "dashboardAlt": "Podgląd pulpitu OpenStock",
-      "heading": "Witaj na pokładzie, {name}",
-      "fallbackIntro": "Dzięki za dołączenie do OpenStock. Masz teraz narzędzia do śledzenia rynków i podejmowania mądrzejszych decyzji.",
-      "featuresLabel": "Oto, co możesz zrobić już teraz:",
-      "featureWatchlist": "Skonfiguruj swoją listę obserwowanych, żeby śledzić ulubione akcje",
-      "featureSearch": "Wyszukaj dowolną akcję za pomocą ⌘K i otwórz ją w nowej karcie",
-      "featureDashboard": "Zajrzyj na pulpit, żeby zobaczyć trendy i najnowsze wiadomości z rynku",
-      "closing": "Będziemy informować cię o nowościach, spostrzeżeniach i alertach — a ty skup się na podejmowaniu dobrych decyzji.",
-      "cta": "Przejdź do pulpitu",
-      "initiative": "Inicjatywa Open Dev Society"
-    },
-    "resetPassword": {
-      "subject": "Zresetuj hasło do OpenStock",
-      "heading": "Zresetuj hasło",
-      "greeting": "Cześć, {name},",
-      "greetingNoName": "Cześć,",
-      "body": "Otrzymaliśmy prośbę o zresetowanie twojego hasła do OpenStock. Skorzystaj z przycisku poniżej, żeby wybrać nowe.",
-      "cta": "Zresetuj hasło",
-      "ignore": "Jeśli to nie ty prosisz o zmianę hasła, możesz zignorować tę wiadomość.",
-      "text": "Zresetuj hasło: {url}"
-    },
-    "stockAlert": {
-      "subjectAbove": "🔔 Alert cenowy: {symbol} powyżej {target}",
-      "subjectBelow": "🔔 Alert cenowy: {symbol} poniżej {target}",
-      "textAbove": "{symbol} kosztuje teraz {price}, powyżej twojego progu {target}.",
-      "textBelow": "{symbol} kosztuje teraz {price}, poniżej twojego progu {target}.",
-      "titleAbove": "Alert cenowy: {symbol} osiągnął górny próg",
-      "titleBelow": "Alert cenowy: {symbol} osiągnął dolny próg",
-      "headingAbove": "📈 Cena przekroczyła próg",
-      "headingBelow": "📉 Cena spadła poniżej progu",
-      "currentPrice": "Aktualna cena",
-      "details": "Szczegóły alertu",
-      "targetPriceLabel": "Cena docelowa:",
-      "triggerLabel": "Wyzwalacz:",
-      "triggerAbove": "Cena przekroczyła twój górny próg {target}",
-      "triggerBelow": "Cena spadła poniżej twojego dolnego progu {target}",
-      "calloutTitleAbove": "Okazja!",
-      "calloutBodyAbove": "{symbol} osiągnął twoją cenę docelową! To może być dobry moment, żeby przejrzeć swoją pozycję i rozważyć realizację zysków albo dostosowanie strategii.",
-      "calloutTitleBelow": "Cena spadła",
-      "calloutBodyBelow": "{symbol} spadł poniżej twojej ceny docelowej. To może być dobry moment na zakup.",
-      "cta": "Zobacz pulpit",
-      "footer": "Dostajesz tę wiadomość, bo masz włączone alerty w OpenStock."
-    }
-  },
   "Sidebar": {
-    "homeAria": "OpenStock — strona główna",
     "searchStocks": "Szukaj akcji",
     "overview": "Przegląd",
     "watchlist": "Lista obserwowanych",
@@ -364,12 +309,7 @@
       "about": "O nas",
       "terms": "Regulamin"
     },
-    "support": "Wesprzyj OpenStock",
-    "sponsor": "Sponsor",
-    "sponsorSlotsOpen": "Otwarte są miejsca dla sponsorów",
-    "sponsorPitch": "Zaprezentuj swoją firmę każdemu użytkownikowi OpenStock.",
-    "signOut": "Wyloguj się",
-    "sponsorSlotsLeft": "{count, plural, one {Zostało # miejsce dla sponsora} few {Zostały # miejsca dla sponsorów} many {Zostało # miejsc dla sponsorów} other {Zostało # miejsca dla sponsorów}}"
+    "signOut": "Wyloguj się"
   },
   "TabBar": {
     "pages": {
@@ -404,16 +344,6 @@
     "seeWhatsNew": "Zobacz, co nowego",
     "fullChangelog": "Przeczytaj pełny dziennik zmian"
   },
-  "DonatePopup": {
-    "kicker": "Szukamy sponsorów",
-    "title": "Pomóż utrzymać OpenStock za darmo",
-    "description": "Twoje wsparcie dla OpenStock i Open Dev Society pomogło nam się rozwinąć, a teraz osiągamy limity darmowego planu Vercel. Zostań sponsorem już od 5 dolarów miesięcznie, przekaż jednorazową darowiznę albo porozmawiaj z nami o partnerstwie.",
-    "becomeSponsor": "Zostań sponsorem",
-    "maybeLater": "Może później"
-  },
-  "OpenDevSocietyBranding": {
-    "initiativeBy": "Inicjatywa"
-  },
   "StockPage": {
     "sentimentTitle": "Nastrój",
     "sentimentSub": "Reddit, X.com, wiadomości i Polymarket",
@@ -431,7 +361,7 @@
     "profileSub": "Czym zajmuje się firma"
   },
   "StockHeader": {
-    "quoteViaYahoo": "opóźnione notowania z serwisu Yahoo Finance",
+    "quoteViaYahoo": "opóźnione notowania z Yahoo chart (unofficial)",
     "quoteViaTradingView": "notowania z TradingView",
     "alertsHint": "Alerty cenowe wymagają źródła notowań, które możemy sprawdzać co 5 minut",
     "alertsScope": "Alerty: akcje z USA i kryptowaluty",

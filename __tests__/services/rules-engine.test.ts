@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEMO_USER } from '@/lib/demo-user';
+import { RULES, RULES_VERSION } from '@/lib/rules';
 import { listDecisions } from '@/lib/store';
 import { getPortfolioState, simulateTrade } from '@/lib/services/portfolio';
 import { createRule, evaluateRules, listRules, setRuleStatus, validateRule } from '@/lib/services/rules-engine';
@@ -135,7 +136,8 @@ describe('evaluateRules', () => {
         const rule = await createRule(below100);
         await setRuleStatus(rule.id, 'paused');
         await expect(setRuleStatus('rule_missing', 'paused')).rejects.toMatchObject({ status: 404 });
-        const actions = (await listDecisions(DEMO_USER.id, { kind: 'user_action' })).map((entry) => (entry.payload as { action: string }).action);
-        expect(actions).toEqual(['rule_create', 'rule_pause']);
+        const rows = await listDecisions(DEMO_USER.id, { kind: 'user_action' });
+        expect(rows.map((entry) => (entry.payload as { action: string }).action)).toEqual(['rule_create', 'rule_pause']);
+        for (const row of rows) expect(row.ruleVersions).toEqual({ rules: RULES_VERSION, filters: RULES.filters.version });
     });
 });

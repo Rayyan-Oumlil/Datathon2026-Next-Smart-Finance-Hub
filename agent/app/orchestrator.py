@@ -72,15 +72,26 @@ def propose_action(type: str, summary: str, params: dict) -> str:
     return record_proposal(trace.current(), type, summary, params)
 
 
+# The orchestrator holds no data tools: it gets the conflicts, never the asset's signals or their sources.
+CONFLICT_FIELDS = ("symbol", "conflicts", "level", "risk")
+
+
+def conflict_view(result: dict) -> dict:
+    """The part of a conflict-check result the model sees. The full result stays in the request's tool
+    results, so the reply's sources still cite the values behind each conflict."""
+    return {key: result.get(key) for key in CONFLICT_FIELDS}
+
+
 @tool
 def check_profile_conflict(symbol: str) -> dict:
     """Checks one asset against the user's profile filters. Returns the conflicts (each with a detail giving
-    the actual values), the asset's signals, and the user's level and risk. Call it before discussing or
-    simulating a trade in an asset."""
+    the actual values) and the user's level and risk. Call it before discussing or simulating a trade in an
+    asset."""
     result = web_tools.call_web("conflict-check", {"symbol": symbol})
-    if isinstance(result, dict) and "error" not in result:
-        trace.current().conflict_checks[symbol.upper()] = result
-    return result
+    if not isinstance(result, dict) or "error" in result:
+        return result
+    trace.current().conflict_checks[symbol.upper()] = result
+    return conflict_view(result)
 
 
 def history_messages(history: list) -> list:

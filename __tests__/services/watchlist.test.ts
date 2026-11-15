@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEMO_USER } from '@/lib/demo-user';
 import type { UniverseEntry } from '@/lib/domain/types';
+import { RULE_VERSIONS } from '@/lib/rules';
 import { listDecisions, readState } from '@/lib/store';
 import { loadDailySignals } from '@/lib/sources/daily-signals';
 import { editProfile } from '@/lib/services/profile';
-import { buildStatus, buildWatchlist, explainSymbol, getWatchlist, profileHash, userAction } from '@/lib/services/watchlist';
+import { buildStatus, buildWatchlist, explainSymbol, getWatchlist, profileHash, refreshWatchlist, userAction } from '@/lib/services/watchlist';
 import { answers, freshWorld } from './helpers';
 
 vi.mock('@/lib/services/quotes', async (original) => (await import('./market-stub')).quotesMock(await original()));
@@ -58,10 +59,11 @@ describe('watchlist service', () => {
         const [run] = await runs();
         const payload = run.payload as { snapshot: { id: string; signals: unknown[]; profile: unknown; holdings: unknown }; candidates: Array<{ symbol: string; filters: unknown[]; passed: boolean; total?: number }>; result: { picks: unknown[] }; profileHash: string };
         expect(run.snapshotId).toBe(payload.snapshot.id);
-        expect(run.ruleVersions).toEqual({ filters: 'filters-v1', score: 'score-v1', selection: 'selection-v1', reasons: 'reasons-v1', level: 'level-v1', risk: 'risk-v1' });
+        expect(run.ruleVersions).toEqual({ filters: 'filters-v1', score: RULE_VERSIONS.score, selection: 'selection-v1', reasons: 'reasons-v1', level: 'level-v1', risk: 'risk-v1' });
         expect(payload.snapshot.signals).toHaveLength(view.result!.candidates);
         expect(payload.snapshot.profile).toMatchObject({ level: 'Intermediate', risk: 'Medium', answers: answers() });
         expect(payload.snapshot.holdings).toEqual({ totalValueCad: 10000, bySector: {}, byAssetClass: {}, symbols: [] });
+        expect((run.payload as { holdingsDetail: unknown[] }).holdingsDetail).toEqual([]);
         expect(payload.candidates).toHaveLength(view.result!.candidates);
         expect(payload.candidates.every((candidate) => candidate.filters.length > 0)).toBe(true);
         expect(payload.candidates.filter((candidate) => candidate.passed && candidate.total !== undefined).length).toBeGreaterThan(10);
@@ -102,6 +104,27 @@ describe('watchlist service', () => {
         expect(second.result!.picks.map((pick) => [pick.symbol, pick.total])).toEqual(first.result!.picks.map((pick) => [pick.symbol, pick.total]));
         expect(second.result!.snapshotId).not.toBe(first.result!.snapshotId);
         expect(await runs()).toHaveLength(2);
+    });
+
+    it('refresh does nothing when today\'s run for the current profile exists, and builds after a profile change', async () => {
+        const first = await refreshWatchlist();
+        expect(first).toEqual({ started: true });
+        await buildStatus().promise;
+        const again = await refreshWatchlist();
+        expect(again.started).toBe(false);
+        expect(again.reason).toContain('once a day');
+        expect(buildStatus().building).toBe(false);
+        expect(await runs()).toHaveLength(1);
+
+        await editProfile({ risk: 'Low' });
+        expect(await refreshWatchlist()).toEqual({ started: true });
+        await buildStatus().promise;
+        expect(await runs()).toHaveLength(2);
+    });
+
+    it('refresh refuses before onboarding', async () => {
+        await freshWorld(false);
+        await expect(refreshWatchlist()).rejects.toMatchObject({ status: 409 });
     });
 
     it('treats the stored run as outdated after a profile edit', async () => {

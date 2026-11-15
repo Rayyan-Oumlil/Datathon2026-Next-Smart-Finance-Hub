@@ -6,6 +6,9 @@ export type ProfileView = Pick<ProfileConfig, 'level' | 'risk' | 'answers'>;
 /** Case and surrounding spaces never decide a match between an answer and a list entry. */
 export const normalize = (text: string): string => text.trim().toLowerCase();
 
+/** The ESG theme is a filter only (rules filters.esg): it selects no candidate and adds no profile-fit points. */
+export const isEsgTheme = (theme: string): boolean => normalize(theme) === 'esg';
+
 /** A provider value counts only when it is a real number; anything else is treated as missing. */
 export function numberOf(sourced: Sourced | undefined): number | undefined {
     return sourced && typeof sourced.value === 'number' && Number.isFinite(sourced.value) ? sourced.value : undefined;

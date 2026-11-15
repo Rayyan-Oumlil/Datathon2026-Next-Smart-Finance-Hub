@@ -15,16 +15,17 @@ def test_collect_finds_every_sourced_value_with_its_symbol():
     assert "TSLA price" in labels and "ENB 1-year volatility" in labels and "Glossary: Volatility" in labels
     price = next(item for item in found if item["label"] == "ENB price")
     assert price["source"] == "Finnhub" and price["fetchedAt"] == FETCHED and price["value"] == 41.75
-    assert len([item for item in found if "document" not in item]) == 3 * 7   # 7 sourced values per signal set
+    # 7 sourced values per signal set, and the one value behind the TSLA conflict
+    assert len([item for item in found if "document" not in item]) == 2 * 7 + 1
 
 
 def test_only_values_stated_in_the_reply_are_returned():
     reply = "TSLA trades at 251.3 USD; its 1-year volatility is 58.4% (see agent/glossary/volatility.md)."
     kept = sources.relevant(sources.collect(RESULTS), reply)
-    assert kept == [
-        {"label": "TSLA price", "source": "Finnhub", "fetchedAt": FETCHED, "asOf": "2026-11-14T15:29:00.000Z"},
+    assert kept == [   # the conflict check comes first in the results, so its volatility is listed first
         {"label": "TSLA 1-year volatility", "source": "derived from Yahoo chart (unofficial) daily closes",
          "fetchedAt": FETCHED},
+        {"label": "TSLA price", "source": "Finnhub", "fetchedAt": FETCHED, "asOf": "2026-11-14T15:29:00.000Z"},
         {"label": "Glossary: Volatility", "source": "agent/glossary/volatility.md"},
     ]
 

@@ -31,6 +31,41 @@ def test_whole_words_only(text):
     assert checks.find_never_words(text) == []
 
 
+@pytest.mark.parametrize("word", checks.JUDGEMENT_WORDS)
+def test_every_judgement_word_is_found_and_fails_the_reply(word):
+    text = f"It is {word.upper()} here."
+    assert checks.find_judgement_words(text) == [word]
+    assert not checks.own_check(text, [], [])["passed"]
+
+
+@pytest.mark.parametrize("text", [
+    "Volatility 58.4% is higher than the cap of 35.0%; the P/E is lower than the sector median.",
+    "The best ask is 251.30 and the best bid is 251.20.",
+    "Betterment, a greatcoat, an idealist: only parts of words.",
+    "Sector: Information Technology. Index: S&P/TSX Composite.",
+])
+def test_factual_data_text_passes_the_judgement_check(text):
+    assert checks.find_judgement_words(text) == []
+
+
+def test_glossary_files_and_safe_refusal_pass_the_judgement_check():
+    assert checks.find_judgement_words(checks.SAFE_REFUSAL) == []
+    for path in sorted(config.glossary_dir().glob("*.md")):
+        assert checks.find_judgement_words(path.read_text(encoding="utf-8")) == [], path.name
+
+
+def test_only_an_exact_glossary_quote_is_exempt():
+    quote = "A limit order is an instruction to trade only at a set price or better."
+    assert checks.find_judgement_words(f"From the glossary: {quote} (agent/glossary/order-types.md)") == []
+    assert checks.find_judgement_words("This price is better.") == ["better"]
+
+
+def test_corrective_instruction_names_the_judgement_words():
+    own = checks.own_check("TSLA is a great bargain.", [], [])
+    assert own["judgementWords"] == ["bargain", "great"]
+    assert "bargain" in checks.corrective_instruction(own, {})
+
+
 def test_safe_refusal_passes_the_check():
     assert checks.find_never_words(checks.SAFE_REFUSAL) == []
     assert checks.own_check(checks.SAFE_REFUSAL, [], [])["passed"]

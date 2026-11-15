@@ -38,8 +38,9 @@
       { "min": 6, "max": 8, "risk": "High" }
     ],
     "caps": [
-      { "when": { "drop_20pct": "sell" }, "max_risk": "Medium", "board_text": "\"Sell\" on the drop question can never give High" }
+      { "when": { "drop_20pct": "sell" }, "max_risk": "Medium", "board_text": "\"Sell\" on the drop question can never give High", "answer_shown": "you answered \"reduce my position\" to the 20% drop question" }
     ],
+    "caps_apply_to_overrides": "a risk chosen by hand on the Profile tab above a cap's max_risk is refused, with the answer that limits it named (owner review, 2026-11-14)",
     "if_self_rating_differs_from_result": "show both"
   },
 
@@ -63,6 +64,7 @@
     "esg": {
       "tags": ["screened", "not screened", "controversy"],
       "when_esg_theme_picked": "only 'screened' passes",
+      "filter_only": "ESG is a filter, not a preference: no universe entry carries it as a theme, so it selects no candidate, does not count as a picked theme in the 'no preference' test (ESG alone means every stock and ETF in the picked markets, then only 'screened' passes), and adds no profile-fit points",
       "data": "mock, set by hand per asset; labelled 'demo data' in the UI"
     },
     "asset_class_rules": {
@@ -85,8 +87,9 @@
   },
 
   "score": {
-    "version": "score-v1",
+    "version": "score-v1.1",
     "origin": "weights and factor meanings: board. Formulas: proposed.",
+    "changed": "score-v1.1 (2026-11-14): diversification formula. Under score-v1 a stock adding a new sector scored 0 once any stock was held (its asset class was held), while a stock in an already held sector could score 50: the opposite of the factor's meaning. It now looks at the sector, or at the asset class only for an asset with no sector. Decisions logged before keep 'score-v1'.",
     "scale_per_factor": [0, 100],
     "weights": { "profile_fit": 40, "risk_fit": 25, "fundamentals": 20, "diversification": 15 },
     "total": "sum(weight x factor) / 100, rounded to 1 decimal",
@@ -96,7 +99,8 @@
       "profile_fit": {
         "meaning": "sector, niche, theme and brand match",
         "formula": "sum of the parts that apply, capped at 100",
-        "parts": { "sector_picked": 40, "niche_picked": 20, "theme_match": 20, "on_brands_list": 20 }
+        "parts": { "sector_picked": 40, "niche_picked": 20, "theme_match": 20, "on_brands_list": 20 },
+        "theme_match_note": "the ESG theme never counts as a theme match (see filters.esg.filter_only)"
       },
       "risk_fit": {
         "meaning": "how close volatility sits to the band",
@@ -113,7 +117,7 @@
       },
       "diversification": {
         "meaning": "adds a sector or class not yet held",
-        "formula": "100 if neither its sector nor its asset class is in the simulated holdings; 50 if the sector is held but is under 20% of the portfolio value; 0 otherwise. An empty portfolio gives 100 to everything, so the factor does not change the order then."
+        "formula": "For an asset with a sector: 100 if that sector is not in the simulated holdings; 50 if the sector is held but is under 20% of the portfolio value; 0 otherwise. For an asset with no sector (ETF, crypto): the same three steps with its asset class in place of the sector. An empty portfolio gives 100 to everything, so the factor does not change the order then."
       }
     }
   },
@@ -126,7 +130,8 @@
     "max_crypto": 1,
     "max_etfs_per_index": 1,
     "max_etfs_per_index_note": "proposed: several listed funds track the same index (four track the S&P 500); one per index keeps the list from repeating the same holdings",
-    "seed_tickers": "kept if they pass the filters",
+    "seed_tickers": "kept if they pass the filters: a seed (a brand on the brands list) that passes every filter takes a slot before anything else and is not subject to the score cut-off, max_per_sector, max_etfs_per_index or the newcomer margin; max_crypto and the top_n of the level still apply",
+    "caps_exception": "max_per_sector and max_etfs_per_index apply only to the picks filled by score. Seeds, and listed picks still inside their min_days_listed stay, are placed first and are not subject to these two caps, so a sector or an index can hold more than the cap when those picks alone exceed it; they still count toward the cap for every pick filled after them. max_crypto and top_n_by_level apply to every pick.",
     "tie_break": ["higher total score", "lower volatility", "ticker A-Z"],
     "slow_moving": {
       "recompute": "once a day",
@@ -182,8 +187,11 @@
       "look up a quote or company",
       "move / swap a widget",
       "create / pause a simulated rule",
-      "explain a watchlist pick"
+      "explain a watchlist pick",
+      "simulate a trade (after confirm)",
+      "change the profile (after confirm)"
     ],
+    "whitelisted_actions_note": "the last two change stored state, so the router runs them only after the user confirms the proposed action in the app",
     "guardrail_failures_before_safe_refusal": 2,
     "models": {
       "orchestrator": "us.anthropic.claude-sonnet-5-5",

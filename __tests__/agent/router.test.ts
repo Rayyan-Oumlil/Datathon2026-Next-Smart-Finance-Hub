@@ -40,7 +40,7 @@ describe('whitelist and params', () => {
             ['lookup', { symbols: ['AAPL'], extra: 1 }],
             ['explain_pick', {}],
             ['layout_change', { layout: 'holdings' }],
-            ['layout_change', { layout: ['total_value', 'smart_watchlist', 'nope'] }],          // unknown widget
+            ['layout_change', { layout: ['total_value', 'nope'] }],                             // unknown widget
             ['layout_change', { layout: ['holdings'] }],                                        // fixed widgets removed
             ['rule_create', { rule: { ...rule, trigger: { type: 'moon', value: 1 } } }],
             ['rule_create', { rule: { ...rule, symbol: 'NOPE' } }],
@@ -71,10 +71,10 @@ describe('whitelist and params', () => {
 
     it('applies nothing without a pending preview, and nothing twice', async () => {
         await expect(apply('missing')).rejects.toMatchObject({ status: 404 });
-        await preview('a5', 'layout_change', { layout: ['total_value', 'smart_watchlist'] });
+        await preview('a5', 'layout_change', { layout: ['total_value'] });
         await apply('a5');
         await expect(apply('a5')).rejects.toMatchObject({ status: 409 });
-        await preview('a6', 'layout_change', { layout: ['total_value', 'smart_watchlist', 'holdings'] });
+        await preview('a6', 'layout_change', { layout: ['total_value', 'holdings'] });
         await cancel('a6');
         await expect(apply('a6')).rejects.toMatchObject({ status: 409 });
         await expect(undo('a6')).rejects.toMatchObject({ status: 409 });
@@ -84,7 +84,7 @@ describe('whitelist and params', () => {
 describe('preview, apply, undo', () => {
     it('layout_change', async () => {
         const before = (await getLayout()).layout;
-        const after = ['smart_watchlist', 'total_value', 'holdings'];
+        const after = ['holdings', 'total_value'];
         const routed = await preview('l1', 'layout_change', { layout: after });
         expect(routed.preview).toMatchObject({ before, after });
         expect(routed.preview.summary).toContain('removes Performance chart');
@@ -195,7 +195,7 @@ describe('wording', () => {
             ruleSentence({ symbol: 'AAPL', trigger: { type: 'price_above', value: 10 }, action: { side: 'sell', quantity: 2 }, once: false }, 'USD'),
             ruleSentence({ symbol: 'AAPL', trigger: { type: 'change_pct_below', value: -5 }, action: { side: 'buy', amountCad: 50 }, once: true }),
             (await preview('w1', 'simulated_trade', { symbol: 'AAPL', side: 'buy', amountCad: 142 })).preview.summary,
-            (await preview('w2', 'layout_change', { layout: ['total_value', 'smart_watchlist'] })).preview.summary,
+            (await preview('w2', 'layout_change', { layout: ['total_value'] })).preview.summary,
         ];
         for (const sentence of sentences) expect(containsNeverWord(sentence), sentence).toBe(false);
         expect(sentences[0]).toBe('When the price of AAPL is above 10.00 USD, reduce the simulated position in AAPL by 2 units, at most once per market day.');

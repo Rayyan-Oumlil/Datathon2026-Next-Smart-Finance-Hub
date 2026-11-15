@@ -32,7 +32,7 @@ export default function SectorAllocation({ bySector, cashCad, totalCad, unpriced
                 })}
             </ul>
             <p className="mt-4 text-[12px] leading-relaxed text-faint">
-                Sector tags come from the app&apos;s asset list (GICS sector names); an ETF or a crypto asset is grouped under its asset class.
+                Sector tags come from the app&apos;s asset list (sector names from the Wikipedia lists it was built from, not a licensed GICS feed); an ETF or a crypto asset is grouped under its asset class.
                 Values are the holdings&apos; values at the last price, as listed under Holdings.
                 {unpriced.length > 0 && ` Not included, no price available right now: ${unpriced.join(', ')}.`}
             </p>

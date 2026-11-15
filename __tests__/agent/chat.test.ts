@@ -1,4 +1,6 @@
+import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { POST as AGENT } from '@/app/api/agent/route';
 import { NEUTRAL_REPLY, chat, confirm, undoAction } from '@/lib/agent/chat';
 import { callAgent, runtimeSessionId } from '@/lib/agent/client';
 import { DEMO_USER } from '@/lib/demo-user';
@@ -41,7 +43,7 @@ describe('chat', () => {
     it('replaces a reply that holds a never-word by the fixed sentence, drops its proposal and logs it', async () => {
         expect(containsNeverWord(NEUTRAL_REPLY)).toBe(false);
         for (const text of ['You should look at AAPL.', 'AAPL is a good pick.', 'I recommend this ETF.', 'Selling now is wise.', 'It will rise.']) {
-            agent.mockResolvedValue(answer({ text, proposed: { type: 'layout_change', summary: 's', params: { layout: ['total_value', 'smart_watchlist'] } }, conflict: { symbol: 'AAPL', checks: [] } }));
+            agent.mockResolvedValue(answer({ text, proposed: { type: 'layout_change', summary: 's', params: { layout: ['total_value'] } }, conflict: { symbol: 'AAPL', checks: [] } }));
             const reply = await chat({ message: 'hello' });
             expect(reply, text).toMatchObject({ text: NEUTRAL_REPLY, refused: true, sources: [] });
             expect(reply).not.toHaveProperty('proposed');
@@ -71,7 +73,7 @@ describe('chat', () => {
     });
 
     it('previews a change, applies it on confirm and restores it on undo, with a row per step', async () => {
-        const layout = ['total_value', 'smart_watchlist', 'holdings'];
+        const layout = ['total_value', 'holdings'];
         agent.mockResolvedValue(answer({ text: 'Here is a smaller layout.', proposed: { type: 'layout_change', summary: 'model words', params: { layout } } }));
         const before = (await getLayout()).layout;
         const reply = await chat({ message: 'show me less' });
@@ -89,7 +91,7 @@ describe('chat', () => {
     });
 
     it('cancels without changing anything', async () => {
-        agent.mockResolvedValue(answer({ proposed: { type: 'layout_change', summary: 's', params: { layout: ['total_value', 'smart_watchlist'] } } }));
+        agent.mockResolvedValue(answer({ proposed: { type: 'layout_change', summary: 's', params: { layout: ['total_value'] } } }));
         const reply = await chat({ message: 'show me less' });
         expect(await confirm(reply.actionId, false)).toMatchObject({ applied: false, undoable: false });
         expect((await getLayout()).saved).toBe(false);
@@ -97,11 +99,33 @@ describe('chat', () => {
         await expect(confirm(reply.actionId, true)).rejects.toMatchObject({ status: 409 });
     });
 
+    it('passes on whether the agent service could write its whole action log', async () => {
+        agent.mockResolvedValue(answer({ logComplete: false }));
+        const reply = await chat({ message: 'hello' });
+        expect(reply.logComplete).toBe(false);
+        const rows = await listAgentActions(DEMO_USER.id, { actionId: reply.actionId });
+        expect(rows.at(-1)).toMatchObject({ step: 'result', result: { agentLogComplete: false } });
+        agent.mockResolvedValue(answer({ logComplete: true }));
+        expect((await chat({ message: 'hello' })).logComplete).toBe(true);
+    });
+
     it('logs a failed agent call and passes the refusal on', async () => {
         agent.mockRejectedValue(new ServiceError(503, 'The agent service is not reachable right now. Nothing was changed.'));
         await expect(chat({ message: 'hello' })).rejects.toMatchObject({ status: 503 });
         const rows = await listAgentActions(DEMO_USER.id);
         expect(rows.map((row) => row.step)).toEqual(['chat_input', 'context_built', 'result']);
+    });
+});
+
+describe('agent route', () => {
+    it('allows 10 requests a minute, then answers 429', async () => {
+        agent.mockResolvedValue(answer());
+        const post = () => AGENT(new NextRequest('http://localhost/api/agent', { method: 'POST', body: JSON.stringify({ message: 'hello' }) }));
+        for (let i = 0; i < 10; i += 1) expect((await post()).status).toBe(200);
+        const over = await post();
+        expect(over.status).toBe(429);
+        expect(await over.json()).toEqual({ error: 'Too many requests. Wait a minute and try again.' });
+        expect(agent).toHaveBeenCalledTimes(10);
     });
 });
 

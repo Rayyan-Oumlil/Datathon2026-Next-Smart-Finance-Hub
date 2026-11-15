@@ -4,7 +4,7 @@
 import { randomBytes } from 'node:crypto';
 import { DEMO_USER } from '@/lib/demo-user';
 import type { FilterCheck, HoldingsSummary, Portfolio, Position, SignalSet, SimulatedTrade, Sourced } from '@/lib/domain/types';
-import { RULES } from '@/lib/rules';
+import { RULES, RULES_VERSION } from '@/lib/rules';
 import { marketDate } from '@/lib/sources/daily-signals';
 import type { DailyClose } from '@/lib/sources/types';
 import { appendDecision, getProfile, listDecisions } from '@/lib/store';
@@ -238,19 +238,44 @@ export async function getPortfolio(): Promise<PortfolioView> {
     };
 }
 
-/** What the watchlist's diversification factor reads. A position with no price is counted at its cost. */
-export async function holdingsSummary(): Promise<HoldingsSummary> {
+/** How each position was valued in a holdings summary, so a value taken at cost is never mistaken for a price. */
+export type HoldingDetail = {
+    symbol: string;
+    quantity: number;
+    price: Sourced | null;
+    valuedAt: 'last price' | 'average cost (no price available)';
+    fxUsdCad: Sourced | null;       // the rate a USD price was converted with; null for a CAD price or no price
+};
+
+/**
+ * What the watchlist's diversification factor reads, with the valuation of each position beside it.
+ * A position with no price is counted at its cost, and its detail says so.
+ */
+export async function holdingsWithDetail(): Promise<{ summary: HoldingsSummary; detail: HoldingDetail[] }> {
     const portfolio = await getPortfolioState();
-    if (portfolio.positions.length === 0) return { totalValueCad: portfolio.cashCad, bySector: {}, byAssetClass: {}, symbols: [] };
-    const { positions } = await priced(portfolio);
+    if (portfolio.positions.length === 0) return { summary: { totalValueCad: portfolio.cashCad, bySector: {}, byAssetClass: {}, symbols: [] }, detail: [] };
+    const { positions, fx } = await priced(portfolio);
     const summary: HoldingsSummary = { totalValueCad: portfolio.cashCad, bySector: {}, byAssetClass: {}, symbols: positions.map((position) => position.symbol).sort() };
+    const detail: HoldingDetail[] = [];
     for (const position of positions) {
         const value = position.valueCad ?? round2(position.quantity * position.avgCostCad);
         summary.totalValueCad = round2(summary.totalValueCad + value);
         if (position.sector) summary.bySector[position.sector] = round2((summary.bySector[position.sector] ?? 0) + value);
         summary.byAssetClass[position.assetClass] = round2((summary.byAssetClass[position.assetClass] ?? 0) + value);
+        const atPrice = position.valueCad !== null;
+        detail.push({
+            symbol: position.symbol,
+            quantity: position.quantity,
+            price: position.price,
+            valuedAt: atPrice ? 'last price' : 'average cost (no price available)',
+            fxUsdCad: atPrice && position.price?.currency === 'USD' ? fx : null,
+        });
     }
-    return summary;
+    return { summary, detail };
+}
+
+export async function holdingsSummary(): Promise<HoldingsSummary> {
+    return (await holdingsWithDetail()).summary;
 }
 
 // ---------------------------------------------------------------- trades
@@ -305,7 +330,7 @@ async function fill(input: TradeInput): Promise<TradeOutcome> {
                 userId: DEMO_USER.id,
                 kind: 'profile_conflict',
                 symbol: entry.symbol,
-                ruleVersions: { filters: RULES.filters.version, level: profile.ruleVersions.level, risk: profile.ruleVersions.risk },
+                ruleVersions: { rules: RULES_VERSION, filters: RULES.filters.version, level: profile.ruleVersions.level, risk: profile.ruleVersions.risk },
                 payload: { conflicts, level: profile.level, risk: profile.risk, origin, ruleId: input.ruleId, acknowledged: input.acknowledgeConflict === true, proceeded: proceeds, signals, simulated: true },
             });
             conflictDecisionId = logged.id;
@@ -339,6 +364,8 @@ async function fill(input: TradeInput): Promise<TradeOutcome> {
         kind: 'simulated_trade',
         symbol: entry.symbol,
         at: trade.at,
+        // The filters are what the profile-conflict check of a purchase reads
+        ruleVersions: { rules: RULES_VERSION, filters: RULES.filters.version },
         payload: { trade, unitPriceCad: unitCad, fxUsdCad: fx, conflicts, conflictDecisionId, cashBeforeCad: before.cashCad, simulated: true },
     });
     (await loadTrades()).push(trade);

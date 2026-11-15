@@ -3,7 +3,8 @@ import { DEMO_USER } from '@/lib/demo-user';
 import type { SimulatedTrade } from '@/lib/domain/types';
 import { listDecisions } from '@/lib/store';
 import { getEntry } from '@/lib/universe';
-import { getPortfolio, getPortfolioState, holdingsSummary, replayTrades, resetPortfolioCache, simulateTrade } from '@/lib/services/portfolio';
+import { RULES, RULES_VERSION } from '@/lib/rules';
+import { getPortfolio, getPortfolioState, holdingsSummary, holdingsWithDetail, replayTrades, resetPortfolioCache, simulateTrade } from '@/lib/services/portfolio';
 import { freshWorld, market, sourced } from './helpers';
 
 vi.mock('@/lib/services/quotes', async (original) => (await import('./market-stub')).quotesMock(await original()));
@@ -43,6 +44,7 @@ describe('simulateTrade', () => {
 
         const [logged] = await listDecisions(DEMO_USER.id, { kind: 'simulated_trade' });
         expect(logged).toMatchObject({ symbol: 'AAPL', payload: { trade: { id: trade.id }, unitPriceCad: 142, fxUsdCad: { value: 1.42, source: 'Bank of Canada' }, cashBeforeCad: 10000, simulated: true } });
+        expect(logged.ruleVersions).toEqual({ rules: RULES_VERSION, filters: RULES.filters.version });
     });
 
     it('values the portfolio from the log: cash, positions, return, sector split and today\'s change', async () => {
@@ -83,6 +85,19 @@ describe('simulateTrade', () => {
         expect(view.valueCad.value).toBe(9000);
         expect(view.valueCad.note).toContain('not included, no price available: RY.TO');
         expect(view.dayChangeCad).toBeNull();
+    });
+
+    it('says which positions of the holdings summary are valued at cost for want of a price', async () => {
+        await filled({ symbol: 'AAPL', side: 'buy', amountCad: 1420 });
+        await filled({ symbol: 'RY.TO', side: 'buy', quantity: 20 });
+        market.prices['RY.TO'] = undefined;
+        const { summary, detail } = await holdingsWithDetail();
+        expect(summary.totalValueCad).toBe(10000);       // 7580 cash + 1420 at the last price + 1000 at cost
+        expect(detail).toEqual([
+            { symbol: 'AAPL', quantity: 10, price: expect.objectContaining({ value: 100, currency: 'USD' }), valuedAt: 'last price', fxUsdCad: expect.objectContaining({ value: 1.42, source: 'Bank of Canada' }) },
+            { symbol: 'RY.TO', quantity: 20, price: null, valuedAt: 'average cost (no price available)', fxUsdCad: null },
+        ]);
+        expect(await holdingsSummary()).toEqual(summary);
     });
 
     it('refuses without a sourced price, without the rate, beyond the cash, beyond the position, and for reference assets', async () => {
@@ -147,6 +162,7 @@ describe('profile conflict', () => {
         expect(await listDecisions(DEMO_USER.id, { kind: 'simulated_trade' })).toEqual([]);
         const [conflict] = await listDecisions(DEMO_USER.id, { kind: 'profile_conflict' });
         expect(conflict).toMatchObject({ symbol: 'AAPL', payload: { acknowledged: false, proceeded: false, risk: 'Medium', conflicts: [{ filter: 'volatility' }] } });
+        expect(conflict.ruleVersions).toEqual({ rules: RULES_VERSION, filters: RULES.filters.version, level: 'level-v1', risk: 'risk-v1' });
     });
 
     it('logs no conflict for a purchase the cash cannot cover', async () => {

@@ -1,7 +1,7 @@
 """Request / response shape, the proposal rules and the guardrail loop, with the model replaced by a script."""
 import pytest
 
-from app import bedrock, checks, main, orchestrator, prompts, trace, web_tools
+from app import bedrock, checks, config, main, orchestrator, prompts, sources, trace, web_tools
 
 PAYLOAD = {"actionId": "act_1", "userId": "demo-user", "message": "simulate 500 dollars of TSLA",
            "history": [{"role": "user", "text": "hi"}, {"role": "assistant", "text": "hello"}],
@@ -60,9 +60,10 @@ def test_response_shape_with_conflict_and_proposal(monkeypatch, table, stub):
     scripted(monkeypatch, table, [GOOD], conflict_then_propose)
     reply = main.invoke(PAYLOAD)
     assert set(reply) == {"actionId", "text", "sources", "refused", "promptVersion", "modelCalls", "trace",
-                          "proposed", "conflict"}
+                          "proposed", "conflict", "logComplete"}
+    assert reply["logComplete"] is True
     assert reply["actionId"] == "act_1" and reply["text"] == GOOD and reply["refused"] is False
-    assert reply["promptVersion"] == "p1" and reply["modelCalls"] == []
+    assert reply["promptVersion"] == config.PROMPT_VERSION and reply["modelCalls"] == []
     assert reply["proposed"] == {"type": "simulated_trade", "summary": "Simulated purchase of 500 CAD of TSLA.",
                                  "params": {"symbol": "TSLA", "side": "buy", "amountCad": 500}, "needsConfirm": True}
     assert reply["conflict"]["symbol"] == "TSLA" and reply["conflict"]["checks"][0]["limit"] == 0.35
@@ -70,7 +71,7 @@ def test_response_shape_with_conflict_and_proposal(monkeypatch, table, stub):
                                  "source": "derived from Yahoo chart (unofficial) daily closes"}]
     steps = [item["step"] for item in table.items.values()]
     assert steps.count("prompt_built") == 1 and steps.count("tool_call") == 1 and steps.count("guardrail_check") == 1
-    assert all(item["actionId"] == "act_1" and item["promptVersion"] == "p1" for item in table.items.values())
+    assert all(item["actionId"] == "act_1" and item["promptVersion"] == config.PROMPT_VERSION for item in table.items.values())
 
 
 def test_one_regeneration_then_pass(monkeypatch, table, stub):
@@ -110,7 +111,10 @@ def test_log_failure_is_reported_in_the_response(monkeypatch, stub):
 
     scripted(monkeypatch, Broken(), ["Hello."])
     reply = main.invoke({**PAYLOAD, "message": "hi"})
-    assert reply["refused"] is False and reply["trace"]["logRows"] == 0
+    assert reply["refused"] is False and reply["text"] == "Hello." and reply["trace"]["logRows"] == 0
+    assert reply["logComplete"] is False
+    # Every row was tried (prompt_built and guardrail_check), not only the first one
+    assert len(reply["trace"]["logErrors"]) == 2
     assert "table unreachable" in reply["trace"]["logErrors"][0]
 
 
@@ -200,3 +204,58 @@ def test_a_failed_model_call_is_logged_as_an_error_with_its_request_id(current, 
 
 def test_hooks_do_nothing_outside_a_request():
     assert bedrock._before_call(params={"modelId": "m"}, context={}) is None
+
+
+# ---- the orchestrator holds no data
+
+def test_conflict_check_gives_the_model_only_the_conflicts(current, stub):
+    seen = orchestrator.check_profile_conflict(symbol="TSLA")
+    assert set(seen) == {"symbol", "conflicts", "level", "risk"}
+    assert seen["conflicts"][0]["detail"] == "volatility 58.4% vs cap 35.0% (Medium)"
+    assert seen["conflicts"][0]["value"] == 0.584 and seen["conflicts"][0]["limit"] == 0.35
+    assert "signals" not in seen and "sources" not in seen
+    # The full response is kept in plain code, so the reply's sources still cite the volatility
+    kept = sources.relevant(sources.collect(current.tool_results), "TSLA volatility 58.4% vs cap 35.0%.")
+    assert kept == [{"label": "TSLA 1-year volatility", "source": "derived from Yahoo chart (unofficial) daily closes",
+                     "fetchedAt": "2026-11-14T15:30:00.000Z"}]
+
+
+def test_no_conflict_gives_the_same_four_fields(current, stub):
+    seen = orchestrator.check_profile_conflict(symbol="ENB")
+    assert seen == {"symbol": "ENB", "conflicts": [], "level": "Intermediate", "risk": "Medium"}
+
+
+def test_a_failed_conflict_check_returns_the_error(current, stub, monkeypatch):
+    monkeypatch.setenv("INTERNAL_API_TOKEN", "wrong")
+    seen = orchestrator.check_profile_conflict(symbol="TSLA")
+    assert seen["error"] == "HTTP 401" and current.conflict_checks == {}
+
+
+# ---- grounding
+
+def test_figures_from_the_history_do_not_ground_a_reply(monkeypatch, table, stub):
+    history = [{"role": "user", "text": "TSLA was at 999.99 yesterday"}, {"role": "assistant", "text": "ok"}]
+    scripted(monkeypatch, table, ["TSLA was at 999.99.", "never used"])
+    payload = {**PAYLOAD, "history": history, "message": "what about 999.99?"}
+    first = main.invoke(payload)["trace"]["guardrail"][0]
+    assert first["own"]["ungroundedNumbers"] == ["999.99"]
+
+
+def test_the_guardrail_grounding_source_holds_no_history(monkeypatch, table, stub):
+    sent = []
+    monkeypatch.setattr(checks, "bedrock_check", lambda reply, grounding, query: sent.append(grounding) or {"passed": True})
+    scripted(monkeypatch, table, ["Hello."])
+    main.invoke({**PAYLOAD, "history": [{"role": "user", "text": "secret figure 777.77"}], "message": "hi"})
+    assert sent and "777.77" not in sent[0]
+
+
+def test_judgement_wording_is_regenerated_once(monkeypatch, table, stub):
+    asked = scripted(monkeypatch, table, ["TSLA looks like a bargain.", GOOD], conflict_then_propose)
+    reply = main.invoke(PAYLOAD)
+    assert reply["refused"] is False and reply["text"] == GOOD and "bargain" in asked[1]
+    assert reply["trace"]["guardrail"][0]["own"]["judgementWords"] == ["bargain"]
+
+
+def test_prompts_name_the_judgement_words():
+    text = prompts.render("glossary", {})
+    assert ", ".join(checks.JUDGEMENT_WORDS) in text and "{{" not in text

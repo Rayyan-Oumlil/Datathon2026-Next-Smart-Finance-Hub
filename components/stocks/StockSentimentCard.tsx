@@ -84,6 +84,9 @@ export default function StockSentimentCard({ insight }: StockSentimentCardProps)
                     </li>
                 ))}
             </ul>
+            <p className="border-t border-line px-3 py-2.5 text-[12px] text-faint">
+                Source: Adanos. Method not disclosed by the provider. Shown for information; it never enters a filter, a score or the agent.
+            </p>
         </div>
     );
 }

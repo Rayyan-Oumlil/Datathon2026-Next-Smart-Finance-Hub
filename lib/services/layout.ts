@@ -1,27 +1,21 @@
 // The widget library (the dashboard modules of spec section 10), the starting layout of each level, and the
-// saved layout. A layout is the ordered list of widget ids shown; each widget belongs to one tab.
+// saved layout. A layout is the ordered list of widget ids shown. Only the Portfolio tab draws from the saved
+// layout (the Overview tab is fixed), so the library holds only the modules that tab renders.
 
 import { DEMO_USER } from '@/lib/demo-user';
 import type { Level } from '@/lib/domain/types';
 import { getProfile, readState, updateState } from '@/lib/store';
 import { ServiceError } from './errors';
 
-export type Widget = { id: string; title: string; tab: 'portfolio' | 'overview'; fixed: boolean; minLevel: Level };
+export type Widget = { id: string; title: string; tab: 'portfolio'; fixed: boolean; minLevel: Level };
 
-// Fixed widgets cannot be removed: the simulated balance, and the smart watchlist the Overview tab is built around.
+// The modules components/portfolio renders from the layout. The simulated balance is fixed: it cannot be removed.
 export const WIDGET_LIBRARY: Widget[] = [
     { id: 'total_value', title: 'Total value (simulated)', tab: 'portfolio', fixed: true, minLevel: 'Novice' },
     { id: 'performance', title: 'Performance chart', tab: 'portfolio', fixed: false, minLevel: 'Novice' },
     { id: 'holdings', title: 'Holdings', tab: 'portfolio', fixed: false, minLevel: 'Novice' },
     { id: 'sector_allocation', title: 'Sector allocation', tab: 'portfolio', fixed: false, minLevel: 'Intermediate' },
     { id: 'investment_rules', title: 'Investment rules (simulated)', tab: 'portfolio', fixed: false, minLevel: 'Intermediate' },
-    { id: 'price_alerts', title: 'Price alerts', tab: 'portfolio', fixed: false, minLevel: 'Expert' },
-    { id: 'smart_watchlist', title: 'Smart watchlist', tab: 'overview', fixed: true, minLevel: 'Novice' },
-    { id: 'quote_lookup', title: 'Quote lookup', tab: 'overview', fixed: false, minLevel: 'Novice' },
-    { id: 'charts', title: 'Charts', tab: 'overview', fixed: false, minLevel: 'Intermediate' },
-    { id: 'indices_sentiment', title: 'Indices & sentiment', tab: 'overview', fixed: false, minLevel: 'Intermediate' },
-    { id: 'market_movers', title: 'Market movers', tab: 'overview', fixed: false, minLevel: 'Expert' },
-    { id: 'earnings_calendar', title: 'Earnings calendar', tab: 'overview', fixed: false, minLevel: 'Expert' },
 ];
 
 const LEVELS: Level[] = ['Novice', 'Intermediate', 'Expert'];
@@ -49,7 +43,12 @@ export function validateLayout(layout: unknown): string[] {
 
 export async function getLayout(): Promise<{ layout: string[]; library: Widget[]; saved: boolean }> {
     const { layout } = await readState();
-    if (layout) return { layout: layout.widgets.map((widget) => widget.widget), library: WIDGET_LIBRARY, saved: true };
+    if (layout) {
+        // A layout saved before a widget left the library keeps its other widgets; the removed id is dropped.
+        const known = new Set(WIDGET_LIBRARY.map((widget) => widget.id));
+        const ids = [...new Set(layout.widgets.map((widget) => widget.widget).filter((id) => known.has(id)))];
+        return { layout: ids, library: WIDGET_LIBRARY, saved: true };
+    }
     const profile = await getProfile(DEMO_USER.id);
     return { layout: defaultLayout(profile?.level ?? 'Novice'), library: WIDGET_LIBRARY, saved: false };
 }

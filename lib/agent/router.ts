@@ -80,6 +80,7 @@ async function layoutPreview(after: string[]): Promise<Preview> {
     if (before.join('|') === after.join('|')) throw new ServiceError(400, 'The proposed layout is the same as the current one.');
     const title = (id: string) => WIDGET_LIBRARY.find((widget) => widget.id === id)?.title ?? id;
     const onTab = (ids: string[], tab: string) => listed(ids.filter((id) => WIDGET_LIBRARY.find((widget) => widget.id === id)?.tab === tab).map(title));
+    // Only the Portfolio tab is drawn from the layout; the Overview tab is fixed.
     const removed = before.filter((id) => !after.includes(id)).map(title);
     const added = after.filter((id) => !before.includes(id)).map(title);
     const parts = [removed.length > 0 ? `removes ${removed.join(', ')}` : '', added.length > 0 ? `adds ${added.join(', ')}` : ''].filter(Boolean);
@@ -88,7 +89,6 @@ async function layoutPreview(after: string[]): Promise<Preview> {
         summary: `Dashboard layout: ${parts.length > 0 ? parts.join('; ') : 'changes the order of the widgets'}.`,
         rows: [
             { label: 'Portfolio tab', before: onTab(before, 'portfolio'), after: onTab(after, 'portfolio') },
-            { label: 'Overview tab', before: onTab(before, 'overview'), after: onTab(after, 'overview') },
         ],
         facts: [],
     };

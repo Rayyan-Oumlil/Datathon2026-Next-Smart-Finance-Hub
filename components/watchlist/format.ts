@@ -55,7 +55,7 @@ export const SIGNAL_LABEL: Record<SignalKey, string> = {
     beta: 'Beta',
     marketCapUsd: 'Market cap',
     avgDailyTradedValueUsd: 'Traded value per day',
-    sectorLabel: "Provider's sector label",
+    sectorLabel: 'Industry label from the provider (not GICS)',
     closes1m: 'Daily closes, 1 month',
     newsCount7d: 'Headlines, 7 days (shown, never scored)',
 };

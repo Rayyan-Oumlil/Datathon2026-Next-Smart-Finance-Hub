@@ -231,7 +231,7 @@
     "sub": "{market} · {status, select, open {مفتوح الآن} other {مغلق الآن}} · {feed, select, live {بيانات مباشرة} delayed {بيانات متأخرة} other {بيانات إغلاق اليوم}}",
     "pulseTitle": "النبض",
     "pulseSubFinnhub": "أسعارنا المشتركة عبر Finnhub",
-    "pulseSubYahoo": "أسعار متأخرة عبر Yahoo Finance",
+    "pulseSubYahoo": "أسعار متأخرة عبر Yahoo chart (unofficial)",
     "pulseSubTradingView": "{feed, select, live {أسعار مباشرة عبر TradingView} delayed {أسعار متأخرة عبر TradingView} other {أسعار الإغلاق عبر TradingView}}",
     "moversTitle": "الأكثر تحركاً",
     "moversSub": "أكبر تحركات اليوم",
@@ -262,8 +262,8 @@
   "YahooQuotes": {
     "changePercent": "٪ التغير",
     "unavailable": "الأسعار غير متاحة الآن.",
-    "source": "الأسعار بعملة {currency} عبر Yahoo Finance، متأخرة نحو ١٥ دقيقة.",
-    "sourceNoCurrency": "الأسعار عبر Yahoo Finance، متأخرة نحو ١٥ دقيقة."
+    "source": "الأسعار بعملة {currency} عبر Yahoo chart (unofficial)، متأخرة نحو ١٥ دقيقة.",
+    "sourceNoCurrency": "الأسعار عبر Yahoo chart (unofficial)، متأخرة نحو ١٥ دقيقة."
   },
   "TradingViewWidget": {
     "fullScreen": "ملء الشاشة",
@@ -297,62 +297,7 @@
     "companyNews": "أخبار الشركة",
     "marketNews": "أخبار السوق"
   },
-  "Emails": {
-    "common": {
-      "logoAlt": "شعار OpenStock",
-      "unsubscribe": "إلغاء الاشتراك",
-      "visitOpenstock": "زر OpenStock"
-    },
-    "welcome": {
-      "subject": "أهلًا بك في OpenStock، أدواتك مفتوحة المصدر لسوق الأسهم!",
-      "text": "شكرًا لانضمامك إلى OpenStock، مبادرة من Open Dev Society",
-      "title": "أهلًا بك في OpenStock",
-      "dashboardAlt": "معاينة لوحة OpenStock",
-      "heading": "أهلًا بك {name}",
-      "fallbackIntro": "شكرًا لانضمامك إلى OpenStock. أصبحت لديك الأدوات لمتابعة الأسواق واتخاذ قرارات أذكى.",
-      "featuresLabel": "إليك ما يمكنك فعله الآن:",
-      "featureWatchlist": "أنشئ قائمة متابعة لتتابع أسهمك المفضلة",
-      "featureSearch": "ابحث عن أي سهم بـ ⌘K وافتحه في تبويب",
-      "featureDashboard": "استكشف لوحة الأسواق لترى الاتجاهات وآخر أخبار السوق",
-      "closing": "سنبقيك على اطلاع بالتحديثات والرؤى والتنبيهات في وقتها، لتركّز على اتخاذ القرار الصحيح.",
-      "cta": "اذهب إلى لوحة الأسواق",
-      "initiative": "مبادرة من Open Dev Society"
-    },
-    "resetPassword": {
-      "subject": "أعد تعيين كلمة مرور OpenStock",
-      "heading": "أعد تعيين كلمة المرور",
-      "greeting": "مرحبًا {name}،",
-      "greetingNoName": "مرحبًا،",
-      "body": "وصلنا طلب لإعادة تعيين كلمة مرور OpenStock الخاصة بك. استخدم الزر أدناه لاختيار كلمة مرور جديدة.",
-      "cta": "استعادة كلمة المرور",
-      "ignore": "إن لم تطلب ذلك، يمكنك تجاهل هذه الرسالة بأمان.",
-      "text": "أعد تعيين كلمة المرور: {url}"
-    },
-    "stockAlert": {
-      "subjectAbove": "🔔 تنبيه سعر: {symbol} فوق ⁦{target}⁩",
-      "subjectBelow": "🔔 تنبيه سعر: {symbol} تحت ⁦{target}⁩",
-      "textAbove": "{symbol} الآن عند ⁦{price}⁩، فوق هدفك ⁦{target}⁩.",
-      "textBelow": "{symbol} الآن عند ⁦{price}⁩، تحت هدفك ⁦{target}⁩.",
-      "titleAbove": "تنبيه سعر: {symbol} بلغ الهدف الأعلى",
-      "titleBelow": "تنبيه سعر: {symbol} بلغ الهدف الأدنى",
-      "headingAbove": "📈 تجاوز السعر الهدف",
-      "headingBelow": "📉 نزل السعر تحت الهدف",
-      "currentPrice": "السعر الحالي",
-      "details": "تفاصيل التنبيه",
-      "targetPriceLabel": "السعر المستهدف:",
-      "triggerLabel": "سبب التنبيه:",
-      "triggerAbove": "تجاوز السعر حدك الأعلى ⁦{target}⁩",
-      "triggerBelow": "نزل السعر تحت حدك الأدنى ⁦{target}⁩",
-      "calloutTitleAbove": "فرصة!",
-      "calloutBodyAbove": "بلغ {symbol} سعرك المستهدف! قد يكون وقتًا مناسبًا لمراجعة مركزك والتفكير في جني الأرباح أو تعديل خطتك.",
-      "calloutTitleBelow": "انخفض السعر",
-      "calloutBodyBelow": "نزل {symbol} تحت سعرك المستهدف. قد يكون وقتًا مناسبًا للشراء.",
-      "cta": "افتح لوحة الأسواق",
-      "footer": "تصلك هذه الرسالة لأنك مشترك في تحديثات أخبار OpenStock."
-    }
-  },
   "Sidebar": {
-    "homeAria": "لوحة OpenStock",
     "searchStocks": "ابحث عن الأسهم",
     "overview": "نظرة عامة",
     "watchlist": "قائمة المتابعة",
@@ -364,11 +309,6 @@
       "about": "عن التطبيق",
       "terms": "الشروط"
     },
-    "support": "ادعم OpenStock",
-    "sponsor": "راعي",
-    "sponsorSlotsOpen": "أماكن الرعاة متاحة",
-    "sponsorSlotsLeft": "{count, plural, one {بقي مكان رعاية واحد} two {بقي مكانا رعاية} few {بقيت # أماكن رعاية} many {بقي # مكانًا للرعاية} other {بقي # مكان رعاية}}",
-    "sponsorPitch": "اجعل شركتك أمام كل مستخدمي OpenStock.",
     "signOut": "تسجيل الخروج"
   },
   "TabBar": {
@@ -404,16 +344,6 @@
     "seeWhatsNew": "شاهد الجديد",
     "fullChangelog": "اقرأ سجل التغييرات كاملاً"
   },
-  "DonatePopup": {
-    "kicker": "الباب مفتوح للرعاة",
-    "title": "خلّ OpenStock مجانياً",
-    "description": "دعمكم لـ OpenStock و‏Open Dev Society ساعدنا على النمو، ووصلنا الآن إلى حدود الطبقة المجانية في Vercel. ارعَنا من ٥ دولارات شهرياً، أو تبرّع مرة واحدة، أو تحدّث معنا عن شراكة.",
-    "becomeSponsor": "كن راعياً",
-    "maybeLater": "لاحقاً"
-  },
-  "OpenDevSocietyBranding": {
-    "initiativeBy": "مبادرة من"
-  },
   "StockPage": {
     "sentimentTitle": "المعنويات",
     "sentimentSub": "ريديت و X والأخبار وبوليماركت",
@@ -431,7 +361,7 @@
     "profileSub": "ماذا تفعل الشركة"
   },
   "StockHeader": {
-    "quoteViaYahoo": "سعر متأخر عبر Yahoo Finance",
+    "quoteViaYahoo": "سعر متأخر عبر Yahoo chart (unofficial)",
     "quoteViaTradingView": "السعر عبر TradingView",
     "alertsHint": "تنبيهات الأسعار تحتاج مصدر أسعار نتحقق منه كل ٥ دقائق",
     "alertsScope": "التنبيهات: الأسهم الأمريكية والعملات الرقمية",

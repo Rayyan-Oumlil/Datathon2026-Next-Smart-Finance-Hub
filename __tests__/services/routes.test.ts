@@ -41,6 +41,23 @@ describe('routes', () => {
         expect((await TRADE(request('POST', { symbol: 'AAPL', side: 'buy', origin: 'rule', amountCad: 1 }))).status).toBe(400);
     });
 
+    it('POST /api/trade accepts only card trades: an agent origin is refused', async () => {
+        await POST(request('POST', { answers: answers() }));
+        const refused = await TRADE(request('POST', { symbol: 'AAPL', side: 'buy', origin: 'agent', amountCad: 142 }));
+        expect(refused.status).toBe(400);
+        expect(await refused.json()).toEqual({ error: 'origin: not one of the accepted values' });
+        const done = await (await TRADE(request('POST', { symbol: 'AAPL', side: 'buy', amountCad: 142, acknowledgeConflict: true }))).json();
+        expect(done.trade.origin).toBe('card');
+    });
+
+    it('PATCH /api/profile refuses a risk override above the cap with the answer that limits it', async () => {
+        await POST(request('POST', { answers: { ...answers(), drop20: 'sell' } }));
+        const refused = await PATCH(request('PATCH', { risk: 'High' }));
+        expect(refused.status).toBe(400);
+        expect(await refused.json()).toEqual({ error: 'High is not available: you answered "reduce my position" to the 20% drop question, which limits the risk profile to Medium.' });
+        expect(containsNeverWord('High is not available: you answered "reduce my position" to the 20% drop question, which limits the risk profile to Medium.')).toBe(false);
+    });
+
     it('answers a value outside a fixed list without quoting the list, which holds words the app never shows', async () => {
         const refused = await TRADE(request('POST', { symbol: 'AAPL', side: 'hold', amountCad: 1 }));
         expect(refused.status).toBe(400);

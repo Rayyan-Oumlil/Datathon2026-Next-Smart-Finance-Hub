@@ -77,6 +77,15 @@ describe('selectCandidates', () => {
         expect(canada).not.toContain('DIV.TO'); // not blue-chip, and its theme was not picked
     });
 
+    it('ESG alone is "no preference": every stock and ETF of the picked market (the ESG filter decides later)', () => {
+        expect(symbols({ markets: 'US', themes: ['ESG'] })).toEqual(symbols({ markets: 'US' }));
+        expect(symbols({ markets: 'Canada', themes: [' esg '] })).toEqual(symbols({ markets: 'Canada' }));
+    });
+
+    it('ESG beside another theme selects only by the other theme', () => {
+        expect(symbols({ markets: 'US', themes: ['ESG', 'AI'] })).toEqual(symbols({ markets: 'US', themes: ['AI'] }));
+    });
+
     it('does not depend on the order of the universe', () => {
         const picked = profile('Intermediate', 'Medium', { markets: 'global', sectors: ['Financials'], brands: ['SOFT'] });
         expect(selectCandidates(shuffled(universe), picked)).toEqual(selectCandidates(universe, picked));

@@ -8,7 +8,8 @@ const schema = z.object({
     side: z.enum(['buy', 'sell']),
     amountCad: z.number().positive().optional(),
     quantity: z.number().positive().optional(),
-    origin: z.enum(['card', 'agent']).default('card'),
+    // Only a card trade comes through this public route; the agent router and the rules engine call the service directly
+    origin: z.enum(['card']).default('card'),
     acknowledgeConflict: z.boolean().optional(),
 });
 

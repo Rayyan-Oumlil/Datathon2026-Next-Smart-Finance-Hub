@@ -231,7 +231,7 @@
     "sub": "{market} · {status, select, open {open now} other {closed now}} · {feed, select, live {live data} delayed {delayed data} other {end of day data}}",
     "pulseTitle": "Pulse",
     "pulseSubFinnhub": "Our shared quotes via Finnhub",
-    "pulseSubYahoo": "Delayed quotes via Yahoo Finance",
+    "pulseSubYahoo": "Delayed quotes via Yahoo chart (unofficial)",
     "pulseSubTradingView": "{feed, select, live {Live quotes via TradingView} delayed {Delayed quotes via TradingView} other {End of day quotes via TradingView}}",
     "moversTitle": "Movers",
     "moversSub": "Biggest moves today",
@@ -262,8 +262,8 @@
   "YahooQuotes": {
     "changePercent": "Change %",
     "unavailable": "Quotes unavailable right now.",
-    "source": "Prices in {currency} via Yahoo Finance, delayed about 15 minutes.",
-    "sourceNoCurrency": "Prices via Yahoo Finance, delayed about 15 minutes."
+    "source": "Prices in {currency} via Yahoo chart (unofficial), delayed about 15 minutes.",
+    "sourceNoCurrency": "Prices via Yahoo chart (unofficial), delayed about 15 minutes."
   },
   "TradingViewWidget": {
     "fullScreen": "Full screen",
@@ -297,62 +297,7 @@
     "companyNews": "Company News",
     "marketNews": "Market News"
   },
-  "Emails": {
-    "common": {
-      "logoAlt": "OpenStock Logo",
-      "unsubscribe": "Unsubscribe",
-      "visitOpenstock": "Visit OpenStock"
-    },
-    "welcome": {
-      "subject": "Welcome to Openstock - your open-source stock market toolkit!",
-      "text": "Thanks for joining Openstock, an initiative by open dev society",
-      "title": "Welcome to OpenStock",
-      "dashboardAlt": "OpenStock Dashboard Preview",
-      "heading": "Welcome aboard {name}",
-      "fallbackIntro": "Thanks for joining Openstock. You now have the tools to track markets and make smarter moves.",
-      "featuresLabel": "Here's what you can do right now:",
-      "featureWatchlist": "Set up your watchlist to follow your favorite stocks",
-      "featureSearch": "Search any stock with ⌘K and open it as a tab",
-      "featureDashboard": "Explore the dashboard for trends and the latest market news",
-      "closing": "We'll keep you informed with timely updates, insights, and alerts — so you can focus on making the right calls.",
-      "cta": "Go to Dashboard",
-      "initiative": "Initiative by Open Dev Society"
-    },
-    "resetPassword": {
-      "subject": "Reset your Openstock password",
-      "heading": "Reset your password",
-      "greeting": "Hi {name},",
-      "greetingNoName": "Hi there,",
-      "body": "We received a request to reset your Openstock password. Use the button below to choose a new one.",
-      "cta": "Reset password",
-      "ignore": "If you did not request this, you can safely ignore this email.",
-      "text": "Reset your password: {url}"
-    },
-    "stockAlert": {
-      "subjectAbove": "🔔 Price Alert: {symbol} is above {target}",
-      "subjectBelow": "🔔 Price Alert: {symbol} is below {target}",
-      "textAbove": "{symbol} is now {price}, above your target of {target}.",
-      "textBelow": "{symbol} is now {price}, below your target of {target}.",
-      "titleAbove": "Price Alert: {symbol} Hit Upper Target",
-      "titleBelow": "Price Alert: {symbol} Hit Lower Target",
-      "headingAbove": "📈 Price Above Reached",
-      "headingBelow": "📉 Price Below Hit",
-      "currentPrice": "Current Price",
-      "details": "Alert Details",
-      "targetPriceLabel": "Target Price:",
-      "triggerLabel": "Trigger:",
-      "triggerAbove": "Price exceeded your upper threshold of {target}",
-      "triggerBelow": "Price dropped below your lower threshold of {target}",
-      "calloutTitleAbove": "Opportunity Alert!",
-      "calloutBodyAbove": "{symbol} has reached your target price! This could be a good time to review your position and consider taking profits or adjusting your strategy.",
-      "calloutTitleBelow": "Price Dropped",
-      "calloutBodyBelow": "{symbol} dropped below your target price. This might be a good time to buy.",
-      "cta": "View Dashboard",
-      "footer": "You're receiving this because you subscribed to Openstock news updates."
-    }
-  },
   "Sidebar": {
-    "homeAria": "OpenStock dashboard",
     "searchStocks": "Search stocks",
     "overview": "Overview",
     "watchlist": "Watchlist",
@@ -364,11 +309,6 @@
       "about": "About",
       "terms": "Terms"
     },
-    "support": "Support OpenStock",
-    "sponsor": "Sponsor",
-    "sponsorSlotsOpen": "Sponsor slots open",
-    "sponsorSlotsLeft": "{count, plural, one {# sponsor slot left} other {# sponsor slots left}}",
-    "sponsorPitch": "Put your company in front of every OpenStock user.",
     "signOut": "Sign out"
   },
   "TabBar": {
@@ -404,16 +344,6 @@
     "seeWhatsNew": "See what’s new",
     "fullChangelog": "Read the full changelog"
   },
-  "DonatePopup": {
-    "kicker": "Open for sponsors",
-    "title": "Keep OpenStock free",
-    "description": "Your love for OpenStock and Open Dev Society has helped us grow, and we're now hitting Vercel's free tier limits. Sponsor from $5 a month, give once, or talk with us about a partnership.",
-    "becomeSponsor": "Become a sponsor",
-    "maybeLater": "Maybe later"
-  },
-  "OpenDevSocietyBranding": {
-    "initiativeBy": "Initiative by"
-  },
   "StockPage": {
     "sentimentTitle": "Sentiment",
     "sentimentSub": "Reddit, X.com, news and Polymarket",
@@ -431,7 +361,7 @@
     "profileSub": "What the company does"
   },
   "StockHeader": {
-    "quoteViaYahoo": "delayed quote via Yahoo Finance",
+    "quoteViaYahoo": "delayed quote via Yahoo chart (unofficial)",
     "quoteViaTradingView": "quote via TradingView",
     "alertsHint": "Price alerts need a quote source we can check every 5 minutes",
     "alertsScope": "Alerts: US stocks and crypto",

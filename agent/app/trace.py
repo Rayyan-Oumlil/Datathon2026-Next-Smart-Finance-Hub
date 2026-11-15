@@ -32,12 +32,17 @@ class RequestTrace:
     log_table = None                                     # tests pass a fake table
 
     def log(self, step: str, actor: str | None = None, **fields) -> None:
-        """Writes one action-log row. After a first failure the table is left alone for this request."""
-        if self.log_errors:
-            return
+        """Writes one action-log row, retrying a failed write once. A row that still fails is recorded in
+        log_errors (the response then says logComplete: false) and the next rows are still tried."""
         row = action_log.build_row(self.user_id, self.action_id, step, actor or current_actor(),
                                    promptVersion=config.PROMPT_VERSION, **fields)
-        error = action_log.write(row, self.log_table)
+        first = action_log.write(row, self.log_table)
+        error = first
+        if first:
+            # Same row id: if the first put did land, the append-only condition refuses the second one.
+            error = action_log.write(row, self.log_table)
+            if error and "ConditionalCheckFailed" in error and "ConditionalCheckFailed" not in first:
+                error = None
         if error:
             self.log_errors.append(error)
         else:

@@ -25,7 +25,7 @@ const Sidebar = ({ user }: SidebarProps) => {
 
     return (
         <aside className="sidebar">
-            <Link href="/portfolio" className="px-2 pt-1 pb-2 text-[19px] font-bold tracking-[-0.03em] text-foreground" aria-label={t('homeAria')}>
+            <Link href="/portfolio" className="px-2 pt-1 pb-2 text-[19px] font-bold tracking-[-0.03em] text-foreground" aria-label="AlphaForge portfolio">
                 Alpha<span className="text-brand-ink">Forge</span>
             </Link>
 

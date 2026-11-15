@@ -40,10 +40,15 @@ Response (`AgentReply` plus a trace):
   "proposed": { "type": "rule_create", "summary": "…", "params": { … }, "needsConfirm": true },   // optional
   "conflict": { "symbol": "TSLA", "checks": [ … FilterCheck … ] },                                 // optional
   "refused": false,
-  "promptVersion": "p1",
-  "modelCalls": [{ "actor": "orchestrator", "modelId": "…", "awsRequestId": "…", "inputTokens": 0, "outputTokens": 0 }]
+  "promptVersion": "p2",
+  "modelCalls": [{ "actor": "orchestrator", "modelId": "…", "awsRequestId": "…", "inputTokens": 0, "outputTokens": 0 }],
+  "logComplete": true
 }
 ```
+
+`logComplete` is `false` when a row of this request could not be written to the agent action log, even after one retry. The reply is still returned (the demo stays available) and the later rows are still tried; the errors are in `trace.logErrors`. The web app passes `logComplete` on in its `/api/agent` response and records it as `agentLogComplete` in its own `result` row.
+
+`/api/agent` (the web app's own route) accepts 10 requests a minute for the demo user, since each one costs several model calls. Over the limit it answers `429` with `{ "error": "Too many requests. Wait a minute and try again." }`.
 
 The agent service never applies anything. `proposed` is a request; the web app's action router checks it against the whitelist, shows a before/after preview, and applies it only after the user confirms.
 
@@ -70,11 +75,17 @@ Base URL `WEB_INTERNAL_URL` (default `http://localhost:3000`). Every call sends 
 | `/api/internal/tools/explain-pick` | `{ symbol }` | `{ listed: boolean, pick?: Pick, rejected?: FilterCheck[], snapshotId, computedAt, ruleVersions }` from the decision log | Watchlist explainer |
 | `/api/internal/tools/portfolio` | `{}` | `{ portfolio: Portfolio, valueCad: Sourced, positions: [{ …Position, price: Sourced, valueCad, returnPct }], bySector, simulated: true }` | Portfolio |
 | `/api/internal/tools/portfolio-stats` | `{ metric: "return" | "drawdown" | "correlation", symbols?: string[], period: "1m" | "3m" | "1y" }` | `{ metric, period, result, method, sources: Sourced[] }` | Portfolio |
-| `/api/internal/tools/conflict-check` | `{ symbol }` | `{ symbol, conflicts: FilterCheck[], signals: SignalSet, level, risk }` | orchestrator |
+| `/api/internal/tools/conflict-check` | `{ symbol }` | `{ symbol, conflicts: FilterCheck[], sources: { volatility1y?, marketCapUsd?, avgDailyTradedValueUsd?, fxUsdCad?: Sourced }, level, risk }` (only the values behind the conflicts; the full signal set stays in the decision log) | orchestrator |
 | `/api/internal/tools/validate-rule` | `{ rule: { text, symbol, trigger, action, once } }` | `{ ok: boolean, rule?: InvestmentRule, errors?: string[], currentPrice?: Sourced }` | Rules |
 | `/api/internal/tools/rules` | `{}` | `{ rules: InvestmentRule[] }` | Rules |
 | `/api/internal/tools/layout` | `{}` | `{ current: string[], library: [{ id, title, fixed: boolean, minLevel? }] }` | Layout |
 | `/api/internal/tools/profile-preview` | `{ changes }` | `{ before: { level, risk }, after: { level, risk }, levelResult, riskResult }` | Profile |
+
+The orchestrator holds no data tools. Its `check_profile_conflict` tool calls `conflict-check` and gives the model only `{ symbol, conflicts, level, risk }`; each conflict keeps its `detail` text, `value` and `limit`. The full response, `sources` included, is kept in plain code so the reply's `sources` list still cites the source and time of each conflict's value.
+
+Only the tool results of the request and the `context` the web app built count as grounding for a figure, in the numbers check and in the Bedrock Guardrail's grounding source. The client-supplied `history` and `message` do not.
+
+The layout library holds only the modules the Portfolio tab draws from the saved layout: `total_value` (fixed), `performance`, `holdings`, `sector_allocation`, `investment_rules`. A saved layout that still holds an id no longer in the library is cleaned on read.
 
 The glossary is read by the agent service itself: from the Bedrock Knowledge Base when `KNOWLEDGE_BASE_ID` is set, otherwise from the markdown files in `agent/glossary/`. Either way the answer quotes the document and cites its location.
 

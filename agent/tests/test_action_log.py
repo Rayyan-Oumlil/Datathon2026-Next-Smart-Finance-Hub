@@ -39,13 +39,48 @@ def test_the_writer_has_no_update_or_delete_path():
 
 def test_unreachable_table_does_not_raise_and_is_recorded(capsys):
     class Broken:
+        calls = 0
+
         def put_item(self, **_):
+            Broken.calls += 1
             raise ConnectionError("table unreachable")
 
     request = trace.RequestTrace(action_id="act_1", user_id="u", message="m", context={})
     request.log_table = Broken()
     request.log("prompt_built", "writer")
-    request.log("tool_call", "writer")            # no second attempt after a failure
-    assert request.log_rows == 0 and len(request.log_errors) == 1
+    request.log("tool_call", "writer")            # later rows are still tried after a failure
+    assert Broken.calls == 4                      # each row: one write and one retry
+    assert request.log_rows == 0 and len(request.log_errors) == 2
     assert "table unreachable" in request.log_errors[0]
     assert "action log write failed" in capsys.readouterr().err
+
+
+def test_a_failed_write_is_retried_once(table):
+    class Flaky:
+        failures = 1
+
+        def put_item(self, **kwargs):
+            if Flaky.failures:
+                Flaky.failures -= 1
+                raise ConnectionError("timeout")
+            table.put_item(**kwargs)
+
+    request = trace.RequestTrace(action_id="act_1", user_id="u", message="m", context={})
+    request.log_table = Flaky()
+    request.log("prompt_built", "writer")
+    request.log("tool_call", "writer")
+    assert request.log_rows == 2 and request.log_errors == [] and len(table.items) == 2
+
+
+def test_a_retry_refused_because_the_first_put_landed_counts_as_written(table):
+    class LostReply:
+        def put_item(self, **kwargs):
+            if not table.calls:
+                table.put_item(**kwargs)          # the row is written, but the answer is lost
+                raise ConnectionError("read timeout")
+            table.put_item(**kwargs)
+
+    request = trace.RequestTrace(action_id="act_1", user_id="u", message="m", context={})
+    request.log_table = LostReply()
+    request.log("prompt_built", "writer")
+    assert request.log_rows == 1 and request.log_errors == [] and len(table.items) == 1

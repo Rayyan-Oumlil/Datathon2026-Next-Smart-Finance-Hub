@@ -33,6 +33,22 @@ describe('profile service', () => {
         expect((await editProfile({ level: null })).profile).toMatchObject({ level: 'Intermediate', levelOverridden: false });
     });
 
+    it('refuses a risk override above the cap, in the preview and the edit, and saves nothing', async () => {
+        await saveOnboarding(answers({ drop20: 'sell' }));
+        const message = 'High is not available: you answered "reduce my position" to the 20% drop question, which limits the risk profile to Medium.';
+        await expect(previewProfileEdit({ risk: 'High' })).rejects.toMatchObject({ status: 400, message });
+        await expect(editProfile({ risk: 'High' })).rejects.toMatchObject({ status: 400, message });
+        expect(await listDecisions(DEMO_USER.id, { kind: 'profile_change' })).toHaveLength(1);
+        expect((await editProfile({ risk: 'Low' })).profile).toMatchObject({ risk: 'Low', riskOverridden: true });
+    });
+
+    it('refuses an answer edit that would put a stored High override above the cap', async () => {
+        await saveOnboarding(answers());
+        await editProfile({ risk: 'High' });
+        await expect(editProfile({ answers: { drop20: 'sell' } })).rejects.toMatchObject({ status: 400 });
+        expect((await editProfile({ risk: null, answers: { drop20: 'sell' } })).profile).toMatchObject({ risk: 'Medium', riskOverridden: false });
+    });
+
     it('previews without saving, and refuses an edit before onboarding', async () => {
         await expect(editProfile({ risk: 'Low' })).rejects.toMatchObject({ status: 404 });
         await saveOnboarding(answers());

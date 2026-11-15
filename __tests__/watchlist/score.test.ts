@@ -40,6 +40,11 @@ describe('score: profile fit', () => {
             detail: 'sector Information Technology was picked (+40); niche Semiconductors was picked (+20); theme dividends was picked (+20); on the brands list (+20): 100 of 100',
         });
     });
+    it('the ESG theme adds no points, even on an entry tagged with it', () => {
+        expect(fit({ themes: ['ESG'] }).score).toBe(0);
+        const tagged = signals('GREEN', { themes: ['ESG'] });
+        expect(score(tagged, profile('Expert', 'Medium', { themes: ['esg'] })).factors.profile_fit.score).toBe(0);
+    });
     it('an ETF has no sector to match', () => {
         const fund = signals('FUND', { assetClass: 'etf', sector: undefined, subIndustry: undefined, themes: ['dividends'] });
         expect(score(fund, profile('Expert', 'Medium', { sectors: [IT], themes: ['dividends'] })).factors.profile_fit.score).toBe(20);
@@ -140,32 +145,41 @@ describe('score: diversification', () => {
 
     it('an empty portfolio gives 100 to everything', () => {
         expect(diversification(signals('AAA'), EMPTY_HOLDINGS)).toEqual({
-            score: 100, detail: 'neither its sector (Information Technology) nor its asset class (stock) is in the simulated holdings: 100',
+            score: 100, detail: 'its sector Information Technology is not in the simulated holdings: 100',
         });
-        expect(diversification(etf, EMPTY_HOLDINGS).score).toBe(100);
+        expect(diversification(etf, EMPTY_HOLDINGS)).toEqual({ score: 100, detail: 'its asset class etf (no sector) is not in the simulated holdings: 100' });
     });
-    it('100 when neither the sector nor the asset class is held', () => {
+    it('100 for a stock whose sector is not held, even when other stocks are held', () => {
+        const held = holdings({ totalValueCad: 10000, bySector: { Energy: 1000 }, byAssetClass: { stock: 1000 }, symbols: ['OIL'] });
+        expect(diversification(signals('AAA'), held)).toEqual({ score: 100, detail: 'its sector Information Technology is not in the simulated holdings: 100' });
         expect(diversification(signals('AAA'), holdings({ totalValueCad: 10000, byAssetClass: { etf: 3000 }, symbols: ['FUND'] })).score).toBe(100);
-        expect(diversification(etf, holdings({ totalValueCad: 10000, bySector: { Energy: 3000 }, byAssetClass: { stock: 3000 }, symbols: ['OIL'] })).score).toBe(100);
+    });
+    it('a new sector scores above a held sector', () => {
+        const held = holdings({ totalValueCad: 10000, bySector: { Energy: 1000 }, byAssetClass: { stock: 1000 }, symbols: ['OIL'] });
+        const energy = signals('OIL2', { sector: 'Energy' });
+        expect(diversification(signals('AAA'), held).score).toBeGreaterThan(diversification(energy, held).score);
     });
     it('50 when the sector is held and is under 20% of the portfolio value', () => {
         const held = holdings({ totalValueCad: 10000, bySector: { [IT]: 1999 }, byAssetClass: { stock: 1999 }, symbols: ['MSFT'] });
-        expect(diversification(signals('AAA'), held)).toEqual({ score: 50, detail: 'Information Technology is held and is 19.99% of the portfolio value, under 20%: 50' });
+        expect(diversification(signals('AAA'), held)).toEqual({ score: 50, detail: 'its sector Information Technology is held and is 19.99% of the portfolio value, under 20%: 50' });
         expect(diversification(signals('AAA'), holdings({ totalValueCad: 10000, bySector: { [IT]: 1000 }, byAssetClass: { stock: 1000 } })).detail)
-            .toBe('Information Technology is held and is 10.0% of the portfolio value, under 20%: 50');
+            .toBe('its sector Information Technology is held and is 10.0% of the portfolio value, under 20%: 50');
     });
     it('0 when the sector is held at exactly 20% or more', () => {
         expect(diversification(signals('AAA'), holdings({ totalValueCad: 10000, bySector: { [IT]: 2000 }, byAssetClass: { stock: 2000 } })).score).toBe(0);
         expect(diversification(signals('AAA'), holdings({ totalValueCad: 10000, bySector: { [IT]: 6000 }, byAssetClass: { stock: 6000 } }))).toEqual({
-            score: 0, detail: 'Information Technology is held and is 60.0% of the portfolio value, not under 20%: 0',
+            score: 0, detail: 'its sector Information Technology is held and is 60.0% of the portfolio value, not under 20%: 0',
         });
     });
-    it('0 ("otherwise") when the sector is new but the asset class is already held', () => {
-        const held = holdings({ totalValueCad: 10000, bySector: { Energy: 1000 }, byAssetClass: { stock: 1000 }, symbols: ['OIL'] });
-        expect(diversification(signals('AAA'), held)).toEqual({ score: 0, detail: 'its sector (Information Technology) is not held but its asset class (stock) already is: 0' });
+    it('an asset with no sector takes the same steps with its asset class', () => {
+        expect(diversification(etf, holdings({ totalValueCad: 10000, bySector: { Energy: 3000 }, byAssetClass: { stock: 3000 }, symbols: ['OIL'] })).score).toBe(100);
+        expect(diversification(etf, holdings({ totalValueCad: 10000, byAssetClass: { etf: 500 }, symbols: ['SPX'] }))).toEqual({
+            score: 50, detail: 'its asset class etf (no sector) is held and is 5.0% of the portfolio value, under 20%: 50',
+        });
+        expect(diversification(etf, holdings({ totalValueCad: 10000, byAssetClass: { etf: 2000 }, symbols: ['SPX'] })).score).toBe(0);
     });
-    it('0 for an ETF when an ETF is already held', () => {
-        expect(diversification(etf, holdings({ totalValueCad: 10000, byAssetClass: { etf: 500 }, symbols: ['SPX'] })).score).toBe(0);
+    it('0 when the group is held but the portfolio value is not known', () => {
+        expect(diversification(signals('AAA'), holdings({ totalValueCad: 0, bySector: { [IT]: 100 }, byAssetClass: { stock: 100 } })).score).toBe(0);
     });
 });
 

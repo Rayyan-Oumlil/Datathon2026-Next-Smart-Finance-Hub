@@ -28,6 +28,7 @@ const replySchema = z.object({
     refused: z.boolean().default(false),
     promptVersion: z.string().optional(),
     modelCalls: z.array(z.record(z.string(), z.unknown())).default([]),
+    logComplete: z.boolean().optional(),      // false when a row of the agent service's action log could not be written
     error: z.string().optional(),
 });
 export type AgentServiceReply = z.infer<typeof replySchema>;

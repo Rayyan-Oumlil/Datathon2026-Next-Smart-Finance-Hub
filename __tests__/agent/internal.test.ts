@@ -52,6 +52,9 @@ describe('tools', () => {
         market.signals.AAPL = { volatility1y: sourced(0.6, { source: 'derived' }) };
         const body = await (await call(CONFLICT, { userId: DEMO_USER.id, symbol: 'aapl' }, TOKEN)).json();
         expect(body).toMatchObject({ symbol: 'AAPL', level: 'Intermediate', risk: 'Medium', conflicts: [{ filter: 'volatility', pass: false }] });
+        // Only the value behind the conflict comes back, with its source; the full signal set does not
+        expect(body).not.toHaveProperty('signals');
+        expect(body.sources).toEqual({ volatility1y: expect.objectContaining({ value: 0.6, source: 'derived' }) });
         const [row] = await listDecisions(DEMO_USER.id, { kind: 'profile_conflict' });
         expect(row).toMatchObject({ symbol: 'AAPL', payload: { origin: 'agent', actionId: 'act_test', proceeded: false } });
         expect(await (await call(CONFLICT, { userId: DEMO_USER.id, symbol: 'NOPE' }, TOKEN)).json()).toEqual({ error: expect.stringContaining('not in the app') });

@@ -52,16 +52,22 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
 export default async function StockHeader({ symbol }: { symbol: string }) {
     if (!hasFinnhubQuotes(symbol)) return <TradingViewHeader symbol={symbol} />;
 
-    const [quotes, profile, t] = await Promise.all([
+    const [quotes, profile, t, locale] = await Promise.all([
         getLiveQuotes([symbol]),
         getCompanyProfile(symbol),
         getTranslations('StockHeader'),
+        getLocale(),
     ]);
     const quote = quotes[symbol];
 
     const currency = profile?.currency || 'USD';
     const company = profile?.name || symbol;
     const money = (value?: number) => (value ? formatPrice(value, currency) : '—');
+
+    // Finnhub's t is the last trade in unix seconds; without it the page says so rather than showing a time
+    const quoteTime = quote?.t
+        ? new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(quote.t * 1000))
+        : 'time not given by the provider';
 
     const stats = [
         { label: t('open'), icon: CalendarClock, value: money(quote?.o), hint: t('openHint') },
@@ -82,7 +88,7 @@ export default async function StockHeader({ symbol }: { symbol: string }) {
                     <div className="min-w-0">
                         <h1 className="truncate text-xl font-bold tracking-[-0.03em]">{company}</h1>
                         <p className="mono truncate text-[12.5px] text-faint">
-                            {[symbol, profile?.exchange, profile?.finnhubIndustry].filter(Boolean).join(' · ')}
+                            {[symbol, profile?.exchange, profile?.finnhubIndustry && `Finnhub industry: ${profile.finnhubIndustry}`].filter(Boolean).join(' · ')}
                         </p>
                     </div>
                 </div>
@@ -100,6 +106,9 @@ export default async function StockHeader({ symbol }: { symbol: string }) {
                     </div>
                 ))}
             </div>
+            <p className="mt-2 text-[12px] text-faint">
+                Source: Finnhub · quote as of {quoteTime} · company profile fetched with the page
+            </p>
         </section>
     );
 }

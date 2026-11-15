@@ -1,8 +1,9 @@
 """The checks run in plain code on every reply, after the model answers.
 
 1. Never-words: the words of rules/v1.json (reasons.never_words) and their simple inflections.
-2. Grounded numbers: every figure in the reply must appear in a tool result of this request,
-   in the context or in the user's own messages.
+   Judgement words: the JUDGEMENT_WORDS below (judgement and prediction wording).
+2. Grounded numbers: every figure in the reply must appear in a tool result of this request
+   or in the context the web app built. Client-supplied history and the message do not count.
 3. Conflicts named: when the profile-conflict check found conflicts, their values must be in the reply.
 4. Bedrock ApplyGuardrail on the reply (word filter, denied topic, personal data, grounding).
 """
@@ -44,6 +45,44 @@ def find_never_words(text: str, words: list[str] | None = None) -> list[str]:
         for match in pattern.finditer(text):
             found.append(match.group(0).lower())
     return sorted(set(found))
+
+
+# Judgement and prediction wording. The Bedrock Guardrail's advice topic only detects, so this list and the
+# never-words are what fail a draft. The only list of these words; agent/app/prompts/_rules.md names them too.
+# "higher" and "lower" are not on it: "higher than the cap" is a comparison of two figures, not a judgement.
+JUDGEMENT_WORDS = [
+    "better", "best", "worse", "worst", "excellent", "great", "attractive", "undervalued", "overvalued", "cheap",
+    "expensive", "ideal", "suits", "suitable", "strong pick", "top pick", "promising", "bargain", "outperform",
+    "underperform", "will go up", "will go down", "will fall", "will drop", "likely to rise", "likely to fall",
+    "worth owning",
+]
+# Fixed phrases of market data that hold a listed word without judging anything.
+JUDGEMENT_EXEMPT_PHRASES = ["best ask", "best bid"]
+
+
+def _sentences(text: str) -> list[str]:
+    return [part.strip() for part in re.split(r"(?<=[.!?])\s+|\n+", text) if part.strip()]
+
+
+def _glossary_sentences() -> list[str]:
+    """Glossary sentences that hold a listed word: an exact quote of the vetted glossary is allowed."""
+    found = []
+    for path in sorted(config.glossary_dir().glob("*.md")):
+        for sentence in _sentences(path.read_text(encoding="utf-8")):
+            if find_never_words(sentence, JUDGEMENT_WORDS):
+                found.append(sentence)
+    return found
+
+
+def find_judgement_words(text: str) -> list[str]:
+    """The judgement words found in the text, whole words, any letter case. Exact glossary quotes and the
+    fixed market-data phrases are left out first."""
+    for sentence in _glossary_sentences():
+        text = text.replace(sentence, " ")
+    for phrase in JUDGEMENT_EXEMPT_PHRASES:
+        body = r"\s+".join(re.escape(part) for part in phrase.split())
+        text = re.sub(rf"(?<![\w]){body}(?![\w])", " ", text, flags=re.IGNORECASE)
+    return find_never_words(text, JUDGEMENT_WORDS)
 
 
 # ---------------------------------------------------------------- numbers
@@ -122,6 +161,7 @@ def unnamed_conflicts(reply: str, conflicts: list[dict]) -> list[str]:
 def own_check(reply: str, data, conflicts: list[dict]) -> dict:
     result = {
         "neverWords": find_never_words(reply),
+        "judgementWords": find_judgement_words(reply),
         "ungroundedNumbers": ungrounded_numbers(reply, data),
         "conflictsNotNamed": unnamed_conflicts(reply, conflicts),
         "empty": not reply.strip(),
@@ -197,6 +237,9 @@ def corrective_instruction(own: dict, guardrail: dict) -> str:
         problems.append(f"it was longer than {MAX_REPLY_CHARS} characters; make it much shorter")
     if own.get("neverWords"):
         problems.append("it used words that are not allowed: " + ", ".join(own["neverWords"]))
+    if own.get("judgementWords"):
+        problems.append("it used judgement or prediction wording that is not allowed: "
+                        + ", ".join(own["judgementWords"]))
     if own.get("ungroundedNumbers"):
         problems.append("these figures are not in any tool result of this request: "
                         + ", ".join(own["ungroundedNumbers"]))

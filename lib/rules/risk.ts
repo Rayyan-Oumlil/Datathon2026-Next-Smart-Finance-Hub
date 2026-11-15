@@ -4,16 +4,34 @@ import { RULES, type Rules } from '@/lib/rules';
 const RISK_ORDER: Risk[] = ['Low', 'Medium', 'High'];
 const SELF_RATED: Record<OnboardingAnswers['selfRating'], Risk> = { low: 'Low', medium: 'Medium', high: 'High' };
 
+const givenAnswers = (answers: OnboardingAnswers): Record<string, string> => ({
+    goal: answers.investingGoal,
+    echeance: answers.echeance,
+    drop_20pct: answers.drop20,
+    self_rating: answers.selfRating,
+});
+
+/**
+ * The caps apply to a risk chosen by hand too (risk.caps_apply_to_overrides). Returns the refusal in plain words
+ * when the chosen risk is above a cap that the answers trigger, otherwise undefined.
+ */
+export function overrideCapRefusal(chosen: Risk, answers: OnboardingAnswers, rules: Rules = RULES): string | undefined {
+    const given = givenAnswers(answers);
+    for (const cap of rules.risk.caps) {
+        const applies = Object.entries(cap.when).every(([question, answer]) => given[question] === answer);
+        const max = cap.max_risk as Risk;
+        if (applies && RISK_ORDER.indexOf(chosen) > RISK_ORDER.indexOf(max)) {
+            return `${chosen} is not available: ${cap.answer_shown}, which limits the risk profile to ${max}.`;
+        }
+    }
+    return undefined;
+}
+
 /** Risk rule: four questions scored 0-2, summed into bands, then the caps of the rules file. */
 export function computeRisk(answers: OnboardingAnswers, rules: Rules = RULES): RiskResult {
     const rule = rules.risk;
     // Keyed like the rules file, so a cap's "when" can be matched against the same names.
-    const given: Record<string, string> = {
-        goal: answers.investingGoal,
-        echeance: answers.echeance,
-        drop_20pct: answers.drop20,
-        self_rating: answers.selfRating,
-    };
+    const given = givenAnswers(answers);
     const breakdown: Record<string, number> = {
         goal: rule.points.goal[answers.investingGoal],
         echeance: rule.points.echeance[answers.echeance],

@@ -2,7 +2,7 @@
 
 A profile-aware stock quotes app with a traceable AI agent, built for a datathon on AI for investment decisions.
 
-**Simulation only.** The app places no real trades and gives no investment advice. Every number shows its source and the time it was fetched, and every suggestion can be traced back to the inputs and rule versions that produced it.
+**Simulation only.** The app places no real trades and gives no investment advice. Every number that enters the watchlist, the portfolio or an agent reply is stored with its source and the time it was fetched, and every suggestion can be traced back to the inputs and rule versions that produced it. The stock page inherited from OpenStock shows the provider and quote time under its figures; its charts are TradingView widgets.
 
 Built on [OpenStock](https://github.com/Open-Dev-Society/OpenStock) by Open Dev Society. Licence: AGPL-3.0, same as the original. See [Licence and credits](#licence-and-credits).
 
@@ -42,7 +42,7 @@ The agent service has no calculators of its own. Its tools call the web app's in
 | Who called which model and when | AWS CloudTrail (trail `datathon-llm-audit`, log file integrity validation on) |
 | The prompt and reply text of each model call | Bedrock model invocation logging, in S3 |
 
-The two logs have no update or delete path in the code, and the deployed task's IAM role has no `UpdateItem` or `DeleteItem` on them.
+How append-only is enforced: the code has no update or delete path for the two logs and writes every row with a condition that the id does not exist yet; the deployed task's IAM role has no `UpdateItem` or `DeleteItem` on them; and point-in-time recovery is on for the tables, so an earlier state can be restored and compared. IAM alone would not stop an unconditional overwrite, so the guarantee is these three together.
 
 To see one model call on the AWS side, take the `awsRequestId` from the Trace section of a reply in the agent panel and run:
 
@@ -115,9 +115,10 @@ Details, endpoints and terms of use are in [docs/data-sources.md](docs/data-sour
 - The Guardrail blocks the forbidden words and ungrounded replies. Its "investment advice" topic and relevance check only detect and log, because they refused correct factual replies when set to block.
 - Gold has no price: the only free source found (Yahoo futures) refused the calls.
 - Canadian stocks have no revenue-growth figure and no news count; the universe has no Canadian health-care names.
-- Saved layout and investment rules live in a file inside the web container and are lost when the task restarts. The profile, the logs and therefore the portfolio are in DynamoDB and persist.
+- Some state lives in a file inside the web container and is lost when the task restarts or is redeployed: the saved layout, investment rules, pins and dismissals, pending agent previews with their undo data, and the slow-moving state of the watchlist (which symbols were listed and since when). After a restart the next watchlist run starts without incumbents. The profile, both logs and therefore the portfolio are in DynamoDB and persist.
 - The interface is in English only. Privacy consent and legal disclaimers have not had a legal review.
-- The site has no sign-in and no rate limit on the agent route.
+- The site has no sign-in, runs over plain HTTP, and every visitor shares the one demo user. The agent route is limited to 10 requests a minute. Do not share the link widely; set a new `DEMO_USER_ID` before a presentation to start from a clean history.
+- Price alerts and the earnings calendar from the board are not built. The Overview tab has a fixed layout; only the Portfolio tab's modules can be rearranged.
 
 ## Licence and credits
 
