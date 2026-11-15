@@ -15,7 +15,7 @@ const synthesize = vi.mocked(synthesizeSpeech);
 const MP3 = Uint8Array.from([0xff, 0xfb, 0x90, 0x00]);
 
 const call = (body: unknown, headers: Record<string, string> = {}) =>
-    POST(new NextRequest('http://localhost/api/voice/speak', { method: 'POST', headers, body: typeof body === 'string' ? body : JSON.stringify(body) }));
+    POST(new NextRequest('http://localhost/api/voice/speak', { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: typeof body === 'string' ? body : JSON.stringify(body) }));
 
 beforeEach(() => {
     limited.mockReset().mockResolvedValue(false);
@@ -67,6 +67,31 @@ describe('POST /api/voice/speak', () => {
 
     it('refuses a body that is not JSON', async () => {
         expect((await call('not json')).status).toBe(400);
+    });
+
+    it('refuses a body that is not sent as JSON with a 415', async () => {
+        const response = await call({ text: 'Hello.' }, { 'content-type': 'text/plain;charset=UTF-8' });
+        expect(response.status).toBe(415);
+        expect(synthesize).not.toHaveBeenCalled();
+    });
+
+    it('refuses a body over 64 KB with a 413, before parsing it', async () => {
+        const response = await call(`{"text":"${'x'.repeat(70_000)}"}`);
+        expect(response.status).toBe(413);
+        expect(synthesize).not.toHaveBeenCalled();
+    });
+
+    it('counts the characters it will have read against an hourly budget', async () => {
+        await call({ text: 'An ETF is a fund.' });
+        const budget = limited.mock.calls.find(([key]) => String(key).startsWith('voice-speak-chars'));
+        expect(budget).toEqual([expect.stringContaining('voice-speak-chars'), 60_000, 3600, 'An ETF is a fund.'.length]);
+    });
+
+    it('refuses with a 429 when the character budget is spent, and does not call Polly', async () => {
+        limited.mockImplementation(async (key: string) => String(key).startsWith('voice-speak-chars'));
+        const response = await call({ text: 'Hello.' });
+        expect(response.status).toBe(429);
+        expect(synthesize).not.toHaveBeenCalled();
     });
 
     it('is rate limited, with the message in the request language', async () => {

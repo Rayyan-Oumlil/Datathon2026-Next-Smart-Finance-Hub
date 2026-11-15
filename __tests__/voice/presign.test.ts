@@ -36,6 +36,10 @@ describe('presignTranscribeUrl', () => {
         expect(make({ language: 'en-US' })).not.toBe(make());
     });
 
+    it('refuses a region that is not an AWS region name', () => {
+        expect(() => make({ region: 'x.evil.com/#' })).toThrow(/region/i);
+    });
+
     it('omits the token parameter for long-lived credentials', () => {
         const url = new URL(make({ credentials: { accessKeyId: 'AKIDEXAMPLE', secretAccessKey: 'secret' } }));
         expect(url.searchParams.has('X-Amz-Security-Token')).toBe(false);

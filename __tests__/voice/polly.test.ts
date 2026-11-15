@@ -40,6 +40,12 @@ describe('buildPollyRequest', () => {
         expect(make({ text: 'Different text.' }).headers.Authorization).not.toBe(make().headers.Authorization);
     });
 
+    it('refuses a region that is not an AWS region name, so the signed request cannot be sent elsewhere', () => {
+        expect(() => make({ region: 'x.evil.com/#' })).toThrow(/region/i);
+        expect(() => make({ region: '' })).toThrow(/region/i);
+        expect(() => make({ region: 'us-east-1.evil.com' })).toThrow(/region/i);
+    });
+
     it('never puts the secret key in a header or the body', () => {
         const request = make();
         expect(JSON.stringify(request)).not.toContain('wJalrXUtnFEMI');
@@ -57,8 +63,18 @@ describe('synthesizeSpeech', () => {
         expect(fetchMock).toHaveBeenCalledWith('https://polly.us-east-1.amazonaws.com/v1/speech', expect.objectContaining({ method: 'POST' }));
     });
 
-    it('throws with the service status and message when Polly refuses', async () => {
-        vi.stubGlobal('fetch', vi.fn(async () => new Response('{"message":"not authorized"}', { status: 403 })));
-        await expect(synthesizeSpeech({ credentials, region: 'us-east-1', text: 'Hi.', locale: 'en', now })).rejects.toThrow(/Polly 403.*not authorized/);
+    it('throws with the status and error type when Polly refuses, and keeps the response body out of the message', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => new Response('{"message":"User arn:aws:sts::891377108451:assumed-role/x is not authorized"}', { status: 403, headers: { 'x-amzn-errortype': 'AccessDeniedException:http://internal.amazon.com/' } })));
+        const error = await synthesizeSpeech({ credentials, region: 'us-east-1', text: 'Hi.', locale: 'en', now }).then(() => new Error('did not throw'), (e: unknown) => e as Error);
+        expect(error.message).toBe('Polly 403 AccessDeniedException');
+    });
+
+    it('gives up after a timeout and refuses redirects, so a hung or redirected call cannot hold or leak the request', async () => {
+        const fetchMock = vi.fn(async () => new Response(Uint8Array.from([1]), { status: 200 }));
+        vi.stubGlobal('fetch', fetchMock);
+        await synthesizeSpeech({ credentials, region: 'us-east-1', text: 'Hi.', locale: 'en', now });
+        const options = (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1];
+        expect(options.redirect).toBe('error');
+        expect(options.signal).toBeInstanceOf(AbortSignal);
     });
 });

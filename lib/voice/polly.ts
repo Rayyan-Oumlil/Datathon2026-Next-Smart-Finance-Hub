@@ -1,10 +1,11 @@
 import type { Locale } from '@/i18n/config';
-import { amzStamp, sha256Hex, signature, signingKey, type SigningCredentials } from './sigv4';
+import { amzStamp, assertRegion, sha256Hex, signature, signingKey, type SigningCredentials } from './sigv4';
 
 // Amazon Polly text-to-speech over its REST API, signed with SigV4 headers. Written out here (as the Transcribe URL
 // is) so voice needs no extra AWS package.
 
 const SERVICE = 'polly';
+const TIMEOUT_MS = 10_000;
 
 // Neural voices: Joanna for English, Gabrielle for Canadian French
 const VOICES: Record<Locale, { voiceId: string; languageCode: string }> = {
@@ -17,7 +18,7 @@ export type PollyRequest = { url: string; headers: Record<string, string>; body:
 export type PollyInput = { credentials: SigningCredentials; region: string; text: string; locale: Locale; now?: Date };
 
 export function buildPollyRequest({ credentials, region, text, locale, now = new Date() }: PollyInput): PollyRequest {
-    const host = `polly.${region}.amazonaws.com`;
+    const host = `polly.${assertRegion(region)}.amazonaws.com`;
     const { stamp, day } = amzStamp(now);
     const voice = VOICES[locale];
     const body = JSON.stringify({ Engine: 'neural', LanguageCode: voice.languageCode, OutputFormat: 'mp3', Text: text, TextType: 'text', VoiceId: voice.voiceId });
@@ -47,10 +48,23 @@ export function buildPollyRequest({ credentials, region, text, locale, now = new
     };
 }
 
-/** The spoken text as MP3 bytes. A refusal from Polly throws with its own message (for the server log, not the user). */
+/**
+ * The spoken text as MP3 bytes. A refusal from Polly throws with its status and error type only (for the server log):
+ * the response body can carry account and role names. A call that hangs is cut off, and a redirect is an error, so
+ * the signed request is never sent anywhere else.
+ */
 export async function synthesizeSpeech(input: PollyInput): Promise<Uint8Array<ArrayBuffer>> {
     const request = buildPollyRequest(input);
-    const response = await fetch(request.url, { method: 'POST', headers: request.headers, body: request.body });
-    if (!response.ok) throw new Error(`Polly ${response.status}: ${(await response.text()).slice(0, 200)}`);
+    const response = await fetch(request.url, {
+        method: 'POST',
+        headers: request.headers,
+        body: request.body,
+        redirect: 'error',
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!response.ok) {
+        const type = (response.headers.get('x-amzn-errortype') ?? '').split(':')[0];
+        throw new Error(`Polly ${response.status}${type ? ` ${type}` : ''}`);
+    }
     return new Uint8Array(await response.arrayBuffer());
 }

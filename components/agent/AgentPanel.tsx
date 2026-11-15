@@ -252,7 +252,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
     const withBase = (text: string) => [voiceBase.current, text].filter(Boolean).join(' ').slice(0, 2000);
     const voice = useVoiceInput({
         enabled: open,
-        onStart: () => { speechRef.current.stop(); voiceBase.current = draft.trim(); },
+        onStart: () => { speechRef.current.stop(); speechRef.current.prime(); voiceBase.current = draft.trim(); },
         onText: (text) => setDraft(withBase(text)),
         // A reply still being written must not swallow the question: keep it in the box instead
         onFinal: (text) => { if (waiting) setDraft(withBase(text)); else void send(withBase(text), true); },
@@ -265,24 +265,31 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
     const patch = (id: string, change: Partial<Message>) => setMessages((list) => list.map((message) => (message.id === id ? { ...message, ...change } : message)));
     const notice = (text: string) => setMessages((list) => [...list, { id: newId(), role: 'assistant', text, failed: true }]);
 
+    // Bumped when the conversation is started over: a reply to a question of the old conversation is then dropped
+    const conversationRun = useRef(0);
+
     const send = async (text: string, viaVoice = false) => {
         const message = text.trim();
         if (!message || waiting) return;
+        speechRef.current.stop();
+        const ticket = speechRef.current.ticket();
+        const run = conversationRun.current;
         const history = messages.filter((m) => !m.failed).slice(-HISTORY_TURNS).map(({ role, text: turn }) => ({ role, text: turn }));
         setMessages((list) => [...list, { id: newId(), role: 'user', text: message }]);
         setDraft('');
         setWaiting(true);
         try {
             const reply = await post<Reply & { text: string; proposed?: { type: string } }>('/api/agent', { message, history, conversationId }, t('errors.request'));
+            if (run !== conversationRun.current) return;
             setMessages((list) => [...list, {
                 id: newId(), role: 'assistant', text: reply.text, change: reply.preview ? 'pending' : undefined,
                 reply: { actionId: reply.actionId, sources: reply.sources ?? [], refused: reply.refused, notice: reply.notice, conflict: reply.conflict, preview: reply.preview, proposedType: reply.proposed?.type },
             }]);
-            if (viaVoice && !speechRef.current.muted) void speechRef.current.speak(reply.text);
+            if (viaVoice && !speechRef.current.muted && !voiceRef.current.active) void speechRef.current.speak(reply.text, ticket);
         } catch (error) {
-            notice(error instanceof Error ? error.message : t('errors.request'));
+            if (run === conversationRun.current) notice(error instanceof Error ? error.message : t('errors.request'));
         } finally {
-            setWaiting(false);
+            if (run === conversationRun.current) setWaiting(false);
         }
     };
 
@@ -330,6 +337,8 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
 
     const reset = () => {
         speechRef.current.stop();
+        conversationRun.current += 1;
+        setWaiting(false);
         setMessages([]);
         setConversationId(newId());
     };

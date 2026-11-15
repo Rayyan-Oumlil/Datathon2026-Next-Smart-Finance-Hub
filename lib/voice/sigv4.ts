@@ -21,6 +21,12 @@ export const amzStamp = (now: Date): { stamp: string; day: string } => {
     return { stamp, day: stamp.slice(0, 8) };
 };
 
+/** The region becomes part of a host name that gets a signed request, so it must look like an AWS region name. */
+export const assertRegion = (region: string): string => {
+    if (!/^[a-z]{2}(?:-[a-z]+)+-\d$/.test(region)) throw new Error(`Not an AWS region name: "${region}"`);
+    return region;
+};
+
 /** RFC 3986 encoding: encodeURIComponent leaves !'()* alone, SigV4 does not. */
 export const rfc3986 = (value: string): string =>
     encodeURIComponent(value).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);

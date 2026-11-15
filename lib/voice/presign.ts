@@ -1,4 +1,4 @@
-import { amzStamp, rfc3986, sha256Hex, signature, signingKey, type SigningCredentials } from './sigv4';
+import { amzStamp, assertRegion, rfc3986, sha256Hex, signature, signingKey, type SigningCredentials } from './sigv4';
 
 // A SigV4 pre-signed URL for Amazon Transcribe streaming over a WebSocket. The browser opens it directly, so the
 // AWS credentials stay on the server and the URL is only good for a short time.
@@ -20,7 +20,7 @@ const PATH = '/stream-transcription-websocket';
 const EMPTY_PAYLOAD_HASH = sha256Hex('');
 
 export function presignTranscribeUrl({ credentials, region, language, sampleRate, now = new Date(), expiresIn = 300 }: PresignInput): string {
-    const host = `transcribestreaming.${region}.amazonaws.com:8443`;
+    const host = `transcribestreaming.${assertRegion(region)}.amazonaws.com:8443`;
     const { stamp, day } = amzStamp(now);
     const scope = `${day}/${region}/${SERVICE}/aws4_request`;
 
