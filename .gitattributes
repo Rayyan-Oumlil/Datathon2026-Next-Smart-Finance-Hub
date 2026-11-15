@@ -1,0 +1,3 @@
+# Replay data is hashed against manifest.json: never convert line endings (Windows autocrlf breaks the check)
+data/replay/** -text
+__tests__/replay/fixtures/** -text
