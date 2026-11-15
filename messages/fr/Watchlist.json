@@ -24,7 +24,6 @@
     "volatility": "Plafond de volatilité",
     "market_cap_floor": "Seuil de capitalisation boursière",
     "liquidity": "Valeur négociée par jour",
-    "esg": "Étiquette ESG (données de démonstration)",
     "novice": "Règle pour le niveau Novice",
     "low_risk_etf": "Règle pour les FNB à faible risque",
     "crypto_risk": "Règle pour les cryptomonnaies",
@@ -75,15 +74,6 @@
     "seed": "Sur votre liste de marques, et conforme à tous les filtres",
     "incumbent": "Déjà inscrit lors du calcul précédent",
     "new": "Nouveau dans ce calcul"
-  },
-  "esg": {
-    "screened": "évalué",
-    "not screened": "non évalué",
-    "controversy": "controverse"
-  },
-  "esgChip": {
-    "label": "ESG : {tag} · données de démonstration",
-    "title": "Étiquette saisie à la main, qui ne provient pas d’un fournisseur de données"
   },
   "source": {
     "line": "{source} · récupéré le {time}{hasProvider, select, true { · heure du fournisseur : {providerTime}} other {}}",
@@ -195,7 +185,7 @@
     "title": "Comment fonctionne le pointage",
     "intro": "Règles fixes ({version}), consignées dans un seul fichier de règles et exécutées comme du code ordinaire. Mêmes données, même liste. Il ne s’agit pas de conseils en placement.",
     "filtersHead": "1. Filtres.",
-    "filtersBody": " Un actif est exclu lorsqu’il échoue à une vérification de votre profil (liste d’exclusion, marchés, plafond de volatilité, seuil de capitalisation boursière, valeur négociée, étiquette ESG en données de démonstration).",
+    "filtersBody": " Un actif est exclu lorsqu’il échoue à une vérification de votre profil (liste d’exclusion, marchés, plafond de volatilité, seuil de capitalisation boursière, valeur négociée).",
     "scoreHead": "2. Pointage.",
     "scoreBody": " Chaque actif retenu reçoit quatre facteurs de 0 à 100, selon des pondérations fixes :",
     "total": "Le total correspond à {formula}.",
@@ -244,8 +234,6 @@
     "note": "Remarque",
     "stale": " · périmé",
     "missingInputs": "Non disponible auprès d’aucune source, et non remplacé par une valeur fictive : {list}.",
-    "esgTag": "Étiquette ESG : ",
-    "esgValue": "{tag} (données de démonstration, saisies à la main)",
     "niche": "Créneau : ",
     "listedFrom": "Inscrit à l’univers d’actifs depuis : ",
     "loadingInputs": "Chargement des valeurs d’entrée…",

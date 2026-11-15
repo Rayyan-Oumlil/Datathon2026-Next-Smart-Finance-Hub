@@ -54,7 +54,7 @@
         "canada_equity": "Actions canadiennes (fonds)",
         "us_equity": "Actions américaines (fonds)",
         "tech_equity": "Technologie (fonds)",
-        "esg_equity": "Actions ESG (fonds)",
+        "esg_equity": "Actions diversifiées (fonds)",
         "stock": "Action",
         "dividend_stock": "Action à dividendes",
         "gold": "Or",
@@ -70,7 +70,7 @@
     "rule": {
         "base": "Table de base",
         "crypto_high_only": "Crypto : profil Élevé seulement",
-        "esg": "Thème ESG",
+        "esg": "Vos thèmes",
         "markets_canada": "Canada seulement",
         "avoid": "Liste à éviter",
         "theme_ai": "Thème IA",
@@ -79,7 +79,7 @@
     "whyItem": {
         "base": "Poids de départ de {weight} % dans la table {version} pour un profil de risque {risk, select, Low {Faible} Medium {Moyen} High {Élevé} other {{risk}}}.",
         "crypto_removed": "Reçoit {points} points de {from} : la crypto est réservée au profil de risque Élevé.",
-        "esg_replaced": "Remplace {from} ({points} points) : vous avez choisi le thème ESG, alors {from} cède sa place à {to}.",
+        "esg_replaced": "Remplace {from} ({points} points) : selon les thèmes choisis, {from} cède sa place à {to}.",
         "canada_replaced": "Remplace {from} ({points} points) : marché Canada seulement, le fonds américain cède sa place à {to}, coté au Canada.",
         "canada_stock_moved": "Reçoit {points} points de {from} : marché Canada seulement, l’action américaine est retirée.",
         "canada_kept": "{symbol} est gardé : aucun fonds d’or coté au Canada dans l’univers de l’application.",

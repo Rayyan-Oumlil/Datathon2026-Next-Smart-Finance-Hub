@@ -10,9 +10,8 @@ export const FACTOR_KEYS: FactorKey[] = ['profile_fit', 'risk_fit', 'fundamental
 // Labels live in messages/<locale>/Watchlist.json; these helpers only pick the key.
 export type Translate = (key: string, values?: Record<string, string | number>) => string;
 
-const FILTER_KEYS = ['avoid_list', 'markets', 'volatility', 'market_cap_floor', 'liquidity', 'esg', 'novice', 'low_risk_etf', 'crypto_risk', 'data'];
+const FILTER_KEYS = ['avoid_list', 'markets', 'volatility', 'market_cap_floor', 'liquidity', 'novice', 'low_risk_etf', 'crypto_risk', 'data'];
 const ASSET_CLASSES = ['stock', 'etf', 'crypto', 'gold', 'bond_yield'];
-const ESG_TAGS = ['screened', 'not screened', 'controversy'];
 const KEPT_KEYS = ['seed', 'incumbent', 'new'];
 const RULE_IDS = ['momentum', 'news_flow', 'adanos_sentiment'];
 
@@ -20,7 +19,8 @@ export const factorLabel = (t: Translate, key: FactorKey) => t(`factors.long.${k
 export const factorShort = (t: Translate, key: FactorKey) => t(`factors.short.${key}`);
 /** An id the service sent is shown translated when it is known, as received otherwise. */
 export const filterLabel = (t: Translate, filter: string) => (FILTER_KEYS.includes(filter) ? t(`filters.${filter}`) : filter);
-export const esgLabel = (t: Translate, tag: string) => (ESG_TAGS.includes(tag) ? t(`esg.${tag}`) : tag);
+/** The profile checks shown to the visitor: the ESG check is not shown on any asset (its tag is demo data only). */
+export const shownChecks = <T extends { filter: string }>(checks: readonly T[]): T[] => checks.filter((check) => check.filter !== 'esg');
 export const keptLabel = (t: Translate, kept: string) => (KEPT_KEYS.includes(kept) ? t(`kept.${kept}`) : kept);
 export const ruleIdLabel = (t: Translate, id: string) => (RULE_IDS.includes(id) ? t(`ruleIds.${id}`) : id.replaceAll('_', ' '));
 export const marketLabel = (t: Translate, market: string) => (market === 'US' || market === 'Canada' ? t(`market.${market}`) : market);

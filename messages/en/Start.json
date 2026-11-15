@@ -54,7 +54,7 @@
         "canada_equity": "Canadian equities (fund)",
         "us_equity": "U.S. equities (fund)",
         "tech_equity": "Technology (fund)",
-        "esg_equity": "ESG equities (fund)",
+        "esg_equity": "Diversified equities (fund)",
         "stock": "Stock",
         "dividend_stock": "Dividend stock",
         "gold": "Gold",
@@ -70,7 +70,7 @@
     "rule": {
         "base": "Base table",
         "crypto_high_only": "Crypto: High profile only",
-        "esg": "ESG theme",
+        "esg": "Your themes",
         "markets_canada": "Canada only",
         "avoid": "Avoid list",
         "theme_ai": "AI theme",
@@ -79,7 +79,7 @@
     "whyItem": {
         "base": "Starting weight of {weight}% in table {version} for a {risk, select, Low {Low} Medium {Medium} High {High} other {{risk}}} risk profile.",
         "crypto_removed": "Receives {points} points from {from}: crypto is kept for the High risk profile.",
-        "esg_replaced": "Replaces {from} ({points} points): you picked the ESG theme, so {from} gives way to {to}.",
+        "esg_replaced": "Replaces {from} ({points} points): per the themes you picked, {from} gives way to {to}.",
         "canada_replaced": "Replaces {from} ({points} points): Canada only, the U.S. fund gives way to {to}, listed in Canada.",
         "canada_stock_moved": "Receives {points} points from {from}: Canada only, the U.S. stock is removed.",
         "canada_kept": "{symbol} is kept: no Canadian-listed gold fund in the app universe.",
