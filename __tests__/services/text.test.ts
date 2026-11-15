@@ -61,7 +61,12 @@ const SAMPLES: { [K in ServiceTextKey]: Array<ServiceParams<K>> } = {
     'svc.watchlist.no_run': [{}],
     'svc.watchlist.not_candidate': [{ symbol: 'ZZZ', count: 1234 }],
     'svc.watchlist.reference_card': [{ symbol: 'GOLD' }],
-    'svc.watchlist.not_selected': [{ symbol: 'MSFT', total: 58.7, picks: 10, level: 'Intermediate', maxPerSector: 2 }],
+    'svc.watchlist.not_selected': [{ symbol: 'MSFT', total: 58.7, picks: 10, level: 'Intermediate', maxPerSector: 2, margin: 5, minDays: 7 }],
+    'svc.watchlist.kept_out': [{ symbol: 'MSFT', total: 58.7, picks: 10, kept: [ref('svc.watchlist.kept_seed', { symbol: 'AAPL', total: 52 }), ref('svc.watchlist.kept_min_stay', { symbol: 'RY.TO', total: 55.1, days: 2, minDays: 7 })] }],
+    'svc.watchlist.kept_seed': [{ symbol: 'AAPL', total: 52 }],
+    'svc.watchlist.kept_min_stay': [{ symbol: 'RY.TO', total: 55.1, days: 1, minDays: 7 }, { symbol: 'RY.TO', total: 55.1, days: 3, minDays: 7 }],
+    'svc.watchlist.kept_margin': [{ symbol: 'ENB', total: 55.5, margin: 5, gap: 3.2 }],
+    'svc.watchlist.kept_incumbent': [{ symbol: 'ENB', total: 55.5, margin: 5, minDays: 7 }],
     'svc.trade.not_in_universe': [{ symbol: 'NOPE' }],
     'svc.trade.amount_or_quantity': [{}],
     'svc.trade.no_price': [{ symbol: 'AAPL' }],
@@ -235,6 +240,10 @@ describe('routes in French', () => {
         const why = await (await WHY(french('http://localhost/api/watchlist/why?symbol=BTC'))).json();
         expect(why.listed).toBe(false);
         expect(why.rejected.map((check: { detail: string }) => check.detail)).toContain(`les cryptomonnaies ne sont retenues que pour un profil de risque Élevé; le profil de risque est Moyen`);
+        // A listed pick comes with its filter checks too, same field as for a candidate, in the request language
+        const listed = await (await WHY(french('http://localhost/api/watchlist/why?symbol=AAPL'))).json();
+        expect(listed).toMatchObject({ listed: true, pick: { symbol: 'AAPL' }, candidate: { symbol: 'AAPL', passed: true } });
+        expect(listed.candidate.filters.find((check: { filter: string }) => check.filter === 'volatility')).toMatchObject({ pass: true, detail: expect.stringContaining('volatilité de 25,0') });
         expect((await explainSymbol('ZZZZ', 'fr')).note).toMatch(/^ZZZZ ne faisait pas partie des \d+ candidats de ce calcul/);
         const missing = await WHY(french('http://localhost/api/watchlist/why'));
         expect(await missing.json()).toEqual({ error: 'Indiquez un symbole.' });

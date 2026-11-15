@@ -264,3 +264,20 @@ def test_the_layout_tool_asks_for_titles_in_the_request_language(stub, current):
     web_tools.get_layout()
     assert stub.requests[-1]["body"] == {"locale": "fr", "userId": "demo-user"}
     assert trace.current().tool_results[-1]["endpoint"].endswith("/layout")
+
+
+# ---- conflict details
+
+def test_the_conflict_tool_asks_for_details_in_the_request_language(stub, current):
+    current.context = {**current.context, "locale": "fr"}
+    orchestrator.check_profile_conflict(symbol="TSLA")
+    assert stub.requests[-1]["body"] == {"symbol": "TSLA", "locale": "fr", "userId": "demo-user"}
+    current.context = {**current.context, "locale": "en"}
+    orchestrator.check_profile_conflict(symbol="TSLA")
+    assert stub.requests[-1]["body"]["locale"] == "en"
+
+
+def test_demo_data_is_named_only_for_the_esg_tag():
+    for context in (FR_PAYLOAD["context"], PAYLOAD["context"]):
+        rendered = prompts.render("orchestrator", context)
+        assert '"demo data" (in French: "données de démonstration") is used only for the ESG tag' in rendered

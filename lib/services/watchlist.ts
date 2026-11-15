@@ -4,14 +4,16 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { getAppLocale } from '@/i18n/locale';
 import { DEMO_USER } from '@/lib/demo-user';
-import type { Candidate, DecisionLogEntry, FilterCheck, Pick as WatchlistPick, ProfileConfig, SignalSet, Snapshot, Sourced, WatchlistResult } from '@/lib/domain/types';
+import type { Candidate, DecisionLogEntry, TextRef, FilterCheck, Pick as WatchlistPick, ProfileConfig, SignalSet, Snapshot, Sourced, WatchlistResult } from '@/lib/domain/types';
 import { RULES, RULES_VERSION, RULE_VERSIONS } from '@/lib/rules';
 import { loadDailySignals, marketDate, refreshDailySignals } from '@/lib/sources/daily-signals';
 import { appendDecision, getDecision, getProfile, readState, updateState, type AppState } from '@/lib/store';
 import { getEntry, getUniverse } from '@/lib/universe';
+import { own } from '@/lib/watchlist/format';
 import { runPipeline } from '@/lib/watchlist/pipeline';
 import { renderCandidate, renderPick, renderRun, renderChecks } from '@/lib/watchlist/render';
 import type { Locale } from '@/lib/watchlist/text';
+import type { PreviousList } from '@/lib/watchlist/selection';
 import { selectCandidates } from '@/lib/watchlist/universe-select';
 import { ServiceError } from './errors';
 import { renderText, serviceRef } from './text';
@@ -34,11 +36,17 @@ type RunPayload = {
     result: WatchlistResult;
     pickDecisionIds: Record<string, string>;
     locale?: Locale;              // the language the run's sentences were written in (result.locale says the same)
+    previous?: PreviousList;      // the slow-moving state the selection started from (empty after a reset)
+    incumbentsReset?: IncumbentsReset;
 };
+// The slow-moving state (previousPicks, listedSince) belongs to the profile whose run wrote it. A run for another
+// profile starts without incumbents: the rule keeps a list steady from day to day, it does not carry one profile's
+// picks into another's. Seeds still apply.
+type IncumbentsReset = { reason: 'profile_changed'; fromProfileHash: string; toProfileHash: string; dropped: string[] };
 // Where the last run sits in the decision log. Kept beside the watchlist state in the app-state file, which
 // has no field for it in its type; the file keeps unknown keys.
 type RunPointer = { date: string; profileHash: string; inputsHash?: string; decisionId: string };
-type StoredWatchlist = AppState['watchlist'] & { lastRun?: RunPointer };
+type StoredWatchlist = AppState['watchlist'] & { lastRun?: RunPointer; stateProfileHash?: string };
 
 export type WatchlistView = {
     result: WatchlistResult | null;
@@ -121,8 +129,15 @@ async function build(profile: ProfileConfig, progress: BuildProgress, locale: Lo
         fxUsdCad: daily.fxUsdCad,
         signals: daily.signals,
     };
-    const { listedSince, previousPicks } = (await readState()).watchlist;
-    const { result, candidates, next } = runPipeline({ snapshot, universe, rules: RULES, previous: { listedSince, previousPicks }, now, locale });
+    const hash = profileHash(profile);
+    const stored = (await readState()).watchlist as StoredWatchlist;
+    // State written before the owner was stored belongs to the profile of the last run
+    const owner = stored.stateProfileHash ?? stored.lastRun?.profileHash;
+    const reset: IncumbentsReset | undefined = owner !== undefined && owner !== hash
+        ? { reason: 'profile_changed', fromProfileHash: owner, toProfileHash: hash, dropped: [...stored.previousPicks] }
+        : undefined;
+    const previous: PreviousList = reset ? { listedSince: {}, previousPicks: [] } : { listedSince: stored.listedSince, previousPicks: stored.previousPicks };
+    const { result, candidates, next } = runPipeline({ snapshot, universe, rules: RULES, previous, now, locale });
 
     progress.stage = 'logging';
     const ruleVersions = { ...result.ruleVersions, level: profile.ruleVersions.level, risk: profile.ruleVersions.risk };
@@ -140,7 +155,7 @@ async function build(profile: ProfileConfig, progress: BuildProgress, locale: Lo
     }
     const payload: RunPayload = {
         date,
-        profileHash: profileHash(profile),
+        profileHash: hash,
         inputsHash: inputs,
         signalsDate: daily.date,
         signalsStale: daily.stale,
@@ -151,12 +166,15 @@ async function build(profile: ProfileConfig, progress: BuildProgress, locale: Lo
         result,
         pickDecisionIds,
         locale,
+        previous,
+        ...(reset ? { incumbentsReset: reset } : {}),
     };
     const run = await appendDecision({ userId: DEMO_USER.id, kind: 'watchlist_run', snapshotId: snapshot.id, ruleVersions, payload });
     await updateState((state) => {
         const watchlist = state.watchlist as StoredWatchlist;
         watchlist.listedSince = next.listedSince;
         watchlist.previousPicks = next.previousPicks;
+        watchlist.stateProfileHash = hash;
         watchlist.lastRun = { date, profileHash: payload.profileHash, inputsHash: inputs, decisionId: run.id };
     });
     holder.__watchlistRun = run;
@@ -280,10 +298,11 @@ export async function explainSymbol(symbol: string, locale?: Locale): Promise<Ex
 
     const say = (ref: Parameters<typeof renderText>[0]) => renderText(ref, lang);
 
-    const pick = payload.result.picks.find((p) => p.symbol === wanted);
-    if (pick) return { listed: true, pick: renderPick(pick, lang), ...base, decisionIds: [run.id, payload.pickDecisionIds[wanted]].filter(Boolean) };
-
     const stored = payload.candidates.find((c) => c.symbol === wanted);
+    const pick = payload.result.picks.find((p) => p.symbol === wanted);
+    // A pick comes with its filter checks too, under candidate.filters as for a symbol that was not selected
+    if (pick) return { listed: true, pick: renderPick(pick, lang), ...(stored ? { candidate: renderCandidate(stored, lang) } : {}), ...base, decisionIds: [run.id, payload.pickDecisionIds[wanted]].filter(Boolean) };
+
     if (!stored) return { listed: false, note: say(serviceRef('svc.watchlist.not_candidate', { symbol: wanted, count: payload.candidates.length })), ...base, decisionIds: [run.id] };
     const candidate = renderCandidate(stored, lang);
     if (!candidate.passed) return { listed: false, rejected: renderChecks(stored.filters.filter((check) => !check.pass), lang), candidate, ...base, decisionIds: [run.id] };
@@ -293,10 +312,49 @@ export async function explainSymbol(symbol: string, locale?: Locale): Promise<Ex
         candidate,
         note: reference
             ? say(serviceRef('svc.watchlist.reference_card', { symbol: wanted }))
-            : say(serviceRef('svc.watchlist.not_selected', { symbol: wanted, total: candidate.total!, picks: payload.result.picks.length, level: payload.result.level, maxPerSector: RULES.selection.max_per_sector })),
+            : say(whyNotSelected(payload, wanted, candidate.total!)),
         ...base,
         decisionIds: [run.id],
     };
+}
+
+const DAY_MS = 86_400_000;
+const tenths = (total: number) => Math.round(total * 10);
+
+/**
+ * Why a candidate that passed every filter is not on the list, read from the stored run only. When the list was
+ * full, no cap of the selection could have kept it out, and every pick with a total no higher than its own was kept
+ * as a seed or an incumbent, those picks and the rule that held each one are named: a seed, the minimum stay (days
+ * listed at the run, from the starting state the run logged) or the newcomer margin. In any other case, or when the
+ * run did not log its starting state, the note says it was outranked and lists the limits that apply.
+ */
+function whyNotSelected(payload: RunPayload, symbol: string, total: number): TextRef {
+    const { picks, level, computedAt } = payload.result;
+    const rule = RULES.selection;
+    const margin = rule.slow_moving.newcomer_margin_points;
+    const minDays = rule.slow_moving.min_days_listed;
+    const outranked = serviceRef('svc.watchlist.not_selected', { symbol, total, picks: picks.length, level, maxPerSector: rule.max_per_sector, margin, minDays });
+    const entry = payload.snapshot.signals.find((set) => set.symbol === symbol)?.entry ?? getEntry(symbol);
+    if (!entry || picks.length < rule.top_n_by_level[level]) return outranked;
+    const index = entry.assetClass === 'etf' ? entry.etf?.index : undefined;
+    const capped = (entry.sector !== undefined && picks.filter((p) => p.sector === entry.sector).length >= rule.max_per_sector)
+        || (index !== undefined && picks.filter((p) => p.assetClass === 'etf' && p.signals.entry.etf?.index === index).length >= rule.max_etfs_per_index)
+        || (entry.assetClass === 'crypto' && picks.filter((p) => p.assetClass === 'crypto').length >= rule.max_crypto);
+    if (capped || picks.some((p) => p.kept === 'new' && tenths(p.total) < tenths(total))) return outranked;
+    const held = picks.filter((p) => p.kept !== 'new' && tenths(p.total) <= tenths(total));
+    if (held.length === 0) return outranked;
+    const kept = held.map((p): TextRef => {
+        if (p.kept === 'seed') return serviceRef('svc.watchlist.kept_seed', { symbol: p.symbol, total: p.total });
+        if (!payload.previous) return serviceRef('svc.watchlist.kept_incumbent', { symbol: p.symbol, total: p.total, margin, minDays });
+        // As the selection counts them: whole days from the listing date to the run, an unknown date counting as the run's
+        const since = Date.parse(own(payload.previous.listedSince, p.symbol) ?? computedAt);
+        const days = Number.isNaN(since) ? 0 : Math.floor((Date.parse(computedAt) - since) / DAY_MS);
+        if (days < minDays) return serviceRef('svc.watchlist.kept_min_stay', { symbol: p.symbol, total: p.total, days, minDays });
+        const gap = tenths(total) - tenths(p.total);
+        if (gap > Math.round(margin * 10)) return serviceRef('svc.watchlist.kept_incumbent', { symbol: p.symbol, total: p.total, margin, minDays });
+        return serviceRef('svc.watchlist.kept_margin', { symbol: p.symbol, total: p.total, margin, gap: gap / 10 });
+    });
+    return serviceRef('svc.watchlist.kept_out', { symbol, total, picks: picks.length, kept });
 }
 
 /** Records what the user did with a card. 'add' brings a dismissed symbol back. */

@@ -36,6 +36,8 @@ const pct2 = (value: number, f: Fmt) => (f.locale === 'fr' ? f.pctOf(value, 2) :
 type Symbol = { symbol: string };
 type ValueNote = { priceSources: string[]; fxValue: number | null; fxSource: string | null; fxAsOf: string | null; unpriced: string[] };
 type Trigger = { hit: boolean; relation: 'below' | 'above' };
+type NotSelected = { symbol: string; total: number; picks: number; level: string; maxPerSector: number; margin: number; minDays: number };
+type Kept = { symbol: string; total: number };
 
 export const SERVICE_TEXT = defineCatalog({
     // ---- shared
@@ -105,11 +107,42 @@ export const SERVICE_TEXT = defineCatalog({
         en: (p: Symbol) => `${p.symbol} is shown as a reference card and is not ranked.`,
         fr: (p: Symbol) => `${p.symbol} est présenté sous forme de fiche de référence et n’est pas classé.`,
     },
+    // Passed every filter, not selected, and the stored run cannot name the one rule that kept it out: the limits
     'svc.watchlist.not_selected': {
-        en: (p: { symbol: string; total: number; picks: number; level: string; maxPerSector: number }, f) =>
-            `${p.symbol} passed every filter with a total of ${f.num(p.total, undefined, 1)}, and was not selected: the list holds ${p.picks} picks (${p.level}), at most ${p.maxPerSector} per sector.`,
-        fr: (p: { symbol: string; total: number; picks: number; level: string; maxPerSector: number }, f) =>
-            `${p.symbol} a satisfait à tous les filtres avec un pointage total de ${f.num(p.total, undefined, 1)}, mais n’a pas été retenu : la liste compte ${p.picks} titres (niveau ${f.level(p.level)}), au plus ${p.maxPerSector} par secteur.`,
+        en: (p: NotSelected, f) =>
+            `${p.symbol} passed every filter with a total of ${f.num(p.total, undefined, 1)}, and was not selected: other picks ranked ahead of it. The list holds ${p.picks} picks (${p.level}), at most ${p.maxPerSector} per sector; a listed pick keeps its place for at least ${p.minDays} days, and after that a newcomer takes its place only with a total more than ${f.num(p.margin, undefined, 1)} points higher.`,
+        fr: (p: NotSelected, f) =>
+            `${p.symbol} a satisfait à tous les filtres avec un pointage total de ${f.num(p.total, undefined, 1)}, mais n’a pas été retenu\u00a0: d’autres titres étaient classés devant lui. La liste compte ${p.picks} titres (niveau ${f.level(p.level)}), au plus ${p.maxPerSector} par secteur; un titre déjà inscrit garde sa place au moins ${p.minDays} jours, puis un nouveau venu ne le remplace qu’avec un pointage total supérieur de plus de ${f.num(p.margin, undefined, 1)} points.`,
+    },
+    // Passed every filter, the list was full, and picks with a total no higher than its own kept their places
+    'svc.watchlist.kept_out': {
+        en: (p: { symbol: string; total: number; picks: number; kept: TextParam }, f) =>
+            `${p.symbol} passed every filter with a total of ${f.num(p.total, undefined, 1)}, and was not selected: the list was full (${p.picks} picks) and these picks with a total no higher kept their places: ${subList(p.kept, 'en')}.`,
+        fr: (p: { symbol: string; total: number; picks: number; kept: TextParam }, f) =>
+            `${p.symbol} a satisfait à tous les filtres avec un pointage total de ${f.num(p.total, undefined, 1)}, mais n’a pas été retenu\u00a0: la liste était complète (${p.picks} titres) et ces titres, au pointage total égal ou inférieur, ont gardé leur place\u00a0: ${subList(p.kept, 'fr')}.`,
+    },
+    'svc.watchlist.kept_seed': {
+        en: (p: Kept, f) => `${p.symbol} (total ${f.num(p.total, undefined, 1)}) is one of the profile's brands, kept while it passes the filters`,
+        fr: (p: Kept, f) => `${p.symbol} (pointage total de ${f.num(p.total, undefined, 1)}) fait partie des marques du profil et reste inscrit tant qu’il satisfait aux filtres`,
+    },
+    'svc.watchlist.kept_min_stay': {
+        en: (p: Kept & { days: number; minDays: number }, f) =>
+            `${p.symbol} (total ${f.num(p.total, undefined, 1)}) had been listed for ${p.days} ${p.days === 1 ? 'day' : 'days'}, inside the ${p.minDays}-day minimum stay`,
+        fr: (p: Kept & { days: number; minDays: number }, f) =>
+            `${p.symbol} (pointage total de ${f.num(p.total, undefined, 1)}) était inscrit depuis ${p.days} ${p.days > 1 ? 'jours' : 'jour'}, à l’intérieur de la durée minimale de ${p.minDays} jours`,
+    },
+    'svc.watchlist.kept_margin': {
+        en: (p: Kept & { margin: number; gap: number }, f) =>
+            `${p.symbol} (total ${f.num(p.total, undefined, 1)}) was already listed, and a newcomer takes a listed pick's place only with a total more than ${f.num(p.margin, undefined, 1)} points higher (the difference here is ${f.num(p.gap, undefined, 1)} points)`,
+        fr: (p: Kept & { margin: number; gap: number }, f) =>
+            `${p.symbol} (pointage total de ${f.num(p.total, undefined, 1)}) était déjà inscrit, et un nouveau venu ne remplace un titre inscrit qu’avec un pointage total supérieur de plus de ${f.num(p.margin, undefined, 1)} points (l’écart est ici de ${f.num(p.gap, undefined, 1)} point${p.gap >= 2 ? 's' : ''})`,
+    },
+    // An incumbent of a run logged before the starting state was stored: which of the two rules held it is unknown
+    'svc.watchlist.kept_incumbent': {
+        en: (p: Kept & { margin: number; minDays: number }, f) =>
+            `${p.symbol} (total ${f.num(p.total, undefined, 1)}) was already listed: a listed pick keeps its place for at least ${p.minDays} days, and after that until a newcomer's total is more than ${f.num(p.margin, undefined, 1)} points higher`,
+        fr: (p: Kept & { margin: number; minDays: number }, f) =>
+            `${p.symbol} (pointage total de ${f.num(p.total, undefined, 1)}) était déjà inscrit\u00a0: un titre inscrit garde sa place au moins ${p.minDays} jours, puis jusqu’à ce qu’un nouveau venu obtienne un pointage total supérieur de plus de ${f.num(p.margin, undefined, 1)} points`,
     },
 
     // ---- simulated portfolio

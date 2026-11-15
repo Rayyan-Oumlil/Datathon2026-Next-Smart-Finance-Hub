@@ -87,7 +87,8 @@ def check_profile_conflict(symbol: str) -> dict:
     """Checks one asset against the user's profile filters. Returns the conflicts (each with a detail giving
     the actual values) and the user's level and risk. Call it before discussing or simulating a trade in an
     asset."""
-    result = web_tools.call_web("conflict-check", {"symbol": symbol})
+    # The details come back in the request's language, so the reply's conflict checks match the reply
+    result = web_tools.call_web("conflict-check", {"symbol": symbol, "locale": trace.current().locale})
     if not isinstance(result, dict) or "error" in result:
         return result
     trace.current().conflict_checks[symbol.upper()] = result

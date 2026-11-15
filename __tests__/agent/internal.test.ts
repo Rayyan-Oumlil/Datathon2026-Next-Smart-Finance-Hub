@@ -60,6 +60,15 @@ describe('tools', () => {
         expect(await (await call(CONFLICT, { userId: DEMO_USER.id, symbol: 'NOPE' }, TOKEN)).json()).toEqual({ error: expect.stringContaining('not in the app') });
     });
 
+    it('conflict-check writes each detail in the locale the agent passes, English when none is given', async () => {
+        market.signals.AAPL = { volatility1y: sourced(0.387, { source: 'derived' }) };
+        const fr = await (await call(CONFLICT, { userId: DEMO_USER.id, symbol: 'AAPL', locale: 'fr' }, TOKEN)).json();
+        expect(fr.conflicts[0]).toMatchObject({ filter: 'volatility', detail: 'volatilité de 38,7\u00a0%, au-dessus du plafond de 35,0\u00a0% pour un profil de risque Moyen', textRef: { key: 'filter.volatility' } });
+        const en = await (await call(CONFLICT, { userId: DEMO_USER.id, symbol: 'AAPL' }, TOKEN)).json();
+        expect(en.conflicts[0].detail).toBe('volatility 38.7% is above the 35.0% cap for Medium risk');
+        expect(await (await call(CONFLICT, { userId: DEMO_USER.id, symbol: 'AAPL', locale: 'de' }, TOKEN)).json()).toHaveProperty('error');
+    });
+
     it('validate-rule and profile-preview save nothing', async () => {
         const rule = { text: 'x', symbol: 'AAPL', trigger: { type: 'price_below', value: 90 }, action: { side: 'buy', amountCad: 200 }, once: true };
         expect(await (await call(VALIDATE, { userId: DEMO_USER.id, rule }, TOKEN)).json()).toMatchObject({ ok: true, rule: { symbol: 'AAPL' }, currentPrice: { value: 100 } });

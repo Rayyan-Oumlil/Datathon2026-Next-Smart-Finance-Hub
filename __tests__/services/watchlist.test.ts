@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEMO_USER } from '@/lib/demo-user';
 import type { UniverseEntry } from '@/lib/domain/types';
 import { RULE_VERSIONS } from '@/lib/rules';
-import { listDecisions, readState } from '@/lib/store';
+import { getProfile, listDecisions, readState, updateState } from '@/lib/store';
 import { loadDailySignals } from '@/lib/sources/daily-signals';
 import { editProfile } from '@/lib/services/profile';
 import { buildStatus, buildWatchlist, explainSymbol, getWatchlist, inputsHash, profileHash, refreshWatchlist, userAction } from '@/lib/services/watchlist';
 import { simulateTrade } from '@/lib/services/portfolio';
-import { answers, freshWorld } from './helpers';
+import { answers, freshWorld, market, sourced } from './helpers';
 
 vi.mock('@/lib/services/quotes', async (original) => (await import('./market-stub')).quotesMock(await original()));
 vi.mock('@/lib/sources/daily-signals', async (original) => {
@@ -203,6 +203,100 @@ describe('watchlist service', () => {
         const actions = await listDecisions(DEMO_USER.id, { kind: 'user_action' });
         expect(actions.map((entry) => [entry.symbol, (entry.payload as { action: string }).action])).toEqual([[top, 'dismiss'], [second, 'pin'], [top, 'add'], [second, 'unpin']]);
         expect(actions[0].snapshotId).toBe(view.result!.snapshotId);
+    });
+
+    it('starts without incumbents when the profile changed: Medium, Low, then Medium again gives the first Medium list', async () => {
+        const symbols = (view: Awaited<ReturnType<typeof getWatchlist>>) => view.result!.picks.map((pick) => pick.symbol);
+        // Volatility 15%: inside the Low cap, so the Low run lists these; the Medium run keeps CCO.TO and CNQ.TO for Energy
+        for (const symbol of ['COP', 'XOM', 'IVV', 'VCN.TO', 'VTI', 'XIC.TO', 'XIU.TO', 'SPY', 'VOO', 'VFV.TO']) market.signals[symbol] = { volatility1y: sourced(0.15, { source: 'derived' }) };
+        await getWatchlist();
+        const medium = await built();
+        const mediumHash = profileHash((await getProfile(DEMO_USER.id))!);
+        await editProfile({ risk: 'Low' });
+        await getWatchlist();
+        const low = await built();
+        const lowHash = profileHash((await getProfile(DEMO_USER.id))!);
+        expect(symbols(low)).not.toEqual(symbols(medium));
+        expect((await readState()).watchlist).toMatchObject({ previousPicks: symbols(low), stateProfileHash: lowHash });
+
+        await editProfile({ risk: 'Medium' });
+        await getWatchlist();
+        const again = await built();
+        expect(symbols(again)).toEqual(symbols(medium));
+        expect(again.result!.picks.map((pick) => pick.kept)).toEqual(medium.result!.picks.map((pick) => pick.kept));
+        expect(again.result!.picks.some((pick) => pick.kept === 'incumbent')).toBe(false);
+        const logged = (await runs()).map((run) => run.payload as { incumbentsReset?: unknown; previous?: unknown });
+        expect(logged).toHaveLength(3);
+        expect(logged[0].incumbentsReset).toBeUndefined();
+        expect(logged[1].incumbentsReset).toEqual({ reason: 'profile_changed', fromProfileHash: mediumHash, toProfileHash: lowHash, dropped: symbols(medium) });
+        expect(logged[2].incumbentsReset).toEqual({ reason: 'profile_changed', fromProfileHash: lowHash, toProfileHash: mediumHash, dropped: symbols(low) });
+        expect(logged[2].previous).toEqual({ listedSince: {}, previousPicks: [] });
+        expect((await readState()).watchlist).toMatchObject({ previousPicks: symbols(medium), stateProfileHash: mediumHash });
+    });
+
+    it('a same-profile run on the next day keeps the incumbents', async () => {
+        await getWatchlist();
+        const first = await built();
+        const listedSince = (await readState()).watchlist.listedSince;
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(Date.now() + 86_400_000);
+        try {
+            expect(await getWatchlist()).toMatchObject({ result: null, building: true });     // a new market day
+            const next = await built();
+            expect(next.result!.picks.map((pick) => pick.symbol)).toEqual(first.result!.picks.map((pick) => pick.symbol));
+            expect(next.result!.picks.filter((pick) => pick.kept !== 'seed').every((pick) => pick.kept === 'incumbent')).toBe(true);
+        } finally {
+            vi.useRealTimers();
+        }
+        const [, second] = await runs();
+        expect(second.payload).not.toHaveProperty('incumbentsReset');
+        expect((second.payload as { previous: unknown }).previous).toEqual({ listedSince, previousPicks: first.result!.picks.map((pick) => pick.symbol) });
+        expect((await readState()).watchlist.listedSince).toEqual(listedSince);       // they stay, so their dates do not move
+    });
+
+    it('names the incumbents that kept a passing candidate out, with the minimum stay and the margin from the rules file', async () => {
+        // MSFT and NVDA: total 46.6 (volatility 5% scores 62.5 on risk fit, growth -10% scores 0), listed 2 days ago.
+        // VTI: total 50, listed 10 days ago, so past its minimum stay and held by the margin. The list fills before XIU.TO (total 50).
+        const weak = { volatility1y: sourced(0.05, { source: 'derived' }), revenueGrowthPct: sourced(-10, { unit: '%' }) };
+        market.signals.MSFT = weak;
+        market.signals.NVDA = weak;
+        const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+        await updateState((state) => {
+            state.watchlist.previousPicks = ['MSFT', 'NVDA', 'VTI'];
+            state.watchlist.listedSince = { MSFT: daysAgo(2), NVDA: daysAgo(2), VTI: daysAgo(10) };
+        });
+        await buildWatchlist();
+        const view = await built();
+        expect(view.result!.picks).toHaveLength(10);
+        expect(view.result!.picks.map((pick) => pick.symbol)).not.toContain('XIU.TO');
+        expect(view.result!.picks.filter((pick) => pick.kept === 'incumbent').map((pick) => [pick.symbol, pick.total])).toEqual([['VTI', 50], ['MSFT', 46.6], ['NVDA', 46.6]]);
+
+        const why = await explainSymbol('XIU.TO');
+        expect(why).toMatchObject({ listed: false, candidate: { symbol: 'XIU.TO', passed: true, total: 50 } });
+        expect(why.note).toBe('XIU.TO passed every filter with a total of 50, and was not selected: the list was full (10 picks) and these picks with a total no higher kept their places: '
+            + 'VTI (total 50) was already listed, and a newcomer takes a listed pick\'s place only with a total more than 5 points higher (the difference here is 0 points); '
+            + 'MSFT (total 46.6) had been listed for 2 days, inside the 7-day minimum stay; NVDA (total 46.6) had been listed for 2 days, inside the 7-day minimum stay.');
+        const fr = (await explainSymbol('XIU.TO', 'fr')).note!;
+        expect(fr).toContain('la liste était complète (10 titres)');
+        expect(fr).toContain('VTI (pointage total de 50) était déjà inscrit, et un nouveau venu ne remplace un titre inscrit qu’avec un pointage total supérieur de plus de 5 points (l’écart est ici de 0 point)');
+        expect(fr).toContain('MSFT (pointage total de 46,6) était inscrit depuis 2 jours, à l’intérieur de la durée minimale de 7 jours');
+
+        // An Energy candidate: the sector cap applies too, so no single rule is named and the limits are listed
+        const capped = (await explainSymbol('COP')).note!;
+        expect(capped).toContain('other picks ranked ahead of it');
+        expect(capped).toContain('at most 2 per sector; a listed pick keeps its place for at least 7 days, and after that a newcomer takes its place only with a total more than 5 points higher');
+    });
+
+    it('gives a listed pick its filter checks under candidate.filters, in the language asked for', async () => {
+        await getWatchlist();
+        await built();
+        const listed = await explainSymbol('AAPL', 'fr');
+        expect(listed).toMatchObject({ listed: true, pick: { symbol: 'AAPL' }, candidate: { symbol: 'AAPL', passed: true } });
+        expect(listed.candidate!.filters.length).toBeGreaterThan(0);
+        expect(listed.candidate!.filters.every((check) => check.pass)).toBe(true);
+        const english = await explainSymbol('AAPL', 'en');
+        expect(listed.candidate!.filters.map((check) => check.filter)).toEqual(english.candidate!.filters.map((check) => check.filter));
+        expect(listed.candidate!.filters.map((check) => check.detail)).not.toEqual(english.candidate!.filters.map((check) => check.detail));
     });
 
     it('explains a pick, a rejected candidate, and a symbol outside the candidates', async () => {
