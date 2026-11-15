@@ -16,8 +16,8 @@ beforeEach(() => freshWorld());
 
 const rule = { text: 'under 90 add 200 CAD of AAPL', symbol: 'AAPL', trigger: { type: 'price_below', value: 90 }, action: { side: 'buy', amountCad: 200 }, once: true };
 const propose = (type: string, params: unknown, extra: object = {}) => ({ type, summary: 'from the model', params, needsConfirm: false, ...extra });
-const preview = async (actionId: string, type: string, params: unknown) => {
-    const routed = await route(actionId, propose(type, params));
+const preview = async (actionId: string, type: string, params: unknown, locale: 'en' | 'fr' = 'en') => {
+    const routed = await route(actionId, propose(type, params), locale);
     if (routed.outcome !== 'preview') throw new Error(`expected a preview, got ${JSON.stringify(routed)}`);
     return routed;
 };
@@ -121,6 +121,16 @@ describe('preview, apply, undo', () => {
         expect((await getLayout()).layout).not.toContain('overview_heatmap');
         await undo('h1');
         expect((await getLayout()).layout).toContain('overview_heatmap');
+    });
+
+    it('layout_change names the Overview panels in French in a French preview', async () => {
+        const all = (await getLayout()).layout;
+        const routed = await preview('h3', 'layout_change', { layout: all.filter((id) => id !== 'overview_heatmap') }, 'fr');
+        expect(routed.preview.summary).toContain('Carte thermique (Aperçu)');
+        expect(routed.preview.summary).not.toContain('Heatmap');
+        const overview = routed.preview.rows.find((row) => row.label === 'Onglet Aperçu');
+        expect(overview?.before).toContain('Carte thermique (Aperçu)');
+        expect(overview?.after).not.toContain('Carte thermique');
     });
 
     it('rule_create', async () => {

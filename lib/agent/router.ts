@@ -13,7 +13,7 @@ import { loadMessages } from '@/i18n/messages';
 import type { AgentActionType, FilterCheck, InvestmentRule, OnboardingAnswers, ProposedAction, Sourced } from '@/lib/domain/types';
 import { RULES } from '@/lib/rules';
 import { ServiceError, round2 } from '@/lib/services/errors';
-import { WIDGET_LIBRARY, getLayout, putLayout, validateLayout } from '@/lib/services/layout';
+import { WIDGET_LIBRARY, getLayout, putLayout, validateLayout, widgetLibrary } from '@/lib/services/layout';
 import { getPortfolioState, simulateTrade } from '@/lib/services/portfolio';
 import { editProfile, getProfile, previewProfileEdit } from '@/lib/services/profile';
 import { fxUsdCad, isTradable, liveQuote, signalsFor, toCad } from '@/lib/services/quotes';
@@ -96,7 +96,9 @@ const priceFact = (label: string, price: Sourced, locale: Locale): PreviewFact =
 async function widgetTitles(locale: Locale): Promise<(id: string) => string> {
     const messages = (await loadMessages(locale).catch(() => ({}))) as { Portfolio?: { modules?: Record<string, string> } };
     const modules = messages.Portfolio?.modules ?? {};
-    return (id: string) => modules[id] ?? WIDGET_LIBRARY.find((widget) => widget.id === id)?.title ?? id;
+    // The Overview panels have no entry in the Portfolio messages: their title comes from the library in this language
+    const library = widgetLibrary(locale);
+    return (id: string) => modules[id] ?? library.find((widget) => widget.id === id)?.title ?? id;
 }
 
 /** The onboarding wording in this language, for the profile preview's questions and answers. */
