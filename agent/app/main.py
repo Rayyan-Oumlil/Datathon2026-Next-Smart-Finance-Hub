@@ -1,10 +1,11 @@
 """Service entrypoint. The same code runs locally (python -m app.main) and on AgentCore Runtime:
 POST /invocations and GET /ping on port 8080. Request and response: docs/agent-api.md section 1."""
 import sys
+import time
 
 from bedrock_agentcore import BedrockAgentCoreApp
 
-from . import checks, config, orchestrator, prompts, sources, trace
+from . import checks, config, orchestrator, prompts, sources, stream, trace
 
 app = BedrockAgentCoreApp()
 
@@ -84,6 +85,8 @@ def neutral_summary(action_type: str, locale: str) -> str:
 
 def check_reply(current: trace.RequestTrace, text: str, attempt: int) -> tuple[dict, str]:
     """Runs our own check and the Bedrock Guardrail on one reply, and logs both. Returns (result, text)."""
+    current.emit("guardrail", "start")
+    started = time.monotonic()
     conflicts = [c for result in current.conflict_checks.values() for c in (result.get("conflicts") or [])]
     # Only what this request's tools returned, the context the web app built and the params of the action
     # proposed in this request (recorded by propose_action, so a reply may repeat its amount) ground a figure;
@@ -107,11 +110,14 @@ def check_reply(current: trace.RequestTrace, text: str, attempt: int) -> tuple[d
               "summaryReplaced": bool(proposal_words)}
     current.log("guardrail_check", "writer", awsRequestId=guardrail.get("awsRequestId"),
                 replySha256=trace.sha256(text), result=result)
+    current.emit("guardrail", "done", attempt=attempt, passed=passed, ms=int((time.monotonic() - started) * 1000))
     return result, text
 
 
-def handle(payload) -> dict:
+def handle(payload, on_event=None) -> dict:
+    """Runs one request. on_event, when given, receives a stage event as each step starts and finishes."""
     current = parse_request(payload)
+    current.on_event = on_event
     token = trace.start(current)
     guardrail_results = []
     try:
@@ -121,15 +127,17 @@ def handle(payload) -> dict:
             "agentStyle": current.context.get("agentStyle"), "contextKeys": sorted(current.context),
             "historyTurns": len(current.history), "messageSha256": trace.sha256(current.message)})
         agent = orchestrator.build(current)
-        text = orchestrator.ask(agent, current.message)
+        with current.stage("orchestrator"):
+            text = orchestrator.ask(agent, current.message)
         for attempt in range(1, config.MAX_GUARDRAIL_FAILURES + 1):
             result, text = check_reply(current, text, attempt)
             guardrail_results.append(result)
             if result["passed"]:
                 return response(current, text, False, guardrail_results)
             if attempt < config.MAX_GUARDRAIL_FAILURES:
-                text = orchestrator.ask(agent, checks.corrective_instruction(result["own"], result["bedrock"],
-                                                                             current.locale))
+                with current.stage("retry"):
+                    text = orchestrator.ask(agent, checks.corrective_instruction(result["own"], result["bedrock"],
+                                                                                 current.locale))
         return response(current, checks.safe_refusal(current.locale), True, guardrail_results)
     except Exception as exc:
         error = f"{type(exc).__name__}: {str(exc)[:300]}"
@@ -140,15 +148,23 @@ def handle(payload) -> dict:
         trace._current.reset(token)
 
 
-@app.entrypoint
-def invoke(payload):
+def answer(payload, on_event=None) -> dict:
     try:
-        return handle(payload)
+        return handle(payload, on_event)
     except ValueError as exc:  # a malformed request: nothing was sent to a model
         context = payload.get("context") if isinstance(payload, dict) else None
         text = checks.safe_refusal(config.locale_of(context))
         return {"error": "invalid_request", "detail": str(exc), "refused": True, "text": text,
                 "sources": [], "promptVersion": config.PROMPT_VERSION, "modelCalls": []}
+
+
+@app.entrypoint
+def invoke(payload):
+    """One JSON reply, or, when the payload asks for "stream": true, a generator of events that AgentCore
+    sends as server-sent events (docs/agent-api.md section 1)."""
+    if isinstance(payload, dict) and payload.get("stream") is True:
+        return stream.events(payload, answer)
+    return answer(payload)
 
 
 if __name__ == "__main__":

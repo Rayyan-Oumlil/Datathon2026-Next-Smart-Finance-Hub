@@ -8,6 +8,11 @@ import { AlertTriangle, MessageSquareText, RotateCcw, SendHorizontal, Undo2, X }
 import { cn } from "@/lib/utils";
 import { formatNumber, formatDateTime } from "@/i18n/format";
 import { formatMoment, sourceLabel } from "@/components/agent/time";
+import AgentText from "@/components/agent/AgentText";
+import StageList, { stageFailed, stageText } from "@/components/agent/StageList";
+import { rowsForStage } from "@/lib/agent/stage-rows";
+import type { StageLine } from "@/lib/agent/stages";
+import { useAgentStream } from "@/hooks/useAgentStream";
 
 type Source = { label: string; source: string; fetchedAt?: string; asOf?: string };
 type Check = { filter: string; pass: boolean; detail: string };
@@ -33,8 +38,9 @@ type Message = {
     reply?: Reply;
     change?: 'pending' | 'applied' | 'cancelled' | 'undone';
     outcome?: string;
+    steps?: StageLine[];              // what the agent did for this reply, each step linked to its log rows
 };
-type LogRow = { id: string; at: string; step: string; actor: string; modelId?: string; awsRequestId?: string; inputTokens?: number; outputTokens?: number };
+type LogRow = { id: string; at: string; step: string; actor: string; modelId?: string; awsRequestId?: string; inputTokens?: number; outputTokens?: number; dataUsed?: unknown };
 
 const STORE_KEY = 'agent-conversation-v1';
 const HISTORY_TURNS = 10;
@@ -60,12 +66,39 @@ async function post<T>(url: string, body: unknown, fallbackError: string): Promi
     return data as T;
 }
 
-// The action-log rows of one reply: enough to find each model call in CloudTrail by its AWS request id.
-const Trace = ({ actionId }: { actionId: string }) => {
+// One row of the action log: what happened, when, and the ids that find it in CloudTrail.
+const TraceRow = ({ row }: { row: LogRow }) => {
     const t = useTranslations('AgentPanel');
     const locale = useLocale();
+    // 'subagent:market_data' -> "Sub-agent: market_data"; the name after the colon is the technical id
+    const actorLabel = (actor: string) => {
+        if (actor.startsWith('subagent:')) return t('trace.actors.subagent', { name: actor.slice('subagent:'.length) });
+        return t.has(`trace.actors.${actor}`) ? t(`trace.actors.${actor}`) : actor;
+    };
+    return (
+        <>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+                <span className="font-semibold text-foreground">{t.has(`trace.steps.${row.step}`) ? t(`trace.steps.${row.step}`) : row.step}</span>
+                <span className="num text-faint">{formatDateTime(row.at, locale, { timeStyle: 'medium' })}</span>
+            </div>
+            <div className="text-muted-foreground">
+                {actorLabel(row.actor)}{row.modelId ? ` · ${row.modelId}` : ''}
+                {row.inputTokens !== undefined || row.outputTokens !== undefined
+                    ? ` · ${t('trace.tokens', { input: row.inputTokens === undefined ? '–' : formatNumber(row.inputTokens, locale), output: row.outputTokens === undefined ? '–' : formatNumber(row.outputTokens, locale) })}`
+                    : ''}
+            </div>
+            {row.awsRequestId && <div className="mono break-all text-faint">{t('trace.awsRequestId', { id: row.awsRequestId })}</div>}
+        </>
+    );
+};
+
+// The action-log rows of one reply: enough to find each model call in CloudTrail by its AWS request id.
+// The steps the agent showed while it worked are listed first; selecting one shows the rows that record it.
+const Trace = ({ actionId, steps }: { actionId: string; steps?: StageLine[] }) => {
+    const t = useTranslations('AgentPanel');
     const [rows, setRows] = useState<LogRow[] | null>(null);
     const [error, setError] = useState('');
+    const [selected, setSelected] = useState<number | null>(null);
     const load = useCallback(async () => {
         setError('');
         try {
@@ -78,12 +111,6 @@ const Trace = ({ actionId }: { actionId: string }) => {
         }
     }, [actionId, t]);
 
-    // 'subagent:market_data' -> "Sub-agent: market_data"; the name after the colon is the technical id
-    const actorLabel = (actor: string) => {
-        if (actor.startsWith('subagent:')) return t('trace.actors.subagent', { name: actor.slice('subagent:'.length) });
-        return t.has(`trace.actors.${actor}`) ? t(`trace.actors.${actor}`) : actor;
-    };
-
     return (
         <details className="mt-2 text-xs" onToggle={(event) => { if (event.currentTarget.open) void load(); }}>
             <summary className="cursor-pointer select-none font-semibold text-faint hover:text-foreground">{t('trace.summary')}</summary>
@@ -91,23 +118,38 @@ const Trace = ({ actionId }: { actionId: string }) => {
                 <p className="mono break-all text-faint">{t('trace.actionId', { id: actionId })}</p>
                 {error && <p className="mt-1 text-down">{error}</p>}
                 {!rows && !error && <p className="mt-1 text-faint">{t('trace.loading')}</p>}
+                {steps && steps.length > 0 && (
+                    <div className="mt-2">
+                        <p className="kicker">{t('trace.stepsTitle')}</p>
+                        <ol className="mt-1 flex flex-col gap-1">
+                            {steps.map((line, index) => {
+                                const open = selected === index;
+                                const found = rows ? rowsForStage(steps, index, rows) : [];
+                                return (
+                                    <li key={line.key}>
+                                        <button type="button" aria-expanded={open} onClick={() => setSelected(open ? null : index)}
+                                            className={cn('flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-start hover:bg-hover', stageFailed(line) ? 'text-down' : 'text-muted-foreground', open && 'bg-hover')}>
+                                            <span className="flex-1 text-foreground">{stageText(t, line)}</span>
+                                            {line.ms !== undefined && <span className="num text-[11px] text-faint">{t('stages.took', { ms: line.ms })}</span>}
+                                        </button>
+                                        {open && (
+                                            <ul className="ms-2 mt-1 flex flex-col gap-1.5 border-s border-line ps-2">
+                                                {!rows ? <li className="text-faint">{t('trace.loading')}</li>
+                                                    : found.length === 0 ? <li className="text-faint">{t('trace.noRowsForStep')}</li>
+                                                        : found.map((row) => <li key={row.id}><TraceRow row={row as LogRow} /></li>)}
+                                            </ul>
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ol>
+                    </div>
+                )}
                 {rows && rows.length === 0 && <p className="mt-1 text-faint">{t('trace.empty')}</p>}
                 {rows && rows.length > 0 && (
                     <ol className="mt-1.5 flex flex-col gap-1.5">
                         {rows.map((row) => (
-                            <li key={row.id} className="border-t border-line pt-1.5 first:border-t-0 first:pt-0">
-                                <div className="flex flex-wrap items-baseline justify-between gap-x-2">
-                                    <span className="font-semibold text-foreground">{t.has(`trace.steps.${row.step}`) ? t(`trace.steps.${row.step}`) : row.step}</span>
-                                    <span className="num text-faint">{formatDateTime(row.at, locale, { timeStyle: 'medium' })}</span>
-                                </div>
-                                <div className="text-muted-foreground">
-                                    {actorLabel(row.actor)}{row.modelId ? ` · ${row.modelId}` : ''}
-                                    {row.inputTokens !== undefined || row.outputTokens !== undefined
-                                        ? ` · ${t('trace.tokens', { input: row.inputTokens === undefined ? '–' : formatNumber(row.inputTokens, locale), output: row.outputTokens === undefined ? '–' : formatNumber(row.outputTokens, locale) })}`
-                                        : ''}
-                                </div>
-                                {row.awsRequestId && <div className="mono break-all text-faint">{t('trace.awsRequestId', { id: row.awsRequestId })}</div>}
-                            </li>
+                            <li key={row.id} className="border-t border-line pt-1.5 first:border-t-0 first:pt-0"><TraceRow row={row} /></li>
                         ))}
                     </ol>
                 )}
@@ -204,6 +246,9 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
     const [waiting, setWaiting] = useState(false);
     const [busyAction, setBusyAction] = useState('');
     const [loaded, setLoaded] = useState(false);
+    const { stages, ask, stop } = useAgentStream();
+    const [revealing, setRevealing] = useState('');         // the reply that is appearing now; stored ones show at once
+    const doneRevealing = useCallback(() => setRevealing(''), []);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const endRef = useRef<HTMLDivElement>(null);
 
@@ -227,7 +272,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
 
     useEffect(() => {
         if (open) endRef.current?.scrollIntoView({ block: 'end' });
-    }, [open, messages, waiting]);
+    }, [open, messages, waiting, stages, revealing]);
 
     useEffect(() => {
         if (!open) return;
@@ -248,13 +293,16 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
         setDraft('');
         setWaiting(true);
         try {
-            const reply = await post<Reply & { text: string; proposed?: { type: string } }>('/api/agent', { message, history, conversationId, page: { path: pathname, ...getPageDetail() } }, t('errors.request'));
+            const { reply, steps } = await ask<Reply & { text: string; proposed?: { type: string } }>({ message, history, conversationId, page: { path: pathname, ...getPageDetail() } }, t('errors.request'));
+            const id = newId();
+            setRevealing(id);
             setMessages((list) => [...list, {
-                id: newId(), role: 'assistant', text: reply.text, change: reply.preview ? 'pending' : undefined,
+                id, role: 'assistant', text: reply.text, change: reply.preview ? 'pending' : undefined, steps,
                 reply: { actionId: reply.actionId, sources: reply.sources ?? [], refused: reply.refused, notice: reply.notice, conflict: reply.conflict, preview: reply.preview, proposedType: reply.proposed?.type },
             }]);
         } catch (error) {
-            notice(error instanceof Error ? error.message : t('errors.request'));
+            // A stop the reader asked for is not a failure: say so and leave the conversation as it was
+            notice(error instanceof DOMException && error.name === 'AbortError' ? t('stopped') : error instanceof Error ? error.message : t('errors.request'));
         } finally {
             setWaiting(false);
         }
@@ -364,7 +412,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                                         <p className="max-w-[88%] whitespace-pre-wrap break-words rounded-2xl bg-brand-soft px-3 py-2 text-sm text-foreground"><span className="sr-only">{t('youSaid')}</span>{message.text}</p>
                                     ) : (
                                         <div className={cn('rounded-2xl border border-line px-3 py-2 text-sm', message.failed && 'bg-down-soft')}>
-                                            <p className="whitespace-pre-wrap break-words text-foreground"><span className="sr-only">{t('agentSaid')}</span>{message.text}</p>
+                                            <AgentText text={message.text} animate={revealing === message.id} onDone={doneRevealing} />
                                             {message.reply && (
                                                 <>
                                                     {message.reply.sources.length > 0 && (
@@ -382,7 +430,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                                                     {message.reply.preview && (
                                                         <PreviewCard message={message} busy={busyAction === message.reply.actionId} onDecide={(accept) => void decide(message, accept)} onUndo={() => void undo(message)} />
                                                     )}
-                                                    <Trace actionId={message.reply.actionId} />
+                                                    <Trace actionId={message.reply.actionId} steps={message.steps} />
                                                 </>
                                             )}
                                         </div>
@@ -390,7 +438,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                                 </li>
                             ))}
                         </ol>
-                        {waiting && <p className="mt-3 text-[13px] text-faint">{t('working')}</p>}
+                        {waiting && <StageList stages={stages} onStop={stop} />}
                         <div ref={endRef} />
                     </div>
 

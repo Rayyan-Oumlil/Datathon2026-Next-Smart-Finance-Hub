@@ -74,6 +74,19 @@ Proposed action types and their `params`:
 | `profile_change` | `{ changes: { level?, risk?, sectors?, … } }` | yes |
 | `simulated_trade` | `{ symbol, side, amountCad? , quantity? }` | yes |
 
+### Streaming
+
+With `"stream": true` in the request the agent service answers `text/event-stream` (AgentCore does this when the entrypoint returns a generator): one JSON object per `data:` line. Without the flag the reply is the single JSON body above.
+
+| `type` | Fields | Meaning |
+|---|---|---|
+| `stage` | `stage` (`orchestrator`, `subagent`, `tool`, `guardrail`, `retry`), `state` (`start`, `done`), `name?`, `ok?`, `ms?`, `attempt?`, `passed?` | a step began or ended; names and timings only, never arguments or text |
+| `heartbeat` | none | sent every 10 s while quiet, so a load balancer does not drop the connection |
+| `final` | `reply` (the response body above) | always last on success |
+| `error` | `message` | an unexpected failure; the stream ends |
+
+The web app's `POST /api/agent/stream` takes the same body as `/api/agent`, runs the same pipeline, forwards `stage` events, and sends `final` only after the word check, the router and the log rows are done; it sends `error` with `status` and `message` for a failure after the stream started. A bad or rate-limited request is answered as JSON before the stream starts. Text that fails a check is never sent. Models still use Converse, so the audit rows are unchanged.
+
 ## 2. Agent service → web app (tools)
 
 Base URL `WEB_INTERNAL_URL` (default `http://localhost:3000`). Every call sends `x-internal-token: $INTERNAL_API_TOKEN` and `x-action-id`. All are `POST` with a JSON body containing `userId`. Every number in a response is a `Sourced` object.
@@ -124,3 +137,8 @@ Each model call row carries `modelId`, `awsRequestId`, token counts, and SHA-256
 | `GUARDRAIL_ID`, `GUARDRAIL_VERSION` | agent | Bedrock Guardrail applied to every reply |
 | `KNOWLEDGE_BASE_ID` | agent | optional; glossary Knowledge Base |
 | `AGENT_ACTION_LOG_TABLE` | both | default `agent_action_log` |
+| `AGENT_REPLY_CACHE` | web | `off` turns off the glossary reply cache (below) |
+
+### Reply cache
+
+A question asked on its own (no history) and answered before, in the same language, level, risk and style, is answered again from the first reply when that reply was made only of glossary sources (`agent/glossary/…`): no proposal, no conflict, nothing refused, nothing withheld. Every figure-bearing reply goes to the agent as before. Entries live one hour in the web server's memory (a restart or a second container starts empty). The stored reply still goes through the web app's wording check, the request leaves its own `chat_input`, `context_built` and `result` rows, and the `result` row carries `cache: { hit: true, fromActionId }` so an auditor can follow it to the original model calls. The stream reports it as a `cache` stage.

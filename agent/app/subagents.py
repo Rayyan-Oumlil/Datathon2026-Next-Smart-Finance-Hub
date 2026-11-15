@@ -52,16 +52,19 @@ def run_subagent(name: str, task: str) -> str:
     current = trace.current()
     token = trace.set_actor(f"subagent:{name}")
     try:
-        agent = Agent(
-            model=bedrock.subagent_model(),
-            system_prompt=prompts.render(name, current.context),
-            tools=SUBAGENTS[name]["tools"],
-            callback_handler=None,
-        )
-        return message_text(agent(task).message) or "No answer from this specialist: treat the data as unavailable."
-    except Exception as exc:
-        current.log("error", result={"error": type(exc).__name__, "detail": str(exc)[:300]})
-        return "This specialist failed: treat the data as unavailable."
+        with current.stage("subagent", name) as done:
+            try:
+                agent = Agent(
+                    model=bedrock.subagent_model(),
+                    system_prompt=prompts.render(name, current.context),
+                    tools=SUBAGENTS[name]["tools"],
+                    callback_handler=None,
+                )
+                return message_text(agent(task).message) or "No answer from this specialist: treat the data as unavailable."
+            except Exception as exc:
+                done["ok"] = False
+                current.log("error", result={"error": type(exc).__name__, "detail": str(exc)[:300]})
+                return "This specialist failed: treat the data as unavailable."
     finally:
         trace.reset_actor(token)
 

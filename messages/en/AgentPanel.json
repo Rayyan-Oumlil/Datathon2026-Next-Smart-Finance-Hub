@@ -12,6 +12,37 @@
   "sources": "Sources",
   "noSource": "This reply cites no data source.",
   "working": "Working on it. A reply can take up to a minute: each figure is fetched and checked.",
+  "stop": "Stop",
+  "stopped": "Stopped. Nothing was changed.",
+  "stages": {
+    "title": "What the agent is doing",
+    "orchestrator": "Reading your request",
+    "retry": "Rewriting the reply after a check",
+    "guardrail": "Checking figures and wording",
+    "guardrailFailed": "The check found a problem",
+    "cache": "Answered from an earlier reply that passed every check",
+    "took": "{ms, number} ms",
+    "subagent": {
+      "market_data": "Market data specialist",
+      "watchlist_explainer": "Watchlist specialist",
+      "portfolio": "Portfolio specialist",
+      "rules": "Rules specialist",
+      "layout": "Layout specialist",
+      "profile": "Profile specialist",
+      "glossary": "Glossary specialist"
+    },
+    "tool": {
+      "conflict-check": "Checking your profile filters",
+      "market-data": "Fetching quotes and signals",
+      "explain-pick": "Reading the watchlist decision log",
+      "portfolio": "Reading the simulated portfolio",
+      "portfolio-stats": "Computing portfolio figures",
+      "validate-rule": "Validating the rule",
+      "rules": "Reading your rules",
+      "layout": "Reading the dashboard layout",
+      "profile-preview": "Previewing the profile change"
+    }
+  },
   "quickActions": "Quick actions",
   "quick": {
     "explain": {
@@ -48,6 +79,8 @@
     "tokens": "tokens {input} in / {output} out",
     "awsRequestId": "AWS request id: {id}",
     "reload": "Reload rows",
+    "stepsTitle": "Steps: select one to see its log rows",
+    "noRowsForStep": "No log row matches this step yet.",
     "steps": {
       "chat_input": "Message received",
       "context_built": "Context built",

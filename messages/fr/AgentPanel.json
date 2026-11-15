@@ -12,6 +12,37 @@
   "sources": "Sources citées",
   "noSource": "Cette réponse ne cite aucune source de données.",
   "working": "Traitement en cours. Une réponse peut prendre jusqu’à une minute : chaque chiffre est récupéré et vérifié.",
+  "stop": "Arrêter",
+  "stopped": "Arrêté. Rien n’a été modifié.",
+  "stages": {
+    "title": "Ce que fait l’agent",
+    "orchestrator": "Lecture de votre demande",
+    "retry": "Reformulation de la réponse après une vérification",
+    "guardrail": "Vérification des chiffres et du vocabulaire",
+    "guardrailFailed": "La vérification a relevé un problème",
+    "cache": "Réponse tirée d’une réponse précédente qui a passé toutes les vérifications",
+    "took": "{ms, number} ms",
+    "subagent": {
+      "market_data": "Spécialiste des données de marché",
+      "watchlist_explainer": "Spécialiste de la liste de surveillance",
+      "portfolio": "Spécialiste du portefeuille",
+      "rules": "Spécialiste des règles",
+      "layout": "Spécialiste de la disposition",
+      "profile": "Spécialiste du profil",
+      "glossary": "Spécialiste du glossaire"
+    },
+    "tool": {
+      "conflict-check": "Vérification de vos filtres de profil",
+      "market-data": "Récupération des cours et des signaux",
+      "explain-pick": "Lecture du journal de décision de la liste",
+      "portfolio": "Lecture du portefeuille simulé",
+      "portfolio-stats": "Calcul des chiffres du portefeuille",
+      "validate-rule": "Validation de la règle",
+      "rules": "Lecture de vos règles",
+      "layout": "Lecture de la disposition du tableau de bord",
+      "profile-preview": "Aperçu de la modification du profil"
+    }
+  },
   "quickActions": "Actions rapides",
   "quick": {
     "explain": {
@@ -47,6 +78,8 @@
     "empty": "Aucune ligne n’est lisible pour l’instant. L’index peut accuser un retard de quelques secondes.",
     "tokens": "jetons{NB}: {input} en entrée / {output} en sortie",
     "awsRequestId": "identifiant de requête AWS : {id}",
+    "stepsTitle": "Étapes : sélectionnez-en une pour voir ses lignes du journal",
+    "noRowsForStep": "Aucune ligne du journal ne correspond encore à cette étape.",
     "reload": "Recharger les lignes",
     "steps": {
       "chat_input": "Message reçu",

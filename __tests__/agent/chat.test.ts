@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { POST as AGENT } from '@/app/api/agent/route';
 import { getAppLocale } from '@/i18n/locale';
-import { NEUTRAL_REPLY, NEUTRAL_REPLY_FR, chat, confirm, undoAction } from '@/lib/agent/chat';
+import { NEUTRAL_REPLY, NEUTRAL_REPLY_FR, chat, confirm, resetReplyCache, undoAction } from '@/lib/agent/chat';
 import { callAgent, runtimeSessionId } from '@/lib/agent/client';
 import { DEMO_USER } from '@/lib/demo-user';
 import { getLayout } from '@/lib/services/layout';
@@ -28,6 +28,7 @@ const steps = async (actionId: string) => (await listAgentActions(DEMO_USER.id, 
 
 beforeEach(async () => {
     await freshWorld();
+    resetReplyCache();
     agent.mockReset();
     locale.mockResolvedValue('en');
 });
@@ -147,9 +148,10 @@ describe('chat in French', () => {
     });
 
     it('lets a factual French reply and a quoted watchlist name through', async () => {
-        for (const text of ['Bien sûr : la volatilité de AAPL est de 24,3 % (source : Finnhub).', 'Apple Inc. figure au rang 1 de votre liste de suivi intelligente.']) {
+        const texts = ['Bien sûr : la volatilité de AAPL est de 24,3 % (source : Finnhub).', 'Apple Inc. figure au rang 1 de votre liste de suivi intelligente.'];
+        for (const [i, text] of texts.entries()) {
             agent.mockResolvedValue(answer({ text }));
-            expect((await chat({ message: 'bonjour' })).text).toBe(text);
+            expect((await chat({ message: `bonjour ${i}` })).text).toBe(text);     // a different question each time: no cached reply
         }
     });
 
@@ -177,6 +179,8 @@ describe('chat in French', () => {
 
 describe('agent route', () => {
     it('allows 10 requests a minute, then answers 429', async () => {
+        process.env.AGENT_REPLY_CACHE = 'off';               // this test counts calls to the agent
+        onTestFinished(() => { delete process.env.AGENT_REPLY_CACHE; });
         agent.mockResolvedValue(answer());
         const post = () => AGENT(new NextRequest('http://localhost/api/agent', { method: 'POST', body: JSON.stringify({ message: 'hello' }) }));
         for (let i = 0; i < 10; i += 1) expect((await post()).status).toBe(200);
