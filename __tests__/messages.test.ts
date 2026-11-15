@@ -73,6 +73,9 @@ describe('message files', () => {
                     if (fr[key] === undefined) continue;
                     const theirs = args(fr[key]);
                     for (const arg of args(msg)) expect(theirs.has(arg), `fr:${ns}.${key} lost ${arg}`).toBe(true);
+                    // An argument only French has is never filled in: next-intl throws FORMATTING_ERROR when the string renders
+                    const ours = args(msg);
+                    for (const arg of theirs) expect(ours.has(arg), `fr:${ns}.${key} adds ${arg}, which the English does not have`).toBe(true);
                 }
             });
 

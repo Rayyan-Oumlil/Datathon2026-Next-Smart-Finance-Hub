@@ -76,7 +76,7 @@
     "unavailable": "Les lignes du journal ne sont pas disponibles pour le moment.",
     "loading": "Chargement des lignes du journal…",
     "empty": "Aucune ligne n’est lisible pour l’instant. L’index peut accuser un retard de quelques secondes.",
-    "tokens": "jetons{NB}: {input} en entrée / {output} en sortie",
+    "tokens": "jetons {input} en entrée / {output} en sortie",
     "awsRequestId": "identifiant de requête AWS : {id}",
     "stepsTitle": "Étapes : sélectionnez-en une pour voir ses lignes du journal",
     "noRowsForStep": "Aucune ligne du journal ne correspond encore à cette étape.",
