@@ -86,6 +86,9 @@ const SAMPLES: { [K in ServiceTextKey]: Array<ServiceParams<K>> } = {
     'svc.portfolio.group': [{ group: 'ETF' }, { group: 'Crypto' }, { group: 'Other' }, { group: 'Energy' }],
     'svc.stats.symbols_needed': [{ metric: 'correlation', count: 2 }, { metric: 'return', count: 1 }],
     'svc.stats.no_closes': [{ symbol: 'AAPL' }],
+    'svc.xray.bad_amount': [{}],
+    'svc.xray.not_held': [{ symbol: 'AAPL' }],
+    'svc.xray.reduce_too_large': [{ symbol: 'AAPL', held: 1500.5, amount: 2000 }],
     'svc.rule.price_trigger': [{}],
     'svc.rule.change_trigger': [{}],
     'svc.rule.amount_or_quantity': [{}],
@@ -265,7 +268,7 @@ describe('routes in French', () => {
     });
 
     it('layout and portfolio: titles, problems and notes in French', async () => {
-        expect((await getLayout('fr')).library.map((widget) => widget.title)).toEqual(['Valeur totale (simulée)', 'Graphique de rendement', 'Positions détenues', 'Répartition par secteur', 'Règles de placement (simulées)']);
+        expect((await getLayout('fr')).library.map((widget) => widget.title)).toEqual(['Valeur totale (simulée)', 'Graphique de rendement', 'Positions détenues', 'Répartition par secteur', 'Radiographie du portefeuille', 'Règles de placement (simulées)']);
         expect((await getLayout('en')).library[0].title).toBe('Total value (simulated)');
         expect(validateLayout(['holdings', 'holdings'], 'fr')).toEqual(['Indiqués plus d’une fois : holdings.'.replace(' :', `${NBSP}:`), `Les modules fixes ne peuvent pas être retirés${NBSP}: Valeur totale (simulée).`]);
         expect(validateLayout(['holdings'])).toEqual(['Fixed widgets cannot be removed: Total value (simulated).']);

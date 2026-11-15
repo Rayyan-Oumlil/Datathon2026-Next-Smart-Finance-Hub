@@ -21,6 +21,7 @@ export const WIDGET_LIBRARY: Widget[] = [
     { id: 'performance', title: widgetTitle('performance'), tab: 'portfolio', fixed: false, minLevel: 'Novice' },
     { id: 'holdings', title: widgetTitle('holdings'), tab: 'portfolio', fixed: false, minLevel: 'Novice' },
     { id: 'sector_allocation', title: widgetTitle('sector_allocation'), tab: 'portfolio', fixed: false, minLevel: 'Intermediate' },
+    { id: 'xray', title: widgetTitle('xray'), tab: 'portfolio', fixed: false, minLevel: 'Novice' },
     { id: 'investment_rules', title: widgetTitle('investment_rules'), tab: 'portfolio', fixed: false, minLevel: 'Intermediate' },
 ];
 

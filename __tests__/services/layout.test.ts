@@ -11,7 +11,7 @@ beforeEach(() => freshWorld(false));
 
 describe('layout', () => {
     it('gives a Novice fewer modules and an Expert all of them', () => {
-        expect(defaultLayout('Novice')).toEqual(['total_value', 'performance', 'holdings']);
+        expect(defaultLayout('Novice')).toEqual(['total_value', 'performance', 'holdings', 'xray']);
         expect(defaultLayout('Intermediate').length).toBeGreaterThan(defaultLayout('Novice').length);
         expect(defaultLayout('Expert')).toEqual(WIDGET_LIBRARY.map((widget) => widget.id));
     });
@@ -39,7 +39,7 @@ describe('layout', () => {
     });
 
     it('offers only the modules the Portfolio tab draws from the layout', () => {
-        expect(WIDGET_LIBRARY.map((widget) => widget.id)).toEqual(['total_value', 'performance', 'holdings', 'sector_allocation', 'investment_rules']);
+        expect(WIDGET_LIBRARY.map((widget) => widget.id)).toEqual(['total_value', 'performance', 'holdings', 'sector_allocation', 'xray', 'investment_rules']);
         expect(WIDGET_LIBRARY.every((widget) => widget.tab === 'portfolio')).toBe(true);
         for (const id of ['price_alerts', 'smart_watchlist', 'quote_lookup', 'charts', 'indices_sentiment', 'market_movers', 'earnings_calendar']) {
             expect(validateLayout(['total_value', id])[0], id).toContain(id);
