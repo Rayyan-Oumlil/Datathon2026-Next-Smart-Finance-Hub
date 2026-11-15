@@ -112,6 +112,11 @@ def check_reply(current: trace.RequestTrace, text: str, attempt: int) -> tuple[d
     current.log("guardrail_check", "writer", awsRequestId=guardrail.get("awsRequestId"),
                 replySha256=trace.sha256(text), result=result)
     current.emit("guardrail", "done", attempt=attempt, passed=passed, ms=int((time.monotonic() - started) * 1000))
+    if not passed and config.env("AGENT_DEBUG"):
+        # Why a reply was refused, on stderr: AGENT_DEBUG=1 when running locally
+        failed = {k: v for k, v in own.items() if v and k != "passed"}
+        print(f"[debug {current.action_id}] attempt {attempt} refused. own={failed} bedrock={ {k: guardrail.get(k) for k in ('blocked', 'error', 'skipped')} }\n"
+              f"  reply: {text[:600]!r}", file=sys.stderr)
     return result, text
 
 

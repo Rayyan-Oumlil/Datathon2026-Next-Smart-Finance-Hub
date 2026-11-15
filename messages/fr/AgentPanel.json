@@ -93,6 +93,7 @@
       "rules": "Spécialiste des règles",
       "layout": "Spécialiste de la disposition",
       "profile": "Spécialiste du profil",
+      "strategy": "Spécialiste des stratégies",
       "glossary": "Spécialiste du glossaire"
     },
     "tool": {
@@ -101,6 +102,9 @@
       "explain-pick": "Lecture du journal de décision de la liste",
       "portfolio": "Lecture du portefeuille simulé",
       "portfolio-stats": "Calcul des chiffres du portefeuille",
+      "portfolio-xray": "Radiographie du portefeuille",
+      "strategies": "Lecture et vérification de vos stratégies",
+      "replay": "Rejeu de la stratégie sur 5 ans d’historique",
       "validate-rule": "Validation de la règle",
       "rules": "Lecture de vos règles",
       "layout": "Lecture de la disposition du tableau de bord",

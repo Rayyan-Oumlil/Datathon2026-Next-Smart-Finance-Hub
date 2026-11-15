@@ -93,6 +93,7 @@
       "rules": "Rules specialist",
       "layout": "Layout specialist",
       "profile": "Profile specialist",
+      "strategy": "Strategy specialist",
       "glossary": "Glossary specialist"
     },
     "tool": {
@@ -101,6 +102,9 @@
       "explain-pick": "Reading the watchlist decision log",
       "portfolio": "Reading the simulated portfolio",
       "portfolio-stats": "Computing portfolio figures",
+      "portfolio-xray": "Running the portfolio X-ray",
+      "strategies": "Reading and checking your strategies",
+      "replay": "Replaying the strategy on 5 years of history",
       "validate-rule": "Validating the rule",
       "rules": "Reading your rules",
       "layout": "Reading the dashboard layout",

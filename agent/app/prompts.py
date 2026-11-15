@@ -8,11 +8,11 @@ from . import checks, config
 PROMPT_DIR = Path(__file__).parent / "prompts"
 
 LEVEL_TONE = {
-    "Novice": "Plain everyday words, short sentences, at most about 90 words. Few figures: only the ones "
+    "Novice": "Plain everyday words, short sentences, at most 45 words. Few figures: only the ones "
               "that answer the question. Avoid jargon; a term that cannot be avoided is explained by the glossary.",
-    "Intermediate": "Clear and compact, at most about 150 words. Give the key figures that answer the question.",
-    "Expert": "Dense. Raw values with units, source and fetch time inline, rule versions when given. "
-              "No definitions of common terms.",
+    "Intermediate": "Clear and compact, at most 70 words. Give the key figures that answer the question.",
+    "Expert": "Dense but short, at most 90 words. Raw values with units, source and fetch time inline, rule versions "
+              "when given. No definitions of common terms.",
 }
 STYLE_TONE = {
     "teach me": "Teaching style: when a term needs explaining, ask the glossary specialist and use its words; "
