@@ -7,7 +7,6 @@ import StockSentimentCard from "@/components/stocks/StockSentimentCard";
 import StockChart from "@/components/stocks/StockChart";
 import Panel from "@/components/Panel";
 import {
-    TECHNICAL_ANALYSIS_WIDGET_CONFIG,
     COMPANY_PROFILE_WIDGET_CONFIG,
     COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
@@ -22,7 +21,8 @@ async function Sentiment({ symbol }: { symbol: string }) {
     const [insight, t] = await Promise.all([getStockSentimentInsights(symbol), getTranslations('StockPage')]);
     if (!insight) return null;
     return (
-        <Panel title={t('sentimentTitle')} sub={t('sentimentSub')}>
+        // Display only: this card never feeds a filter, a score or the agent
+        <Panel title={t('sentimentTitle')} sub={`${t('sentimentSub')} · Adanos · display only, not used in any score`}>
             <StockSentimentCard insight={insight} />
         </Panel>
     );
@@ -83,18 +83,11 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-3">
-                    <Panel title={t('technicalsTitle')} sub={t('technicalsSub')}>
-                        <TradingViewWidget
-                            scriptUrl={`${scriptUrl}technical-analysis.js`}
-                            config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tvSymbol, locale)}
-                            height={400}
-                        />
-                    </Panel>
-                    <Suspense fallback={null}>
-                        <DividendYield symbol={symbol} />
-                    </Suspense>
                     <Suspense fallback={null}>
                         <Sentiment symbol={symbol} />
+                    </Suspense>
+                    <Suspense fallback={null}>
+                        <DividendYield symbol={symbol} />
                     </Suspense>
                     <Panel title={t('profileTitle')} sub={t('profileSub')}>
                         <TradingViewWidget

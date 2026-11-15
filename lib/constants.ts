@@ -163,18 +163,6 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en'
     height: 600,
 });
 
-export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en') => ({
-    symbol: symbol.toUpperCase(),
-    colorTheme: 'light',
-    isTransparent: true,
-    locale: tvLocale(locale),
-    width: '100%',
-    height: 400,
-    interval: '1h',
-    largeChartUrl: '',
-});
-
-// embed-widget-company-profile.js was retired by TradingView (403); symbol-profile.js takes the same config
 export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en') => ({
     symbol: symbol.toUpperCase(),
     colorTheme: 'light',
