@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ListChecks, RefreshCw, Search, TriangleAlert } from "lucide-react";
+import { ChevronDown, ListChecks, Rows3, RefreshCw, Search, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { Level, SignalSet, WatchlistResult } from "@/lib/domain/types";
+import AssetLogo from "@/components/AssetLogo";
+import type { AssetClass, Level, SignalSet, Sourced, WatchlistResult } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
 import { formatPercent } from "@/i18n/format";
-import { FACTOR_KEYS, factorLabel, factorShort, notAvailable, formatSignal, formatTime, isStale, kindLabel, marketLabel, missingLabel, ruleIdLabel, type FactorKey, type WatchlistRulesView } from "./format";
-import { SourceLine } from "./parts";
-import PickCard from "./PickCard";
+import { FACTOR_KEYS, factorLabel, factorShort, notAvailable, formatSignal, formatTime, isStale, kindLabel, marketLabel, missingLabel, ruleIdLabel, type FactorKey, type SignalKey, type WatchlistRulesView } from "./format";
+import { Mark, SourceLegend, StaleChip } from "./parts";
+import PickCard, { CARD_VALUE_KEYS } from "./PickCard";
+import { buildSourceMarks, type MarkOf } from "./sources";
 import TradeDialog from "./TradeDialog";
 import WhyPanel from "./WhyPanel";
 
@@ -31,19 +32,40 @@ type SortKey = 'rank' | 'total' | FactorKey;
 
 const POLL_MS = 5000;
 const LEVELS: Level[] = ['Novice', 'Intermediate', 'Expert'];
+const ASSET_CLASSES: AssetClass[] = ['stock', 'etf', 'crypto', 'gold', 'bond_yield'];
+const asAssetClass = (value: string) => (ASSET_CLASSES as string[]).includes(value) ? value as AssetClass : undefined;
+const COMPACT_KEY = 'watchlist.compact';
+// Order in which a card shows its figures: the quote first, then the 1-month curve, then the folded values
+const MARK_ORDER: SignalKey[] = ['price', 'changePercent', 'closes1m', ...CARD_VALUE_KEYS.filter((k) => k !== 'price' && k !== 'changePercent' && k !== 'closes1m')];
 
-function ReferenceCard({ signals, quoteStaleSeconds }: { signals: SignalSet; quoteStaleSeconds: number }) {
+/** A section under the list, closed by default */
+function Fold({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
+    return (
+        <details className="card group">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3.5 py-2.5 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0">{title}</span>
+                <ChevronDown aria-hidden className="size-4 flex-none text-faint transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="flex flex-col gap-3 border-t border-line px-3.5 py-3">{children}</div>
+        </details>
+    );
+}
+
+function ReferenceCard({ signals, quoteStaleSeconds, markOf }: { signals: SignalSet; quoteStaleSeconds: number; markOf: MarkOf }) {
     const t = useTranslations('Watchlist');
     const locale = useLocale();
     const value = signals.price;
     return (
-        <li className="card flex flex-col gap-1 p-3.5">
-            <p className="text-[12.5px] font-semibold text-muted-foreground">{signals.entry.name}</p>
+        <li className="card flex min-w-0 flex-col gap-1 p-3.5">
+            <p className="flex min-w-0 items-center gap-2 text-[12.5px] font-semibold text-muted-foreground">
+                <AssetLogo symbol={signals.symbol} name={signals.entry.name} assetClass={signals.entry.assetClass} size={24} />
+                <span className="min-w-0 truncate" title={signals.entry.name}>{signals.entry.name}</span>
+            </p>
             {value ? (
                 <>
-                    <p className="num text-lg font-bold text-foreground">{formatSignal('price', value, t, locale)}</p>
+                    <p className="num text-lg font-bold text-foreground">{formatSignal('price', value, t, locale)}<Mark mark={markOf(value)} sourced={value} /></p>
                     {/* Gold is a quote; a bond yield is published once a day, so it is judged as a daily value */}
-                    <SourceLine sourced={value} stale={isStale(signals.entry.assetClass === 'bond_yield' ? 'closes1m' : 'price', value, quoteStaleSeconds)} />
+                    {isStale(signals.entry.assetClass === 'bond_yield' ? 'closes1m' : 'price', value, quoteStaleSeconds) && <span title={formatTime(value.fetchedAt, t, locale)}><StaleChip>{t('list.referenceStale')}</StaleChip></span>}
                     {value.note && <p className="text-[11.5px] text-faint">{value.note}</p>}
                 </>
             ) : (
@@ -56,18 +78,12 @@ function ReferenceCard({ signals, quoteStaleSeconds }: { signals: SignalSet; quo
     );
 }
 
-function ScoreExplainer({ rules, onClose }: { rules: WatchlistRulesView; onClose: () => void }) {
+function ScoreExplainer({ rules }: { rules: WatchlistRulesView }) {
     const t = useTranslations('Watchlist');
     const locale = useLocale();
     return (
-        <Dialog open onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-h-[90dvh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>{t('explain.title')}</DialogTitle>
-                    <DialogDescription>
-                        {t('explain.intro', { version: rules.scoreVersion })}
-                    </DialogDescription>
-                </DialogHeader>
+        <>
+                <p className="text-[12.5px] text-muted-foreground">{t('explain.intro', { version: rules.scoreVersion })}</p>
                 <ol className="flex flex-col gap-2 text-sm text-foreground">
                     <li><span className="font-semibold">{t('explain.filtersHead')}</span>{t('explain.filtersBody')}</li>
                     <li><span className="font-semibold">{t('explain.scoreHead')}</span>{t('explain.scoreBody')}</li>
@@ -87,8 +103,7 @@ function ScoreExplainer({ rules, onClose }: { rules: WatchlistRulesView; onClose
                 <p className="text-[12.5px] text-faint">
                     {t('explain.notScored', { removed: rules.removedFromScore.map((id) => ruleIdLabel(t, id)).join(', '), never: rules.neverAnInput.map((id) => ruleIdLabel(t, id)).join(', ') })}
                 </p>
-            </DialogContent>
-        </Dialog>
+        </>
     );
 }
 
@@ -102,8 +117,9 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
     const [skipped, setSkipped] = useState<'already_current' | 'building' | null>(null);
     const [sort, setSort] = useState<SortKey>('rank');
     const [why, setWhy] = useState<string | null>(null);
-    const [trade, setTrade] = useState<{ symbol: string; name: string } | null>(null);
-    const [explain, setExplain] = useState(false);
+    const [trade, setTrade] = useState<{ symbol: string; name: string; assetClass?: AssetClass } | null>(null);
+    // Dense one-row cards; remembered in this browser only
+    const [compact, setCompact] = useState(false);
     const [query, setQuery] = useState('');
     const [found, setFound] = useState<SearchEntry[] | null>(null);
     const [searchFailed, setSearchFailed] = useState(false);
@@ -122,6 +138,15 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
     }, [t]);
 
     useEffect(() => { void load(); }, [load]);
+
+    useEffect(() => {
+        try { setCompact(window.localStorage.getItem(COMPACT_KEY) === '1'); } catch { /* storage blocked: default view */ }
+    }, []);
+    function toggleCompact() {
+        const next = !compact;
+        setCompact(next);
+        try { window.localStorage.setItem(COMPACT_KEY, next ? '1' : '0'); } catch { /* storage blocked: kept for this visit */ }
+    }
 
     // The first build of a day can take minutes: ask again every 5 s until it is there
     const building = view?.building ?? false;
@@ -193,6 +218,12 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
         return [...shown].sort((a, b) => Number(pinned.has(b.symbol)) - Number(pinned.has(a.symbol)) || value(b) - value(a) || a.rank - b.rank);
     }, [result, rules.topN, sort, pinned]);
 
+    // One marker per source, in order of first appearance on the cards, then on the reference cards
+    const marks = useMemo(() => buildSourceMarks([
+        ...picks.flatMap((p) => MARK_ORDER.map((key) => p.signals[key] as Sourced<unknown> | undefined)),
+        ...(result?.referenceCards ?? []).map((r) => r.price),
+    ]), [picks, result]);
+
     return (
         <section className="hatch" aria-labelledby="smart-watchlist-title">
             <div className="section-head flex-wrap">
@@ -204,45 +235,66 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
                             : t('list.subEmpty')}
                     </p>
                 </div>
-                {result && (
-                    <div className="flex max-w-sm flex-col items-end gap-1">
-                        <button type="button" className="btn btn-ghost h-9" disabled={building || busy === 'recompute'} onClick={() => void recompute()}>
-                            <RefreshCw aria-hidden className={cn(building && 'animate-spin')} />{building ? t('list.recomputing') : t('list.recompute')}
-                        </button>
-                        <p role="status" aria-live="polite" className="text-end text-[12.5px] text-faint">
-                            {skipped && t(`list.recomputeSkipped.${skipped}`)}
-                        </p>
-                    </div>
-                )}
             </div>
 
             <div className="flex flex-col gap-3 p-1">
-                <div className="card p-3 focus-within:border-brand focus-within:ring-2 focus-within:ring-ring">
-                    <label className="flex items-center gap-2">
-                        <Search aria-hidden className="size-4 flex-none text-faint" />
-                        <span className="sr-only">{t('list.searchLabel')}</span>
-                        <input
-                            type="search" value={query} onChange={(e) => setQuery(e.target.value)} maxLength={40}
-                            placeholder={t('list.searchPlaceholder')}
-                            className="h-9 w-full min-w-0 bg-transparent text-foreground outline-none placeholder:text-faint focus-visible:ring-0"
-                        />
-                    </label>
+                <div className="@container card p-2">
+                    <div role="toolbar" aria-label={t('list.toolbarLabel')} className="flex flex-wrap items-center gap-2">
+                        <label className="flex h-9 min-w-[12rem] flex-1 items-center gap-2 rounded-[10px] px-2 focus-within:ring-2 focus-within:ring-ring">
+                            <Search aria-hidden className="size-4 flex-none text-faint" />
+                            <span className="sr-only">{t('list.searchLabel')}</span>
+                            <input
+                                type="search" value={query} onChange={(e) => setQuery(e.target.value)} maxLength={40}
+                                placeholder={t('list.searchPlaceholderShort')} title={t('list.searchPlaceholder')}
+                                className="h-9 w-full min-w-0 bg-transparent text-foreground outline-none placeholder:text-faint focus-visible:ring-0"
+                            />
+                        </label>
+                        {result && (
+                            <span className="flex flex-none items-center gap-1.5">
+                                {level === 'Expert' && picks.length > 1 && (
+                                    <label className="flex items-center gap-1.5">
+                                        <span className="sr-only">{t('list.sortBy')}</span>
+                                        <select
+                                            value={sort} onChange={(e) => setSort(e.target.value as SortKey)}
+                                            className="h-9 max-w-[9.5rem] rounded-[10px] border border-line bg-card px-2 text-[12.5px] font-semibold text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        >
+                                            {(['rank', 'total', ...FACTOR_KEYS] as SortKey[]).map((key) => (
+                                                <option key={key} value={key}>{t('list.sortOption', { label: key === 'rank' ? t('factors.sort.rank') : key === 'total' ? t('factors.sort.total') : factorShort(t, key) })}</option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                )}
+                                <button type="button" className="btn btn-ghost h-9 px-2.5" disabled={building || busy === 'recompute'} onClick={() => void recompute()} title={t('list.recompute')}>
+                                    <RefreshCw aria-hidden className={cn(building && 'animate-spin')} /><span className="hidden @lg:inline">{building ? t('list.recomputing') : t('list.recompute')}</span><span className="sr-only @lg:hidden">{building ? t('list.recomputing') : t('list.recompute')}</span>
+                                </button>
+                                <button type="button" className={cn('btn btn-ghost h-9 px-2.5', compact && 'is-on')} aria-pressed={compact} onClick={toggleCompact} title={t('list.compact')}>
+                                    <Rows3 aria-hidden /><span className="hidden @lg:inline">{t('list.compact')}</span><span className="sr-only @lg:hidden">{t('list.compact')}</span>
+                                </button>
+                            </span>
+                        )}
+                    </div>
+                    <p role="status" aria-live="polite" className={cn('px-2 text-[12.5px] text-faint', skipped && 'pt-1')}>
+                        {skipped && t(`list.recomputeSkipped.${skipped}`)}
+                    </p>
                     {found && (
-                        <ul className="mt-2 flex flex-col border-t border-line" aria-live="polite">
+                        <ul className="mt-1 flex flex-col border-t border-line px-1" aria-live="polite">
                             {searchFailed && <li role="alert" className="py-3 text-sm font-semibold text-down">{t('list.searchFailed')}</li>}
                             {found.length === 0 && !searchFailed && <li className="py-3 text-sm text-faint">{t('list.searchEmpty', { query: query.trim() })}</li>}
                             {found.map((entry) => (
                                 <li key={entry.symbol} className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2 last:border-b-0">
-                                    <div className="min-w-0">
-                                        <p className="truncate text-sm font-semibold text-foreground">{entry.name} <span className="mono text-[12.5px] text-faint">({entry.symbol})</span></p>
-                                        <p className="text-[12.5px] text-faint">{kindLabel(t, entry.assetClass, entry.sector)}{entry.market !== 'none' && ` · ${marketLabel(t, entry.market)}`}</p>
+                                    <div className="flex min-w-0 items-center gap-2.5">
+                                        <AssetLogo symbol={entry.symbol} name={entry.name} assetClass={asAssetClass(entry.assetClass)} size={28} />
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-semibold text-foreground">{entry.name} <span className="mono text-[12.5px] text-faint">({entry.symbol})</span></p>
+                                            <p className="truncate text-[12.5px] text-faint">{kindLabel(t, entry.assetClass, entry.sector)}{entry.market !== 'none' && ` · ${marketLabel(t, entry.market)}`}</p>
+                                        </div>
                                     </div>
                                     <div className="flex flex-wrap gap-1.5">
                                         <button type="button" className="btn btn-ghost h-8 px-2.5" onClick={() => setWhy(entry.symbol)}>{t('card.why')}</button>
                                         {(entry.assetClass === 'stock' || entry.assetClass === 'etf' || entry.assetClass === 'crypto') && (
                                             <>
                                                 <Link href={`/stocks/${encodeURIComponent(entry.symbol)}`} className="btn btn-ghost h-8 px-2.5">{t('list.quotePage')}</Link>
-                                                <button type="button" className="btn btn-ghost h-8 px-2.5" onClick={() => setTrade({ symbol: entry.symbol, name: entry.name })}>{t('card.addToPortfolio')}</button>
+                                                <button type="button" className="btn btn-ghost h-8 px-2.5" onClick={() => setTrade({ symbol: entry.symbol, name: entry.name, assetClass: asAssetClass(entry.assetClass) })}>{t('card.addToPortfolio')}</button>
                                             </>
                                         )}
                                     </div>
@@ -306,17 +358,6 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
                     <>
                         {view?.stale && <p role="note" className="card flex items-center gap-2 p-3 text-sm text-warn"><TriangleAlert aria-hidden className="size-4 flex-none" />{t('list.staleInputs', { date: view.signalsDate ? formatTime(view.signalsDate, t, locale) : t('list.earlierDay') })}</p>}
 
-                        {level === 'Expert' && picks.length > 1 && (
-                            <div role="group" aria-label={t('list.sortGroup')} className="flex flex-wrap items-center gap-1.5 px-1">
-                                <span className="form-label">{t('list.sortBy')}</span>
-                                {(['rank', 'total', ...FACTOR_KEYS] as SortKey[]).map((key) => (
-                                    <button key={key} type="button" aria-pressed={sort === key} onClick={() => setSort(key)} className={cn('btn btn-ghost h-8 px-2.5 text-[12.5px]', sort === key && 'is-on')}>
-                                        {key === 'rank' ? t('factors.sort.rank') : key === 'total' ? t('factors.sort.total') : factorShort(t, key)}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
                         {picks.length === 0 ? (
                             <div className="card empty-state">
                                 <span className="empty-icon"><ListChecks aria-hidden /></span>
@@ -326,13 +367,13 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
                                 </p>
                             </div>
                         ) : (
-                            <ul className={cn('grid gap-3', level === 'Expert' ? '@4xl:grid-cols-2' : '@2xl:grid-cols-2 @6xl:grid-cols-3')}>
+                            <ul className={cn('grid gap-3', compact ? 'gap-1.5' : level === 'Expert' ? '@4xl:grid-cols-2' : '@2xl:grid-cols-2 @6xl:grid-cols-3')}>
                                 {picks.map((pick) => (
                                     <PickCard
                                         key={pick.symbol} pick={pick} level={level} rules={rules} ruleVersions={result.ruleVersions}
-                                        pinned={pinned.has(pick.symbol)} busy={busy === pick.symbol}
+                                        pinned={pinned.has(pick.symbol)} busy={busy === pick.symbol} compact={compact} markOf={marks.markOf}
                                         onWhy={() => setWhy(pick.symbol)}
-                                        onTrade={() => setTrade({ symbol: pick.symbol, name: pick.name })}
+                                        onTrade={() => setTrade({ symbol: pick.symbol, name: pick.name, assetClass: pick.assetClass })}
                                         onPin={() => void act(pick.symbol, pinned.has(pick.symbol) ? 'unpin' : 'pin')}
                                         onDismiss={() => void act(pick.symbol, 'dismiss')}
                                     />
@@ -340,38 +381,43 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
                             </ul>
                         )}
 
-                        {view && view.state.dismissed.length > 0 && (
-                            <p className="flex flex-wrap items-center gap-1.5 px-1 text-[12.5px] text-faint">
-                                {t('list.dismissedBy')}
-                                {view.state.dismissed.map((symbol) => (
-                                    <button key={symbol} type="button" className="btn btn-ghost h-7 px-2 text-[12.5px]" disabled={busy === symbol} onClick={() => void act(symbol, 'add')}>{t('list.restore', { symbol })}</button>
-                                ))}
-                            </p>
-                        )}
+                        <SourceLegend entries={marks.entries} />
 
-                        <p className="px-1 text-[12.5px] leading-relaxed text-muted-foreground">
-                            {t('list.rankingNote', { versions: Object.values(result.ruleVersions).join(', ') })} <span className="mono">{result.snapshotId}</span>.{' '}
-                            <button type="button" className="font-semibold text-brand-ink underline underline-offset-2" onClick={() => setExplain(true)}>{t('list.howScoreWorks')}</button>
-                        </p>
+                        <div className="flex flex-col gap-2">
+                            {view && view.state.dismissed.length > 0 && (
+                                <Fold title={t('list.dismissedTitle', { count: view.state.dismissed.length })}>
+                                    <p className="flex flex-wrap items-center gap-1.5 text-[12.5px] text-faint">
+                                        {view.state.dismissed.map((symbol) => (
+                                            <button key={symbol} type="button" className="btn btn-ghost h-8 gap-1.5 px-2 text-[12.5px]" disabled={busy === symbol} onClick={() => void act(symbol, 'add')}>
+                                                <AssetLogo symbol={symbol} size={18} />{t('list.restore', { symbol })}
+                                            </button>
+                                        ))}
+                                    </p>
+                                </Fold>
+                            )}
 
-                        {result.referenceCards.length > 0 && (
-                            <div className="flex flex-col gap-2 pt-1">
-                                <div className="px-1">
-                                    <h3 className="kicker">{t('list.referenceTitle')}</h3>
+                            {result.referenceCards.length > 0 && (
+                                <Fold title={t('list.referenceTitle')}>
                                     <p className="text-[12.5px] text-faint">{t('list.referenceBody')}</p>
-                                </div>
-                                <ul className="grid gap-3 @xl:grid-cols-2 @4xl:grid-cols-4">
-                                    {result.referenceCards.map((signals) => <ReferenceCard key={signals.symbol} signals={signals} quoteStaleSeconds={rules.quoteStaleSeconds} />)}
-                                </ul>
-                            </div>
-                        )}
+                                    <ul className="grid gap-3 @xl:grid-cols-2 @4xl:grid-cols-4">
+                                        {result.referenceCards.map((signals) => <ReferenceCard key={signals.symbol} signals={signals} quoteStaleSeconds={rules.quoteStaleSeconds} markOf={marks.markOf} />)}
+                                    </ul>
+                                </Fold>
+                            )}
+
+                            <Fold title={t('list.howScoreWorks')}>
+                                <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+                                    {t('list.rankingNote', { versions: Object.values(result.ruleVersions).join(', ') })} <span className="mono break-all">{result.snapshotId}</span>.
+                                </p>
+                                <ScoreExplainer rules={rules} />
+                            </Fold>
+                        </div>
                     </>
                 )}
             </div>
 
             {why && <WhyPanel symbol={why} rules={rules} onClose={() => setWhy(null)} />}
-            {trade && <TradeDialog symbol={trade.symbol} name={trade.name} onClose={() => setTrade(null)} />}
-            {explain && <ScoreExplainer rules={rules} onClose={() => setExplain(false)} />}
+            {trade && <TradeDialog symbol={trade.symbol} name={trade.name} assetClass={trade.assetClass} onClose={() => setTrade(null)} />}
         </section>
     );
 }

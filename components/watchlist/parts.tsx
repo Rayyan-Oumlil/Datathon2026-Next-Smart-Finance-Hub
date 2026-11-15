@@ -6,8 +6,9 @@ import { sourceLabel } from "@/lib/source-label";
 import { useLocale, useTranslations } from "next-intl";
 import type { EsgTag, Sourced } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
-import { formatNumber } from "@/i18n/format";
+import { formatDateTime, formatNumber } from "@/i18n/format";
 import { esgLabel, formatTime } from "./format";
+import type { SourceLegendEntry } from "./sources";
 
 /** Geometry of the sparkline in a 0-100 box: x and y in percent, y measured from the top. Pure, so it can be tested. */
 export function sparklineModel(closes: number[]) {
@@ -86,7 +87,7 @@ export function StaleChip({ children }: { children: React.ReactNode }) {
     return <span className="pill text-warn"><Clock aria-hidden />{children}</span>;
 }
 
-/** Where and when a value came from. Shown next to every figure on the Expert card and in the "Why?" panel. */
+/** Where and when a value came from. Shown in the folded "Data freshness" section of a card and in the "Why?" panel. */
 export function SourceLine({ sourced, stale, label }: { sourced: Sourced<unknown>; stale?: boolean; label?: string }) {
     const t = useTranslations('Watchlist');
     const locale = useLocale();
@@ -101,5 +102,46 @@ export function SourceLine({ sourced, stale, label }: { sourced: Sourced<unknown
             })}
             {stale && <span className="font-bold text-warn">{t('source.stale')}</span>}
         </span>
+    );
+}
+
+/** A source marker next to a figure; the exact source and time are in the tooltip. */
+export function Mark({ mark, sourced }: { mark: string | null; sourced?: Sourced<unknown> }) {
+    const t = useTranslations('Watchlist');
+    const locale = useLocale();
+    if (!mark) return null;
+    const title = sourced
+        ? t('source.line', {
+            source: sourceLabel(sourced.source, locale),
+            time: formatTime(sourced.fetchedAt, t, locale),
+            hasProvider: String(Boolean(sourced.asOf)),
+            providerTime: sourced.asOf ? formatTime(sourced.asOf, t, locale) : '',
+        })
+        : undefined;
+    return <sup className="mono ms-0.5 text-[10px] font-semibold text-faint" title={title}>{mark}</sup>;
+}
+
+/** The one place a view names its sources: each once, with the range of fetch times of the values shown. */
+export function SourceLegend({ entries }: { entries: SourceLegendEntry[] }) {
+    const t = useTranslations('Watchlist');
+    const locale = useLocale();
+    if (entries.length === 0) return null;
+    const day = (iso: string) => formatDateTime(iso, locale, { dateStyle: 'short' });
+    const at = (iso: string) => formatDateTime(iso, locale, { dateStyle: 'medium', timeStyle: 'short' });
+    const range = (e: SourceLegendEntry) => {
+        if (e.from === e.to || at(e.from) === at(e.to)) return t('legend.single', { time: at(e.from) });
+        const to = day(e.from) === day(e.to) ? formatDateTime(e.to, locale, { timeStyle: 'short' }) : at(e.to);
+        return t('legend.range', { from: at(e.from), to });
+    };
+    return (
+        <div role="note" className="px-1 text-[11.5px] leading-relaxed text-faint">
+            <span className="font-semibold text-muted-foreground">{t('legend.title')}</span>{' '}
+            {entries.map((e) => (
+                <span key={e.source} className="me-3 inline-block">
+                    <span className="mono font-semibold">{e.mark}</span> {sourceLabel(e.source, locale)} · {range(e)}
+                </span>
+            ))}
+            <span className="block">{t('legend.note')}</span>
+        </div>
     );
 }

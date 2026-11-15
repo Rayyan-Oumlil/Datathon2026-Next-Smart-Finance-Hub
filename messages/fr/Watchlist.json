@@ -111,12 +111,29 @@
     "addToPortfolio": "Ajouter au portefeuille simulé",
     "pin": "Épingler",
     "unpin": "Désépingler",
-    "dismiss": "Écarter"
+    "dismiss": "Écarter",
+    "more": "Plus d’actions pour {name}",
+    "moreShort": "Plus d’actions",
+    "openPage": "Ouvrir la page du titre",
+    "pinnedShort": "Épinglé",
+    "rankShort": "N° {rank}",
+    "oneMonthShort": "1 mois",
+    "foldsLabel": "Détails repliables",
+    "folds": {
+      "factors": "Facteurs du score",
+      "raw": "Valeurs brutes",
+      "freshness": "Fraîcheur des données"
+    },
+    "topDriversNote": "Principaux facteurs (encadrés) : {list}",
+    "ruleVersions": "Versions des règles : {list}",
+    "staleBoth": "Cours et valeurs non à jour",
+    "staleQuoteShort": "Cours non en direct",
+    "staleDailyShort": "Valeurs d’avant aujourd’hui"
   },
   "levelView": {
     "Novice": "Affichage Novice : faits seulement, sans pointage",
-    "Intermediate": "Affichage Intermédiaire : rang, pointage, principaux facteurs et courbe sur 1 mois",
-    "Expert": "Affichage Expert : tous les facteurs, valeurs brutes et leurs sources"
+    "Intermediate": "Affichage Intermédiaire : rang, pointage et courbe sur 1 mois; facteurs et valeurs brutes dans des sections repliables",
+    "Expert": "Affichage Expert : rang, pointage et courbe sur 1 mois; facteurs, valeurs brutes et fraîcheur des données dans des sections repliables"
   },
   "stage": {
     "signals": "Collecte des données de marché",
@@ -166,7 +183,13 @@
     },
     "actionFailed": "Impossible d’enregistrer l’action.",
     "noSourceFor": "Aucune source n’a répondu pour : {list}. Aucune valeur de remplacement n’est affichée.",
-    "thisValue": "cette valeur"
+    "thisValue": "cette valeur",
+    "toolbarLabel": "Outils de la liste de suivi",
+    "compact": "Vue compacte",
+    "searchPlaceholderShort": "Rechercher un symbole ou une entreprise",
+    "sortOption": "Trier : {label}",
+    "dismissedTitle": "Écartés par vous ({count})",
+    "referenceStale": "Valeur périmée"
   },
   "explain": {
     "title": "Comment fonctionne le pointage",
@@ -232,7 +255,9 @@
     "computed": "Calculé",
     "snapshot": "Instantané",
     "ruleVersions": "Versions des règles",
-    "decisionRows": "Lignes du journal des décisions"
+    "decisionRows": "Lignes du journal des décisions",
+    "expandAll": "Tout déplier",
+    "collapseAll": "Tout replier"
   },
   "trade": {
     "title": "Ajouter {symbol} au portefeuille simulé",
@@ -255,5 +280,11 @@
     "failed": "Impossible d’enregistrer l’acquisition simulée.",
     "noAnswer": "Le serveur n’a pas répondu. Aucune opération n’a été simulée."
   },
-  "labelColon": "{label} :"
+  "labelColon": "{label} :",
+  "legend": {
+    "title": "Sources :",
+    "single": "données récupérées le {time}",
+    "range": "données récupérées du {from} au {to}",
+    "note": "L’heure exacte de chaque valeur s’affiche au survol de son repère, dans « Fraîcheur des données » et dans « Pourquoi? »."
+  }
 }

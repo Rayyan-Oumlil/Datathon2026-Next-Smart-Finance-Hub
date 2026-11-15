@@ -5,7 +5,8 @@ import { sourceLabel } from "@/lib/source-label";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { FilterCheck, SimulatedTrade } from "@/lib/domain/types";
+import AssetLogo from "@/components/AssetLogo";
+import type { AssetClass, FilterCheck, SimulatedTrade } from "@/lib/domain/types";
 import { formatMoney, formatNumber } from "@/i18n/format";
 import { filterLabel, formatTime } from "./format";
 
@@ -17,7 +18,7 @@ function money(amount: number, currency: string, locale: string): string {
 type Conflict = { conflicts: FilterCheck[]; message: string };
 
 // Asks an amount in CAD and adds the position to the simulated portfolio. No real order exists anywhere.
-export default function TradeDialog({ symbol, name, onClose }: { symbol: string; name: string; onClose: () => void }) {
+export default function TradeDialog({ symbol, name, assetClass, onClose }: { symbol: string; name: string; assetClass?: AssetClass; onClose: () => void }) {
     const t = useTranslations('Watchlist');
     const locale = useLocale();
     const [amount, setAmount] = useState('500');
@@ -60,7 +61,10 @@ export default function TradeDialog({ symbol, name, onClose }: { symbol: string;
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{t('trade.title', { symbol })}</DialogTitle>
+                    <div className="flex items-center gap-3">
+                        <AssetLogo symbol={symbol} name={name} assetClass={assetClass} size={40} />
+                        <DialogTitle className="min-w-0">{t('trade.title', { symbol })}</DialogTitle>
+                    </div>
                     <DialogDescription>{t('trade.description', { name })}</DialogDescription>
                 </DialogHeader>
 

@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { sourceLabel } from "@/lib/source-label";
-import { CircleCheck, CircleX } from "lucide-react";
+import { ChevronDown, CircleCheck, CircleX } from "lucide-react";
+import AssetLogo from "@/components/AssetLogo";
 import { useLocale, useTranslations } from "next-intl";
 import { runDetail, type RunDetail } from "@/app/(root)/overview/actions";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { FactorDetail, FilterCheck, Pick, SignalSet, Sourced } from "@/lib/domain/types";
+import type { AssetClass, FactorDetail, FilterCheck, Pick, SignalSet, Sourced } from "@/lib/domain/types";
+import { cn } from "@/lib/utils";
 import { formatNumber, formatPercent } from "@/i18n/format";
 import {
     FACTOR_KEYS, SIGNAL_KEYS, esgLabel, factorLabel, filterLabel, keptLabel, missingLabel, notAvailable, signalLabel,
@@ -28,14 +30,23 @@ type Explanation = {
 
 const ONE_DECIMAL = { minimumFractionDigits: 1, maximumFractionDigits: 1 };
 
-function Section({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
+type SectionId = 'reason' | 'score' | 'filters' | 'inputs' | 'trace';
+const SECTION_IDS: SectionId[] = ['reason', 'score', 'filters', 'inputs', 'trace'];
+
+/** One fold of the accordion. A closed fold hides its content; nothing is dropped from the data. */
+function Section({ id, title, sub, open, onToggle, children }: { id: string; title: string; sub?: string; open: boolean; onToggle: () => void; children: React.ReactNode }) {
     return (
-        <section className="flex flex-col gap-2 border-t border-line pt-4">
-            <div>
-                <h3 className="section-title">{title}</h3>
-                {sub && <p className="section-sub">{sub}</p>}
-            </div>
-            {children}
+        <section className="flex flex-col gap-2 border-t border-line pt-3">
+            <h3>
+                <button type="button" className="flex w-full items-start justify-between gap-3 text-start" aria-expanded={open} aria-controls={id} onClick={onToggle}>
+                    <span className="min-w-0">
+                        <span className="section-title block">{title}</span>
+                        {sub && <span className="section-sub block">{sub}</span>}
+                    </span>
+                    <ChevronDown aria-hidden className={cn('mt-0.5 size-4 flex-none text-faint transition-transform', open && 'rotate-180')} />
+                </button>
+            </h3>
+            {open && <div id={id} className="flex flex-col gap-2">{children}</div>}
         </section>
     );
 }
@@ -52,6 +63,12 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
     const [data, setData] = useState<Explanation | null>(null);
     const [detail, setDetail] = useState<RunDetail | 'loading' | 'failed'>('loading');
     const [error, setError] = useState<string | null>(null);
+    const baseId = useId();
+    // The sentence and the score are open first; "Expand all" opens every fold for an audit
+    const [open, setOpen] = useState<Set<SectionId>>(() => new Set<SectionId>(['reason', 'score']));
+    const allOpen = SECTION_IDS.every((id) => open.has(id));
+    const toggle = (id: SectionId) => setOpen((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+    const fold = (id: SectionId) => ({ id: `${baseId}-${id}`, open: open.has(id), onToggle: () => toggle(id) });
 
     useEffect(() => {
         let live = true;
@@ -78,13 +95,18 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
     const total = pick?.total ?? data?.candidate?.total;
     const filters = data?.candidate?.filters ?? extra?.filters ?? null;
     const signals: SignalSet | null = pick?.signals ?? extra?.signals ?? null;
+    const logoClass: AssetClass | undefined = pick?.assetClass ?? signals?.entry.assetClass;
+    const logoName = pick?.name ?? signals?.entry.name;
     const template = pick?.reason ? rules.reasonTemplates.find((t) => t.id === pick.reason?.templateId) : undefined;
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="top-0 right-0 left-auto h-dvh max-w-full translate-x-0 translate-y-0 content-start gap-4 overflow-y-auto rounded-none sm:max-w-xl sm:rounded-l-2xl">
                 <DialogHeader>
-                    <DialogTitle>{t('why.title', { name: pick ? `${pick.name} (${pick.symbol})` : signals ? `${signals.entry.name} (${signals.symbol})` : symbol })}</DialogTitle>
+                    <div className="flex items-center gap-3">
+                    <AssetLogo symbol={pick?.symbol ?? signals?.symbol ?? symbol} name={logoName} assetClass={logoClass} size={40} />
+                    <DialogTitle className="min-w-0">{t('why.title', { name: pick ? `${pick.name} (${pick.symbol})` : signals ? `${signals.entry.name} (${signals.symbol})` : symbol })}</DialogTitle>
+                    </div>
                     <DialogDescription>
                         {t('why.description')}
                     </DialogDescription>
@@ -102,6 +124,11 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
                             {pick && <span className="pill">{kindLabel(t, pick.assetClass, pick.sector)}</span>}
                             {pick?.kept && <span className="pill">{keptLabel(t, pick.kept)}</span>}
                         </div>
+                        <div className="flex justify-end">
+                            <button type="button" className="btn btn-ghost h-8 px-2.5 text-[12.5px]" onClick={() => setOpen(allOpen ? new Set() : new Set(SECTION_IDS))}>
+                                {allOpen ? t('why.collapseAll') : t('why.expandAll')}
+                            </button>
+                        </div>
                         {data.note && <p className="text-sm text-foreground">{data.note}</p>}
                         {data.rejected && data.rejected.length > 0 && (
                             <div role="note" className="rounded-xl border border-line bg-brand-soft p-3 text-sm text-foreground">
@@ -113,7 +140,7 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
                         )}
 
                         {data.listed && (
-                            <Section title={t('why.reasonTitle')} sub={t('why.reasonSub', { count: rules.reasonTemplates.length, version: data.ruleVersions.reasons ?? notAvailable(t) })}>
+                            <Section {...fold('reason')} title={t('why.reasonTitle')} sub={t('why.reasonSub', { count: rules.reasonTemplates.length, version: data.ruleVersions.reasons ?? notAvailable(t) })}>
                                 {pick?.reason ? (
                                     <>
                                         <p className="text-[15px] font-semibold text-foreground">“{pick.reason.text}”</p>
@@ -129,7 +156,7 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
                             </Section>
                         )}
 
-                        <Section title={t('why.scoreTitle')} sub={t('why.scoreSub', { version: data.ruleVersions.score ?? notAvailable(t) })}>
+                        <Section {...fold('score')} title={t('why.scoreTitle')} sub={t('why.scoreSub', { version: data.ruleVersions.score ?? notAvailable(t) })}>
                             {factors && total !== undefined ? (
                                 <>
                                     <p className="text-sm text-foreground"><span className="num text-2xl font-bold">{formatNumber(total, locale, ONE_DECIMAL)}</span> <span className="text-faint">{t('why.outOf100')}</span></p>
@@ -156,7 +183,7 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
                             ) : <p className="text-sm text-faint">{t('why.noScore')}</p>}
                         </Section>
 
-                        <Section title={t('why.filterTitle')} sub={t('why.filterSub', { version: data.ruleVersions.filters ?? notAvailable(t) })}>
+                        <Section {...fold('filters')} title={t('why.filterTitle')} sub={t('why.filterSub', { version: data.ruleVersions.filters ?? notAvailable(t) })}>
                             {filters ? (
                                 <ul className="flex flex-col gap-2">
                                     {filters.map((check) => (
@@ -174,7 +201,7 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
                                 : <Missing t={t} what={t('why.missingChecks')} />}
                         </Section>
 
-                        <Section title={t('why.inputsTitle')} sub={t('why.inputsSub')}>
+                        <Section {...fold('inputs')} title={t('why.inputsTitle')} sub={t('why.inputsSub')}>
                             {signals ? (
                                 <>
                                     <ul className="flex flex-col gap-2.5">
@@ -211,7 +238,7 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
                                 : <Missing t={t} what={t('why.missingInputsFor')} />}
                         </Section>
 
-                        <Section title={t('why.traceTitle')}>
+                        <Section {...fold('trace')} title={t('why.traceTitle')}>
                             <dl className="grid gap-x-3 gap-y-1 text-[12.5px] text-muted-foreground sm:grid-cols-[auto_1fr]">
                                 <dt className="font-semibold">{t('why.computed')}</dt><dd>{formatTime(data.computedAt, t, locale)}</dd>
                                 <dt className="font-semibold">{t('why.snapshot')}</dt><dd className="mono break-all">{data.snapshotId}</dd>

@@ -111,12 +111,29 @@
     "pin": "Pin",
     "unpin": "Unpin",
     "dismiss": "Dismiss",
-    "kindPinned": "{kind} · pinned"
+    "kindPinned": "{kind} · pinned",
+    "more": "More actions for {name}",
+    "moreShort": "More actions",
+    "openPage": "Open the stock page",
+    "pinnedShort": "Pinned",
+    "rankShort": "No. {rank}",
+    "oneMonthShort": "1 month",
+    "foldsLabel": "Folded details",
+    "folds": {
+      "factors": "Score factors",
+      "raw": "Raw values",
+      "freshness": "Data freshness"
+    },
+    "topDriversNote": "Top drivers (outlined): {list}",
+    "ruleVersions": "Rule versions: {list}",
+    "staleBoth": "Quote and values not current",
+    "staleQuoteShort": "Quote not live",
+    "staleDailyShort": "Values from before today"
   },
   "levelView": {
     "Novice": "Novice view: facts only, no scores",
-    "Intermediate": "Intermediate view: rank, score, top drivers and a 1-month line",
-    "Expert": "Expert view: every factor, raw values and their sources"
+    "Intermediate": "Intermediate view: rank, score and 1-month curve; factors and raw values in folded sections",
+    "Expert": "Expert view: rank, score and 1-month curve; factors, raw values and data freshness in folded sections"
   },
   "stage": {
     "signals": "Collecting market data",
@@ -166,7 +183,13 @@
     },
     "actionFailed": "The action could not be recorded.",
     "noSourceFor": "No source answered for: {list}. No placeholder is shown.",
-    "thisValue": "this value"
+    "thisValue": "this value",
+    "toolbarLabel": "Watchlist tools",
+    "compact": "Compact view",
+    "searchPlaceholderShort": "Search a ticker or a company",
+    "sortOption": "Sort: {label}",
+    "dismissedTitle": "Dismissed by you ({count})",
+    "referenceStale": "Stale value"
   },
   "explain": {
     "title": "How the score works",
@@ -232,7 +255,9 @@
     "computed": "Computed",
     "snapshot": "Snapshot",
     "ruleVersions": "Rule versions",
-    "decisionRows": "Decision log rows"
+    "decisionRows": "Decision log rows",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all"
   },
   "trade": {
     "title": "Add {symbol} to the simulated portfolio",
@@ -255,5 +280,11 @@
     "failed": "The simulated purchase could not be recorded.",
     "noAnswer": "The server did not answer. Nothing was simulated."
   },
-  "labelColon": "{label}:"
+  "labelColon": "{label}:",
+  "legend": {
+    "title": "Sources:",
+    "single": "data fetched {time}",
+    "range": "data fetched from {from} to {to}",
+    "note": "The exact time of each value shows when hovering its marker, in “Data freshness” and in “Why?”."
+  }
 }
