@@ -1,3 +1,6 @@
+'use client';
+
+import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Level } from '@/lib/domain/types';
 import type { PortfolioView } from '@/lib/services/portfolio';
@@ -6,17 +9,11 @@ import { formatDateTime } from '@/i18n/format';
 import { AssetLogo } from '@/components/AssetLogo';
 import { useFmt } from './useFmt';
 
-const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
-    <div className="min-w-0">
-        <dt className="kicker">{label}</dt>
-        <dd className="num mt-1 text-[17px] font-bold tracking-[-0.02em] text-foreground">{value}</dd>
-        {sub && <dd className="text-[12px] text-faint">{sub}</dd>}
-    </div>
-);
-
 // The fixed widget: the simulated balance, the session's change and where the prices behind it came from.
 export default function TotalValue({ view, level }: { view: PortfolioView; level: Level }) {
     const t = useTranslations('Portfolio');
+    const [open, setOpen] = useState(false);
+    const detailsId = useId();
     const fmt = useFmt();
     const { valueCad, dayChangeCad, cashCad, portfolio, positions, fxUsdCad, unpriced, market } = view;
     const start = portfolio.startingCashCad;
@@ -55,43 +52,45 @@ export default function TotalValue({ view, level }: { view: PortfolioView; level
                     )}
                 </div>
 
-                <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-line pt-4 sm:grid-cols-4">
-                    <Stat label={t('total.startingAmount')} value={fmt.cad(start)} sub={t('total.startingSub')} />
-                    <Stat label={t('total.sinceStart')} value={fmt.signedCad(sinceStart)} sub={level === 'Novice' ? undefined : t('total.pctOfStart', { pct: fmt.signedPct((sinceStart / start) * 100) })} />
-                    <Stat label={t('total.cash')} value={fmt.cad(cashCad)} sub={t('total.cashSub')} />
-                    {level !== 'Novice' && <Stat label={t('total.inPositions')} value={fmt.cad(invested)} sub={t('total.heldCount', { count: positions.length })} />}
-                </dl>
+                <p className="mt-3 text-[13px] text-muted-foreground">
+                    {t('total.cash')} <span className="num font-semibold text-foreground">{fmt.cad(cashCad)}</span>
+                    {' · '}
+                    {t('total.inPositions')} <span className="num font-semibold text-foreground">{fmt.cad(invested)}</span>
+                </p>
+                {/* Always shown: the total above leaves these positions out */}
+                {unpriced.length > 0 && <p className="mt-2 text-[12px] text-down">{t('total.unpriced', { list: unpriced.join(', ') })}</p>}
 
-                <div className="mt-4 text-[12px] leading-relaxed text-faint">
-                    <p>
-                        <span className="font-semibold text-muted-foreground">{t('total.howLabel')}</span>{' '}
-                        {t('total.howBody', { when: fmt.when(valueCad.fetchedAt) })}
-                    </p>
-                    {priced.length > 0 && (
-                        <p>
-                            {pricesBefore}
-                            {priced.map((position, index) => (
-                                <span key={position.symbol} className="whitespace-normal">
-                                    {index > 0 && ' · '}
-                                    <span className="inline-flex items-center gap-1 align-middle">
-                                        <AssetLogo symbol={position.symbol} name={position.name} assetClass={position.assetClass} size={14} />
-                                        <span className="font-semibold text-muted-foreground">{position.symbol}</span>
+                <button type="button" className="btn btn-ghost mt-3" aria-expanded={open} aria-controls={detailsId} onClick={() => setOpen((v) => !v)}>
+                    {open ? t('total.less') : t('total.more')}
+                </button>
+
+                {open && (
+                    <div id={detailsId} className="mt-3 space-y-1 border-t border-line pt-3 text-[12px] leading-relaxed text-faint">
+                        <p>{t('total.startingAmount')} : <span className="num text-muted-foreground">{fmt.cad(start)}</span> · {t('total.sinceStart')} : <span className="num text-muted-foreground">{fmt.signedCad(sinceStart)}</span>{level !== 'Novice' && <> ({fmt.signedPct((sinceStart / start) * 100)})</>}</p>
+                        <p>{t('total.formula')} · {t('total.computedAt', { when: fmt.when(valueCad.fetchedAt) })}</p>
+                        {priced.length > 0 && (
+                            <p>
+                                {pricesBefore}
+                                {priced.map((position, index) => (
+                                    <span key={position.symbol} className="whitespace-normal">
+                                        {index > 0 && ' · '}
+                                        <span className="inline-flex items-center gap-1 align-middle">
+                                            <AssetLogo symbol={position.symbol} name={position.name} assetClass={position.assetClass} size={14} />
+                                            <span className="font-semibold text-muted-foreground">{position.symbol}</span>
+                                        </span>
+                                        {': '}{position.price ? fmt.sourceLine(position.price) : ''}
                                     </span>
-                                    {': '}{position.price ? fmt.sourceLine(position.price) : ''}
-                                </span>
-                            ))}
-                            {pricesAfter}
-                        </p>
-                    )}
-                    {fxUsdCad && positions.some((position) => position.price?.currency === 'USD') && (
-                        <p>{t('total.fxNote', { rate: fmt.units(fxUsdCad.value), source: fmt.sourceLine(fxUsdCad) })}</p>
-                    )}
-                    {dayChangeCad !== null && positions.length > 0 && (
-                        <p>{t('total.dayNote')}</p>
-                    )}
-                    {unpriced.length > 0 && <p className="text-down">{t('total.unpriced', { list: unpriced.join(', ') })}</p>}
-                    {level === 'Expert' && valueCad.note && <p className="mono mt-1 text-[11px]">{valueCad.note}</p>}
-                </div>
+                                ))}
+                                {pricesAfter}
+                            </p>
+                        )}
+                        {fxUsdCad && positions.some((position) => position.price?.currency === 'USD') && (
+                            <p>{t('total.fxNote', { rate: fmt.units(fxUsdCad.value), source: fmt.sourceLine(fxUsdCad) })}</p>
+                        )}
+                        {dayChangeCad !== null && positions.length > 0 && <p>{t('total.dayNote')}</p>}
+                        {level === 'Expert' && valueCad.note && <p className="mono text-[11px]">{valueCad.note}</p>}
+                    </div>
+                )}
             </div>
         </section>
     );
