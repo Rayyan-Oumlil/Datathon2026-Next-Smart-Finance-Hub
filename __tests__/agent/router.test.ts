@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TEST_SCOPE } from '@/__tests__/test-user';
 import { listScopeDecisions } from '@/lib/session';
 import { apply, cancel, getAction, route, ruleSentence, undo } from '@/lib/agent/router';
-import { getLayout } from '@/lib/services/layout';
+import { getLayout, putLayout } from '@/lib/services/layout';
 import { getPortfolioState } from '@/lib/services/portfolio';
 import { getProfile } from '@/lib/services/profile';
 import { createRule, listRules } from '@/lib/services/rules-engine';
@@ -16,6 +16,12 @@ beforeEach(() => freshWorld());
 
 const rule = { text: 'under 90 add 200 CAD of AAPL', symbol: 'AAPL', trigger: { type: 'price_below', value: 90 }, action: { side: 'buy', amountCad: 200 }, once: true };
 const propose = (type: string, params: unknown, extra: object = {}) => ({ type, summary: 'from the model', params, needsConfirm: false, ...extra });
+// A layout with every Overview panel shown (the heatmap is not part of the starting layout), saved so the tests start from it
+const layoutWithHeatmap = async () => {
+    const all = [...(await getLayout()).layout, 'overview_heatmap'];
+    await putLayout(all);
+    return all;
+};
 const preview = async (actionId: string, type: string, params: unknown, locale: 'en' | 'fr' = 'en') => {
     const routed = await route(actionId, propose(type, params), locale);
     if (routed.outcome !== 'preview') throw new Error(`expected a preview, got ${JSON.stringify(routed)}`);
@@ -99,7 +105,7 @@ describe('preview, apply, undo', () => {
     });
 
     it('layout_change hides an Overview panel such as the heatmap, shows it again, and undoes either', async () => {
-        const all = (await getLayout()).layout;
+        const all = await layoutWithHeatmap();
         expect(all).toContain('overview_heatmap');
         const without = all.filter((id) => id !== 'overview_heatmap');
 
@@ -124,7 +130,7 @@ describe('preview, apply, undo', () => {
     });
 
     it('layout_change names the Overview panels in French in a French preview', async () => {
-        const all = (await getLayout()).layout;
+        const all = await layoutWithHeatmap();
         const routed = await preview('h3', 'layout_change', { layout: all.filter((id) => id !== 'overview_heatmap') }, 'fr');
         expect(routed.preview.summary).toContain('Carte thermique (Aperçu)');
         expect(routed.preview.summary).not.toContain('Heatmap');
@@ -134,7 +140,7 @@ describe('preview, apply, undo', () => {
     });
 
     it('names the page where each kind of change is reviewed and saved, and none for a trade', async () => {
-        const all = (await getLayout()).layout;
+        const all = await layoutWithHeatmap();
         expect((await preview('pg1', 'layout_change', { layout: all.filter((id) => id !== 'overview_heatmap') })).preview.page).toBe('/overview');
         expect((await preview('pg2', 'layout_change', { layout: all.filter((id) => id !== 'xray') })).preview.page).toBe('/portfolio');
         // A change that touches both tabs goes to the Portfolio, where the other half is
@@ -144,7 +150,7 @@ describe('preview, apply, undo', () => {
     });
 
     it('a new proposal for a page replaces the one still waiting on that page, and leaves other pages alone', async () => {
-        const all = (await getLayout()).layout;
+        const all = await layoutWithHeatmap();
         await preview('s1', 'layout_change', { layout: all.filter((id) => id !== 'overview_heatmap') });
         await preview('s2', 'layout_change', { layout: all.filter((id) => id !== 'overview_news') });
         await preview('s3', 'layout_change', { layout: all.filter((id) => id !== 'xray') });   // the Portfolio page

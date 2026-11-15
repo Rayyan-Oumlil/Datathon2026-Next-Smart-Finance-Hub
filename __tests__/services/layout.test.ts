@@ -13,9 +13,10 @@ beforeEach(() => freshWorld(false));
 
 describe('layout', () => {
     it('starts a Novice with fewer modules and an Expert with all of them', () => {
-        expect(defaultLayout('Novice')).toEqual(['total_value', 'performance', 'holdings', 'xray', ...OVERVIEW]);
+        expect(defaultLayout('Novice')).toEqual(['total_value', 'performance', 'holdings', 'xray', ...OVERVIEW.filter((id) => id !== 'overview_heatmap')]);
         expect(defaultLayout('Intermediate').length).toBeGreaterThan(defaultLayout('Novice').length);
-        expect(defaultLayout('Expert')).toEqual(WIDGET_LIBRARY.map((widget) => widget.id));
+        expect(defaultLayout('Expert')).toEqual(WIDGET_LIBRARY.map((widget) => widget.id).filter((id) => id !== 'overview_heatmap'));
+        expect(defaultLayout('Novice')).not.toContain('overview_heatmap');
     });
 
     it('gates no widget by level: the library has no minimum level and any level may save any widget', async () => {

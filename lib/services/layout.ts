@@ -39,10 +39,12 @@ export const widgetLibrary = (locale: Locale): Widget[] => WIDGET_LIBRARY.map((w
 // The layout a new user starts with, by level: a Novice starts with fewer Portfolio modules. It is only a starting
 // point: any level may show, hide or move any widget, by hand or through the agent.
 const NOVICE_HIDDEN = new Set(['sector_allocation', 'investment_rules']);
+// Widgets no level starts with: they appear once the user (or the agent) adds them.
+const NOT_STARTING = new Set(['overview_heatmap']);
 const STARTING_LAYOUT: Record<Level, string[]> = {
-    Novice: WIDGET_LIBRARY.filter((widget) => !NOVICE_HIDDEN.has(widget.id)).map((widget) => widget.id),
-    Intermediate: WIDGET_LIBRARY.map((widget) => widget.id),
-    Expert: WIDGET_LIBRARY.map((widget) => widget.id),
+    Novice: WIDGET_LIBRARY.filter((widget) => !NOVICE_HIDDEN.has(widget.id) && !NOT_STARTING.has(widget.id)).map((widget) => widget.id),
+    Intermediate: WIDGET_LIBRARY.filter((widget) => !NOT_STARTING.has(widget.id)).map((widget) => widget.id),
+    Expert: WIDGET_LIBRARY.filter((widget) => !NOT_STARTING.has(widget.id)).map((widget) => widget.id),
 };
 
 /** The starting layout of a level (a copy). Never a limit: every widget of the library may be added at any level. */
