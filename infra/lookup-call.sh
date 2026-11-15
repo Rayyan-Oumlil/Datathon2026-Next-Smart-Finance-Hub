@@ -24,9 +24,16 @@ done
 echo "== Invocation log (S3)"
 BUCKET="datathon-bedrock-invlogs-${ACCOUNT}"
 DAY=$(date -u +%Y/%m/%d)
-aws s3 cp "s3://${BUCKET}/bedrock/AWSLogs/${ACCOUNT}/BedrockModelInvocationLogs/${REGION}/${DAY}/" "${TMPDIR:-/tmp}/invlogs/" --recursive --quiet || true
-grep -rhs "$RID" "${TMPDIR:-/tmp}/invlogs/" 2>/dev/null | head -1 | python3 -c "
+DEST="${TMPDIR:-/tmp}/invlogs"
+aws s3 sync "s3://${BUCKET}/bedrock/AWSLogs/${ACCOUNT}/BedrockModelInvocationLogs/${REGION}/${DAY}/" "$DEST/" --quiet || true
+# Delivered as gzipped JSON lines, one model call per line
+find "$DEST" -name '*.gz' -exec gzip -cd {} + 2>/dev/null | grep -F "$RID" | head -1 | python3 -c "
 import sys, json
 line = sys.stdin.readline()
-if not line: print('not found yet (delivery can take a few minutes; .gz files need zgrep)'); sys.exit()
-d = json.loads(line); print(json.dumps({k: d.get(k) for k in ['timestamp','requestId','operation','modelId','requestMetadata']}, indent=2)); print('identity:', d.get('identity')); print('input tokens', d['input'].get('inputTokenCount'), 'output tokens', d['output'].get('outputTokenCount'))"
+if not line:
+    print('not found yet (delivery to S3 can take a few minutes)'); sys.exit()
+d = json.loads(line)
+print(json.dumps({k: d.get(k) for k in ['timestamp', 'requestId', 'operation', 'modelId', 'requestMetadata']}, indent=2))
+print('identity:', d.get('identity'))
+print('input tokens', d['input'].get('inputTokenCount'), '| output tokens', d['output'].get('outputTokenCount'))
+print('prompt and reply text are in input.inputBodyJson and output.outputBodyJson of this record')"
