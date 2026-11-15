@@ -32,7 +32,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
     return (
         <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-page px-3 py-6 sm:px-6">
             <div className="flex w-full max-w-[600px] items-baseline justify-between gap-3 px-1">
-                <span className="text-[19px] font-bold tracking-[-0.03em] text-foreground">AlphaForge</span>
+                <span className="text-[19px] font-bold tracking-[-0.03em] text-foreground">Next Smart Finance Hub</span>
                 <div className="flex items-center gap-2">
                     <LanguageToggle />
                     <span className="pill">{t('simulationOnly')}</span>

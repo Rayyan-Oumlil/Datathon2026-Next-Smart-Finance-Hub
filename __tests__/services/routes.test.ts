@@ -1,3 +1,4 @@
+import '@/__tests__/test-user';
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PATCH, POST } from '@/app/api/profile/route';

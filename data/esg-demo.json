@@ -38,6 +38,7 @@
     "ADP": "screened",
     "AEM.TO": "screened",
     "AEP": "screened",
+    "AGG": "screened",
     "AMAT": "screened",
     "AMD": "screened",
     "AMGN": "screened",
@@ -99,6 +100,7 @@
     "ENB.TO": "not screened",
     "EOG": "not screened",
     "EQIX": "screened",
+    "ESGV": "screened",
     "ETH": "not screened",
     "ETN": "screened",
     "ETR": "screened",
@@ -114,6 +116,7 @@
     "GIB-A.TO": "screened",
     "GIL.TO": "screened",
     "GILD": "screened",
+    "GLD": "screened",
     "GOLD": "screened",
     "GOOGL": "screened",
     "GS": "screened",
@@ -203,6 +206,7 @@
     "TECK-B.TO": "screened",
     "TGT": "screened",
     "TJX": "screened",
+    "TLT": "screened",
     "TMO": "screened",
     "TMUS": "screened",
     "TOU.TO": "not screened",
@@ -235,10 +239,12 @@
     "WN.TO": "screened",
     "WPM.TO": "screened",
     "WSP.TO": "screened",
+    "XBB.TO": "screened",
     "XEI.TO": "screened",
     "XEL": "screened",
     "XIC.TO": "screened",
     "XIU.TO": "screened",
-    "XOM": "not screened"
+    "XOM": "not screened",
+    "ZST.TO": "screened"
   }
 }

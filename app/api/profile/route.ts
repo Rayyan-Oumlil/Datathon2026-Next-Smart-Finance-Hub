@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requestLocale, respond } from '@/lib/services/http';
 import { editProfile, getProfile, localizeProfile, saveOnboarding } from '@/lib/services/profile';
+import { requestScope } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ const patchSchema = z.object({
 }).strict();
 
 // The profile's display text (a risk cap's wording) and every refusal follow the request's language.
-export const GET = (req: NextRequest) => respond(async () => ({ profile: await getProfile(await requestLocale(req)) }), req);
+export const GET = (req: NextRequest) => respond(async () => ({ profile: await getProfile(await requestLocale(req), await requestScope(req)) }), req);
 
 export const POST = (req: NextRequest) => respond(async () => {
     const { answers } = z.object({ answers: answersSchema }).parse(await req.json());
@@ -44,12 +45,12 @@ export const POST = (req: NextRequest) => respond(async () => {
         delete answers.experience;
         delete answers.tools;
     }
-    return { profile: localizeProfile(await saveOnboarding(answers), await requestLocale(req)) };
+    return { profile: localizeProfile(await saveOnboarding(answers, await requestScope(req)), await requestLocale(req)) };
 }, req);
 
 export const PATCH = (req: NextRequest) => respond(async () => {
     const patch = patchSchema.parse(await req.json());
     const given = Object.fromEntries(Object.entries(patch.answers ?? {}).filter(([, value]) => value !== undefined));
-    const edit = await editProfile({ level: patch.level, risk: patch.risk, answers: given });
+    const edit = await editProfile({ level: patch.level, risk: patch.risk, answers: given }, await requestScope(req));
     return { ...edit, profile: localizeProfile(edit.profile, await requestLocale(req)) };
 }, req);

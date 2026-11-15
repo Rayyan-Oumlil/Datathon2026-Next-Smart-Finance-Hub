@@ -183,6 +183,16 @@
     "label": "simulated"
   },
 
+  "strategy": {
+    "version": "strategy-v1",
+    "origin": "owner; agreed on 2026-11-15 (docs/v2-plan.md, 'Rule priority')",
+    "note": "Read by the one rules evaluator shared by the live app and the replay (lib/strategy/evaluate.ts). The priority, the anti-oscillation delay and the minimum order size were agreed on 2026-11-15. price_threshold is the V1 rule kind: it comes last and keeps its V1 delay (at most one firing per market day).",
+    "priority": ["drawdown_guard", "weight_cap", "allocation_target", "periodic_purchase", "price_threshold"],
+    "anti_oscillation_trading_days": 5,
+    "min_order_cad": 25,
+    "price_threshold_min_days_between_firings": 1
+  },
+
   "agent": {
     "origin": "board; models and region changed by the owner",
     "whitelisted_actions": [

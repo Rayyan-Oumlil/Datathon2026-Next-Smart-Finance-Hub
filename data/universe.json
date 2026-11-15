@@ -213,6 +213,68 @@
       "namesIndex": true,
       "namesTicker": true,
       "ok": true
+    },
+    {
+      "symbol": "XBB.TO",
+      "url": "https://www.blackrock.com/ca/investors/en/products/239493/ishares-canadian-bond-index-etf",
+      "index": "FTSE Canada Universe Bond Index",
+      "checkedAt": "2026-11-15T17:21:21.415Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "AGG",
+      "url": "https://www.ishares.com/us/products/239458/ishares-core-total-us-bond-market-etf",
+      "index": "Bloomberg US Aggregate Bond Index",
+      "checkedAt": "2026-11-15T17:21:26.025Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "TLT",
+      "url": "https://www.ishares.com/us/products/239454/ishares-20-year-treasury-bond-etf",
+      "index": "ICE US Treasury 20+ Year Bond Index",
+      "checkedAt": "2026-11-15T17:22:26.024Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "ESGV",
+      "url": "https://investor.vanguard.com/investment-products/etfs/profile/esgv",
+      "index": "FTSE US All Cap Choice Index",
+      "checkedAt": "2026-11-15T17:21:17.140Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "GLD",
+      "url": "https://www.spdrgoldshares.com/usa/gld/",
+      "index": "Gold bullion",
+      "checkedAt": "2026-11-15T17:23:08.786Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "ZST.TO",
+      "url": "https://www.bmogam.com/ca-en/products/exchange-traded-fund/bmo-ultra-short-term-bond-etf-zst/",
+      "index": "Actively managed, ultra short-term Canadian bonds (no index)",
+      "checkedAt": "2026-11-15T17:40:00.000Z",
+      "httpStatus": null,
+      "namesIndex": false,
+      "namesTicker": false,
+      "ok": true,
+      "method": "manual",
+      "note": "Entered by hand on 2026-11-15 for the example portfolios. BMO's product page renders its details in the browser, so the automatic check could not read it. The fund is actively managed and tracks no index."
     }
   ],
   "entries": [
@@ -2427,6 +2489,20 @@
       "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (BlackRock Canada (iShares)), read 2026-11-15"
     },
     {
+      "symbol": "XBB.TO",
+      "name": "iShares Core Canadian Universe Bond Index ETF",
+      "assetClass": "etf",
+      "market": "Canada",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": false,
+      "etf": {
+        "index": "FTSE Canada Universe Bond Index",
+        "issuerUrl": "https://www.blackrock.com/ca/investors/en/products/239493/ishares-canadian-bond-index-etf"
+      },
+      "listSource": "Added for the example portfolios (docs/v2-plan.md); hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (BlackRock Canada (iShares)), read 2026-11-15"
+    },
+    {
       "symbol": "ICLN",
       "name": "iShares Global Clean Energy ETF",
       "assetClass": "etf",
@@ -2529,6 +2605,62 @@
       "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (Vanguard), read 2026-11-15"
     },
     {
+      "symbol": "AGG",
+      "name": "iShares Core U.S. Aggregate Bond ETF",
+      "assetClass": "etf",
+      "market": "US",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": false,
+      "etf": {
+        "index": "Bloomberg US Aggregate Bond Index",
+        "issuerUrl": "https://www.ishares.com/us/products/239458/ishares-core-total-us-bond-market-etf"
+      },
+      "listSource": "Added for the example portfolios (docs/v2-plan.md); hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (BlackRock (iShares)), read 2026-11-15"
+    },
+    {
+      "symbol": "TLT",
+      "name": "iShares 20+ Year Treasury Bond ETF",
+      "assetClass": "etf",
+      "market": "US",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": false,
+      "etf": {
+        "index": "ICE US Treasury 20+ Year Bond Index",
+        "issuerUrl": "https://www.ishares.com/us/products/239454/ishares-20-year-treasury-bond-etf"
+      },
+      "listSource": "Added for the example portfolios (docs/v2-plan.md); hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (BlackRock (iShares)), read 2026-11-15"
+    },
+    {
+      "symbol": "ESGV",
+      "name": "Vanguard ESG U.S. Stock ETF",
+      "assetClass": "etf",
+      "market": "US",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": false,
+      "etf": {
+        "index": "FTSE US All Cap Choice Index",
+        "issuerUrl": "https://investor.vanguard.com/investment-products/etfs/profile/esgv"
+      },
+      "listSource": "Added for the example portfolios (docs/v2-plan.md); hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (Vanguard), read 2026-11-15"
+    },
+    {
+      "symbol": "GLD",
+      "name": "SPDR Gold Shares",
+      "assetClass": "etf",
+      "market": "US",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": false,
+      "etf": {
+        "index": "Gold bullion",
+        "issuerUrl": "https://www.spdrgoldshares.com/usa/gld/"
+      },
+      "listSource": "Added for the example portfolios (docs/v2-plan.md); hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (World Gold Trust Services (SPDR Gold Shares)), read 2026-11-15"
+    },
+    {
       "symbol": "BTC",
       "name": "Bitcoin",
       "assetClass": "crypto",
@@ -2581,6 +2713,20 @@
       "themes": [],
       "esg": "screened",
       "listSource": "Hand-set: rules/v1.json filters.asset_class_rules.bond_yields (reference card); Bank of Canada Valet series BD.CDN.10YR.DQ.YLD"
+    },
+    {
+      "symbol": "ZST.TO",
+      "name": "BMO Ultra Short-Term Bond ETF",
+      "assetClass": "etf",
+      "market": "Canada",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": false,
+      "etf": {
+        "index": "Actively managed, ultra short-term Canadian bonds (no index)",
+        "issuerUrl": "https://www.bmogam.com/ca-en/products/exchange-traded-fund/bmo-ultra-short-term-bond-etf-zst/"
+      },
+      "listSource": "Added by hand for the example portfolios (2026-11-15). The issuer page builds its content in the browser, so the automatic page check could not confirm it."
     }
   ]
 }

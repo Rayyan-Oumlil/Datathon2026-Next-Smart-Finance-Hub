@@ -11,6 +11,8 @@ import { formatNumber, formatDateTime } from "@/i18n/format";
 import { formatMoment, sourceLabel } from "@/components/agent/time";
 import AgentText from "@/components/agent/AgentText";
 import StageList, { stageFailed, stageText } from "@/components/agent/StageList";
+import Timeline from "@/components/agent/Timeline";
+import Link from "next/link";
 import { rowsForStage } from "@/lib/agent/stage-rows";
 import type { StageLine } from "@/lib/agent/stages";
 import { useAgentStream } from "@/hooks/useAgentStream";
@@ -473,6 +475,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                                                     {message.reply.preview && (
                                                         <PreviewCard message={message} busy={busyAction === message.reply.actionId} onDecide={(accept) => void decide(message, accept)} onUndo={() => void undo(message)} />
                                                     )}
+                                                    <Timeline actionId={message.reply.actionId} refreshKey={message.change} />
                                                     <Trace actionId={message.reply.actionId} steps={message.steps} />
                                                 </>
                                             )}
@@ -514,6 +517,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                             <VoiceButton state={voice.state} support={voice.support} onStart={() => void voice.start()} onStop={voice.stop} />
                             <button type="submit" className="btn btn-primary h-11 px-3" disabled={waiting || !draft.trim()} aria-label={t('send')}><SendHorizontal aria-hidden /></button>
                         </form>
+                        <Link href="/logs" className="mt-1.5 inline-block text-[11px] font-semibold text-faint hover:text-foreground hover:underline">{t('logsLink')}</Link>
                     </footer>
                 </div>
             </aside>

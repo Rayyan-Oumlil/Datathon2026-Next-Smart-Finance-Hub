@@ -3,10 +3,10 @@
 
 import { createHash, randomBytes } from 'node:crypto';
 import { getAppLocale } from '@/i18n/locale';
-import { DEMO_USER } from '@/lib/demo-user';
 import type { Candidate, DecisionLogEntry, TextRef, FilterCheck, Pick as WatchlistPick, ProfileConfig, SignalSet, Snapshot, Sourced, WatchlistResult } from '@/lib/domain/types';
 import { RULES, RULES_VERSION, RULE_VERSIONS } from '@/lib/rules';
 import { loadDailySignals, marketDate, refreshDailySignals } from '@/lib/sources/daily-signals';
+import { currentScope, type Scope } from '@/lib/session';
 import { appendDecision, getDecision, getProfile, readState, updateState, type AppState } from '@/lib/store';
 import { getEntry, getUniverse } from '@/lib/universe';
 import { own } from '@/lib/watchlist/format';
@@ -43,8 +43,8 @@ type RunPayload = {
 // profile starts without incumbents: the rule keeps a list steady from day to day, it does not carry one profile's
 // picks into another's. Seeds still apply.
 type IncumbentsReset = { reason: 'profile_changed'; fromProfileHash: string; toProfileHash: string; dropped: string[] };
-// Where the last run sits in the decision log. Kept beside the watchlist state in the app-state file, which
-// has no field for it in its type; the file keeps unknown keys.
+// Where the last run sits in the decision log. Kept beside the watchlist state in the app-state document, which
+// has no field for it in its type; the document keeps unknown keys.
 type RunPointer = { date: string; profileHash: string; inputsHash?: string; decisionId: string };
 type StoredWatchlist = AppState['watchlist'] & { lastRun?: RunPointer; stateProfileHash?: string };
 
@@ -60,11 +60,20 @@ export type WatchlistView = {
 };
 
 const RETRY_AFTER_FAILURE_MS = 60_000;
+type Build = { promise: Promise<void>; progress: BuildProgress };
+// One entry per scope (session generation): a visitor's build, last run and failure are never another's.
+// The watchlist runs, its pointer and its state all belong to the scope id, which reads the profile and the holdings.
 const holder = globalThis as {
-    __watchlistBuild?: { promise: Promise<void>; progress: BuildProgress } | null;
-    __watchlistRun?: DecisionLogEntry | null;
-    __watchlistFailure?: { at: number; profileHash: string } | null;
+    __watchlistBuilds?: Map<string, Build>;
+    __watchlistRuns?: Map<string, DecisionLogEntry>;
+    __watchlistFailures?: Map<string, { at: number; profileHash: string }>;
 };
+const builds = () => (holder.__watchlistBuilds ??= new Map());
+const runs = () => (holder.__watchlistRuns ??= new Map());
+const failures = () => (holder.__watchlistFailures ??= new Map());
+// The run cache holds a whole snapshot per visitor; the oldest are forgotten and read again from the log
+const MAX_CACHED_RUNS = 200;
+const scopeOr = async (scope?: Scope): Promise<Scope> => scope ?? currentScope();
 
 /**
  * Changes whenever an input the pipeline reads from the profile changes; a stored run with another hash is
@@ -85,7 +94,7 @@ export function inputsHash(positions: Array<{ symbol: string; quantity: number }
     return createHash('sha256').update(JSON.stringify([holdings, rules.version, rules.versions])).digest('hex').slice(0, 16);
 }
 
-const currentInputsHash = async (): Promise<string> => inputsHash((await getPortfolioState()).positions);
+const currentInputsHash = async (scope: Scope): Promise<string> => inputsHash((await getPortfolioState(scope)).positions);
 
 /** Every distinct source behind a pick's signals, with the fetch time of each. */
 function sourcesOf(signals: SignalSet): Array<{ signal: string; source: string; fetchedAt: string; asOf?: string }> {
@@ -97,16 +106,24 @@ function sourcesOf(signals: SignalSet): Array<{ signal: string; source: string; 
         });
 }
 
-async function lastRun(): Promise<DecisionLogEntry | null> {
-    const pointer = ((await readState()).watchlist as StoredWatchlist).lastRun;
+function remember(scope: Scope, run: DecisionLogEntry): void {
+    const cache = runs();
+    cache.delete(scope.scopeId);
+    if (cache.size >= MAX_CACHED_RUNS) cache.delete(cache.keys().next().value as string);
+    cache.set(scope.scopeId, run);
+}
+
+async function lastRun(scope: Scope): Promise<DecisionLogEntry | null> {
+    const pointer = ((await readState(scope)).watchlist as StoredWatchlist).lastRun;
     if (!pointer) return null;
-    if (holder.__watchlistRun?.id === pointer.decisionId) return holder.__watchlistRun;
-    const entry = await getDecision(DEMO_USER.id, pointer.decisionId);
-    holder.__watchlistRun = entry;
+    const cached = runs().get(scope.scopeId);
+    if (cached?.id === pointer.decisionId) return cached;
+    const entry = await getDecision(scope.scopeId, pointer.decisionId);
+    if (entry) remember(scope, entry);
     return entry;
 }
 
-async function build(profile: ProfileConfig, progress: BuildProgress, locale: Locale): Promise<void> {
+async function build(scope: Scope, profile: ProfileConfig, progress: BuildProgress, locale: Locale): Promise<void> {
     const universe = getUniverse();
     const { candidates: entries, seeds } = selectCandidates(universe, profile);
     progress.total = entries.length;
@@ -119,18 +136,18 @@ async function build(profile: ProfileConfig, progress: BuildProgress, locale: Lo
     progress.stage = 'ranking';
     const now = new Date().toISOString();
     const date = marketDate(new Date(now));
-    const [holdings, inputs] = await Promise.all([holdingsWithDetail(), currentInputsHash()]);
+    const [holdings, inputs] = await Promise.all([holdingsWithDetail(scope), currentInputsHash(scope)]);
     const snapshot: Snapshot = {
         id: `snap_${date}_${randomBytes(4).toString('hex')}`,
         takenAt: now,
-        userId: DEMO_USER.id,
+        userId: scope.scopeId,
         profile: { level: profile.level, risk: profile.risk, answers: profile.answers, ruleVersions: profile.ruleVersions },
         holdings: holdings.summary,
         fxUsdCad: daily.fxUsdCad,
         signals: daily.signals,
     };
     const hash = profileHash(profile);
-    const stored = (await readState()).watchlist as StoredWatchlist;
+    const stored = (await readState(scope)).watchlist as StoredWatchlist;
     // State written before the owner was stored belongs to the profile of the last run
     const owner = stored.stateProfileHash ?? stored.lastRun?.profileHash;
     const reset: IncumbentsReset | undefined = owner !== undefined && owner !== hash
@@ -144,7 +161,7 @@ async function build(profile: ProfileConfig, progress: BuildProgress, locale: Lo
     const pickDecisionIds: Record<string, string> = {};
     for (const pick of result.picks) {
         const logged = await appendDecision({
-            userId: DEMO_USER.id,
+            userId: scope.scopeId,
             kind: 'pick',
             symbol: pick.symbol,
             snapshotId: snapshot.id,
@@ -169,15 +186,15 @@ async function build(profile: ProfileConfig, progress: BuildProgress, locale: Lo
         previous,
         ...(reset ? { incumbentsReset: reset } : {}),
     };
-    const run = await appendDecision({ userId: DEMO_USER.id, kind: 'watchlist_run', snapshotId: snapshot.id, ruleVersions, payload });
-    await updateState((state) => {
+    const run = await appendDecision({ userId: scope.scopeId, kind: 'watchlist_run', snapshotId: snapshot.id, ruleVersions, payload });
+    await updateState(scope, (state) => {
         const watchlist = state.watchlist as StoredWatchlist;
         watchlist.listedSince = next.listedSince;
         watchlist.previousPicks = next.previousPicks;
         watchlist.stateProfileHash = hash;
         watchlist.lastRun = { date, profileHash: payload.profileHash, inputsHash: inputs, decisionId: run.id };
     });
-    holder.__watchlistRun = run;
+    remember(scope, run);
 }
 
 /** The language a service writes in: the one given, else the current request's (English outside a request). */
@@ -188,30 +205,32 @@ const languageOf = async (locale?: Locale): Promise<Locale> => locale ?? getAppL
  * returned for tests and scripts that want to wait. The run is written in `locale` (default: the request's
  * language) and records it; any reader can render it again in the other language (renderRun).
  */
-export async function buildWatchlist(locale?: Locale): Promise<{ started: boolean; done: Promise<void> }> {
-    if (holder.__watchlistBuild) return { started: false, done: holder.__watchlistBuild.promise };
+export async function buildWatchlist(locale?: Locale, scope?: Scope): Promise<{ started: boolean; done: Promise<void> }> {
+    const s = await scopeOr(scope);
+    const running = builds().get(s.scopeId);
+    if (running) return { started: false, done: running.promise };
     const lang = await languageOf(locale);
-    const profile = await getProfile(DEMO_USER.id);
+    const profile = await getProfile(s.profileUserId);
     if (!profile) throw new ServiceError(409, serviceRef('svc.no_profile', {}));
     // Another request may have started one while the profile was read
-    const raced = buildStatus().promise;
-    if (raced) return { started: false, done: raced };
+    const raced = builds().get(s.scopeId);
+    if (raced) return { started: false, done: raced.promise };
 
     const progress: BuildProgress = { startedAt: new Date().toISOString(), stage: 'signals', done: 0, total: 0 };
     const hash = profileHash(profile);
-    const promise = build(profile, progress, lang)
+    const promise = build(s, profile, progress, lang)
         .then(() => {
-            holder.__watchlistFailure = null;
+            failures().delete(s.scopeId);
         })
         .catch((error) => {
             const message = error instanceof Error ? error.message : String(error);
             console.error('watchlist build failed:', message);
-            holder.__watchlistFailure = { at: Date.now(), profileHash: hash };
+            failures().set(s.scopeId, { at: Date.now(), profileHash: hash });
         })
         .finally(() => {
-            holder.__watchlistBuild = null;
+            builds().delete(s.scopeId);
         });
-    holder.__watchlistBuild = { promise, progress };
+    builds().set(s.scopeId, { promise, progress });
     return { started: true, done: promise };
 }
 
@@ -225,19 +244,20 @@ export type RefreshResult = { started: true } | { started: false; reasonCode: Re
  * change, a simulated trade, a rules change or a missing run (or a run on an earlier day's signals) starts a build.
  * The reason is written in `locale` (default: the request's), with a code the UI can translate itself.
  */
-export async function refreshWatchlist(locale?: Locale): Promise<RefreshResult> {
+export async function refreshWatchlist(locale?: Locale, scope?: Scope): Promise<RefreshResult> {
+    const s = await scopeOr(scope);
     const lang = await languageOf(locale);
-    const profile = await getProfile(DEMO_USER.id);
+    const profile = await getProfile(s.profileUserId);
     if (!profile) throw new ServiceError(409, serviceRef('svc.no_profile', {}));
     const today = marketDate();
-    const pointer = ((await readState()).watchlist as StoredWatchlist).lastRun;
-    if (pointer && pointer.date === today && pointer.profileHash === profileHash(profile) && pointer.inputsHash === (await currentInputsHash())) {
-        const payload = (await lastRun())?.payload as RunPayload | undefined;
+    const pointer = ((await readState(s)).watchlist as StoredWatchlist).lastRun;
+    if (pointer && pointer.date === today && pointer.profileHash === profileHash(profile) && pointer.inputsHash === (await currentInputsHash(s))) {
+        const payload = (await lastRun(s))?.payload as RunPayload | undefined;
         if (payload && payload.signalsDate === today) {
             return { started: false, reasonCode: 'already_current', reason: renderText(serviceRef('svc.watchlist.already_today', { date: today }), lang) };
         }
     }
-    const { started } = await buildWatchlist(lang);
+    const { started } = await buildWatchlist(lang, s);
     return started ? { started } : { started, reasonCode: 'building', reason: renderText(serviceRef('svc.watchlist.in_progress', {}), lang) };
 }
 
@@ -245,17 +265,19 @@ export async function refreshWatchlist(locale?: Locale): Promise<RefreshResult> 
  * Today's run for the current profile, from the decision log. When there is none, a build is started.
  * Every sentence is in `locale` (default: the request's language), whatever language the run was computed in.
  */
-export async function getWatchlist(locale?: Locale): Promise<WatchlistView> {
+export async function getWatchlist(locale?: Locale, scope?: Scope): Promise<WatchlistView> {
+    const s = await scopeOr(scope);
     const lang = await languageOf(locale);
-    const [profile, state] = await Promise.all([getProfile(DEMO_USER.id), readState()]);
+    const [profile, state] = await Promise.all([getProfile(s.profileUserId), readState(s)]);
     const { pinned, dismissed } = state.watchlist;
-    const view: WatchlistView = { result: null, state: { pinned, dismissed }, signalsDate: null, stale: false, building: Boolean(holder.__watchlistBuild), progress: holder.__watchlistBuild?.progress ?? null };
+    const running = builds().get(s.scopeId);
+    const view: WatchlistView = { result: null, state: { pinned, dismissed }, signalsDate: null, stale: false, building: Boolean(running), progress: running?.progress ?? null };
     if (!profile) return { ...view, needsProfile: true };
 
     const hash = profileHash(profile);
     const pointer = (state.watchlist as StoredWatchlist).lastRun;
     if (pointer && pointer.date === marketDate() && pointer.profileHash === hash) {
-        const payload = (await lastRun())?.payload as RunPayload | undefined;
+        const payload = (await lastRun(s))?.payload as RunPayload | undefined;
         if (payload) {
             // Dismissed symbols are hidden here; they stay in the logged run
             const hidden = new Set(dismissed);
@@ -264,12 +286,12 @@ export async function getWatchlist(locale?: Locale): Promise<WatchlistView> {
         }
     }
     if (view.building) return view;
-    const failure = holder.__watchlistFailure;
+    const failure = failures().get(s.scopeId);
     if (failure && failure.profileHash === hash && Date.now() - failure.at < RETRY_AFTER_FAILURE_MS) {
         return { ...view, error: renderText(serviceRef('svc.watchlist.failed', {}), lang) };
     }
-    await buildWatchlist(lang);
-    return { ...view, building: true, progress: holder.__watchlistBuild?.progress ?? null };
+    await buildWatchlist(lang, s);
+    return { ...view, building: true, progress: builds().get(s.scopeId)?.progress ?? null };
 }
 
 export type Explanation = {
@@ -288,9 +310,9 @@ export type Explanation = {
  * The "Why?" panel: what the last logged run says about one symbol. Every sentence (filter checks, factor details,
  * reason, note) is in `locale` (default: the request's language), whatever language the run was computed in.
  */
-export async function explainSymbol(symbol: string, locale?: Locale): Promise<Explanation> {
+export async function explainSymbol(symbol: string, locale?: Locale, scope?: Scope): Promise<Explanation> {
     const lang = await languageOf(locale);
-    const run = await lastRun();
+    const run = await lastRun(await scopeOr(scope));
     if (!run) throw new ServiceError(404, serviceRef('svc.watchlist.no_run', {}));
     const payload = run.payload as RunPayload;
     const wanted = getEntry(symbol)?.symbol ?? symbol.trim().toUpperCase();
@@ -358,11 +380,12 @@ function whyNotSelected(payload: RunPayload, symbol: string, total: number): Tex
 }
 
 /** Records what the user did with a card. 'add' brings a dismissed symbol back. */
-export async function userAction(symbol: string, action: WatchlistAction): Promise<{ state: { pinned: string[]; dismissed: string[] } }> {
+export async function userAction(symbol: string, action: WatchlistAction, scope?: Scope): Promise<{ state: { pinned: string[]; dismissed: string[] } }> {
     const wanted = getEntry(symbol)?.symbol;
     if (!wanted) throw new ServiceError(404, serviceRef('svc.not_in_universe', { symbol }));
+    const sc = await scopeOr(scope);
     const without = (list: string[]) => list.filter((s) => s !== wanted);
-    const next = await updateState((state) => {
+    const next = await updateState(sc, (state) => {
         const { watchlist } = state;
         if (action === 'dismiss') {
             watchlist.dismissed = [...without(watchlist.dismissed), wanted];
@@ -378,24 +401,33 @@ export async function userAction(symbol: string, action: WatchlistAction): Promi
     });
     const state = { pinned: next.watchlist.pinned, dismissed: next.watchlist.dismissed };
     await appendDecision({
-        userId: DEMO_USER.id,
+        userId: sc.scopeId,
         kind: 'user_action',
         symbol: wanted,
-        snapshotId: (await lastRun())?.snapshotId,
+        snapshotId: (await lastRun(sc))?.snapshotId,
         ruleVersions: RULE_VERSIONS,
         payload: { action, state },
     });
     return { state };
 }
 
-export function buildStatus(): { building: boolean; progress: BuildProgress | null; promise: Promise<void> | null } {
-    const current = holder.__watchlistBuild;
-    return { building: Boolean(current), progress: current?.progress ?? null, promise: current?.promise ?? null };
+/**
+ * The build in progress for a scope. Without a scope (tests and scripts): whether any build is running, and a
+ * promise that settles once every build running now has.
+ */
+export function buildStatus(scope?: Pick<Scope, 'scopeId'>): { building: boolean; progress: BuildProgress | null; promise: Promise<void> | null } {
+    if (scope) {
+        const current = builds().get(scope.scopeId);
+        return { building: Boolean(current), progress: current?.progress ?? null, promise: current?.promise ?? null };
+    }
+    const all = [...builds().values()];
+    if (all.length === 0) return { building: false, progress: null, promise: null };
+    return { building: true, progress: all[0].progress, promise: Promise.all(all.map((b) => b.promise)).then(() => undefined) };
 }
 
-/** Test helper: forgets the run held in memory and any build state. */
+/** Test helper: forgets the runs held in memory and any build state. */
 export function resetWatchlistMemory(): void {
-    holder.__watchlistBuild = null;
-    holder.__watchlistRun = null;
-    holder.__watchlistFailure = null;
+    holder.__watchlistBuilds = new Map();
+    holder.__watchlistRuns = new Map();
+    holder.__watchlistFailures = new Map();
 }

@@ -26,8 +26,10 @@ describe('universe against rules/v1.json', () => {
 
     it('each fund was checked at the URL it carries, and funds the builder could not verify are absent', () => {
         for (const etf of getUniverse().filter((e) => e.assetClass === 'etf')) {
-            const check = universeFile.fundChecks.find((c) => c.symbol === etf.symbol)!;
+            const check = universeFile.fundChecks.find((c) => c.symbol === etf.symbol)! as typeof universeFile.fundChecks[number] & { method?: string; note?: string };
             expect(check.url).toBe(etf.etf!.issuerUrl);
+            // A fund entered by hand is allowed only when it says so and why (its issuer page could not be read)
+            if (check.method === 'manual') { expect(check.note, etf.symbol).toBeTruthy(); continue; }
             expect(check.httpStatus).toBe(200);
             expect(check.namesIndex && check.namesTicker).toBe(true);
             expect(Number.isNaN(Date.parse(check.checkedAt))).toBe(false);

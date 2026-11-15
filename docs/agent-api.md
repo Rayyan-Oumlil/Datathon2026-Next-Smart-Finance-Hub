@@ -13,7 +13,7 @@ Request:
 ```json
 {
   "actionId": "act_…",            // created by the web app, one per user request
-  "userId": "demo-user",
+  "userId": "3f0c…-uuid:p0:f0",
   "message": "why is ENB on my list?",
   "history": [{ "role": "user" | "assistant", "text": "…" }],   // last turns, at most 10
   "context": {
@@ -58,7 +58,7 @@ Response (`AgentReply` plus a trace):
 
 `logComplete` is `false` when a row of this request could not be written to the agent action log, even after one retry. The reply is still returned (the demo stays available) and the later rows are still tried; the errors are in `trace.logErrors`. The web app passes `logComplete` on in its `/api/agent` response and records it as `agentLogComplete` in its own `result` row.
 
-`/api/agent` (the web app's own route) accepts 10 requests a minute for the demo user, since each one costs several model calls. Over the limit it answers `429` with `{ "error": "Too many requests. Wait a minute and try again." }` (in French: `"Trop de demandes. Attendez une minute, puis réessayez."`).
+`/api/agent` (the web app's own route) accepts 10 requests a minute per visitor session (and 30 per address), since each one costs several model calls. Over the limit it answers `429` with `{ "error": "Too many requests. Wait a minute and try again." }` (in French: `"Trop de demandes. Attendez une minute, puis réessayez."`).
 
 The agent service never applies anything. `proposed` is a request; the web app's action router checks it against the whitelist, shows a before/after preview, and applies it only after the user confirms.
 
@@ -90,7 +90,7 @@ The web app's `POST /api/agent/stream` takes the same body as `/api/agent`, runs
 
 ## 2. Agent service → web app (tools)
 
-Base URL `WEB_INTERNAL_URL` (default `http://localhost:3000`). Every call sends `x-internal-token: $INTERNAL_API_TOKEN` and `x-action-id`. All are `POST` with a JSON body containing `userId`. Every number in a response is a `Sourced` object.
+Base URL `WEB_INTERNAL_URL` (default `http://localhost:3000`). Every call sends `x-internal-token: $INTERNAL_API_TOKEN` and `x-action-id`. All are `POST` with a JSON body containing `userId`: the scope id `<sessionId>:p<n>:f<m>` the agent received (lib/session/scope.ts). Only the current generation of an existing session is accepted; an old one is refused. Every number in a response is a `Sourced` object.
 
 | Endpoint | Body | Returns | Used by subagent |
 |---|---|---|---|

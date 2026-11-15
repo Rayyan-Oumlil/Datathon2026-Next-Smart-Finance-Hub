@@ -2,6 +2,7 @@ import { useTranslations } from 'next-intl';
 import type { Level } from '@/lib/domain/types';
 import type { PortfolioView } from '@/lib/services/portfolio';
 import ChangePill from '@/components/ChangePill';
+import { formatDateTime } from '@/i18n/format';
 import { useFmt } from './useFmt';
 
 const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
@@ -12,16 +13,18 @@ const Stat = ({ label, value, sub }: { label: string; value: string; sub?: strin
     </div>
 );
 
-// The fixed widget: the simulated balance, today's change and where the prices behind it came from.
+// The fixed widget: the simulated balance, the session's change and where the prices behind it came from.
 export default function TotalValue({ view, level }: { view: PortfolioView; level: Level }) {
     const t = useTranslations('Portfolio');
     const fmt = useFmt();
-    const { valueCad, dayChangeCad, cashCad, portfolio, positions, fxUsdCad, unpriced } = view;
+    const { valueCad, dayChangeCad, cashCad, portfolio, positions, fxUsdCad, unpriced, market } = view;
     const start = portfolio.startingCashCad;
     const sinceStart = valueCad.value - start;
     const previous = dayChangeCad === null ? null : valueCad.value - dayChangeCad;
     const dayPct = dayChangeCad === null || !previous ? null : (dayChangeCad / previous) * 100;
     const invested = valueCad.value - cashCad;
+    // Outside a session the change belongs to the last one, so it is named by its date, never as "today"
+    const lastSession = formatDateTime(`${market.lastSession}T12:00:00Z`, fmt.locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
     const priceSources = positions.flatMap((position) => (position.price ? [`${position.symbol}: ${fmt.sourceLine(position.price)}`] : []));
 
     return (
@@ -36,20 +39,21 @@ export default function TotalValue({ view, level }: { view: PortfolioView; level
                 </p>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-[13.5px] text-muted-foreground">
-                    <span className="font-semibold">{t('total.today')}</span>
+                    <span className="font-semibold">{market.open ? t('total.today') : t('total.lastSession', { day: lastSession })}</span>
+                    {!market.open && <span className="pill">{t('total.marketsClosed')}</span>}
                     {dayChangeCad === null ? (
                         <span>{positions.length === 0 ? t('total.noChangeCashOnly') : t('total.changeUnavailable')}</span>
                     ) : (
                         <>
                             <span className={`num font-bold ${dayChangeCad > 0 ? 'text-up' : dayChangeCad < 0 ? 'text-down' : ''}`}>{fmt.signedCad(dayChangeCad)}</span>
-                            {positions.length > 0 && <ChangePill value={dayPct} />}
+                            {positions.length > 0 && <><ChangePill value={dayPct} /><span className="text-[12px] text-faint">{t('total.pctOfTotal')}</span></>}
                         </>
                     )}
                 </div>
 
                 <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-line pt-4 sm:grid-cols-4">
                     <Stat label={t('total.startingAmount')} value={fmt.cad(start)} sub={t('total.startingSub')} />
-                    <Stat label={t('total.sinceStart')} value={fmt.signedCad(sinceStart)} sub={level === 'Novice' ? undefined : fmt.signedPct((sinceStart / start) * 100)} />
+                    <Stat label={t('total.sinceStart')} value={fmt.signedCad(sinceStart)} sub={level === 'Novice' ? undefined : t('total.pctOfStart', { pct: fmt.signedPct((sinceStart / start) * 100) })} />
                     <Stat label={t('total.cash')} value={fmt.cad(cashCad)} sub={t('total.cashSub')} />
                     {level !== 'Novice' && <Stat label={t('total.inPositions')} value={fmt.cad(invested)} sub={t('total.heldCount', { count: positions.length })} />}
                 </dl>

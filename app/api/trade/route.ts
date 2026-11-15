@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requestLocale, respond } from '@/lib/services/http';
 import { simulateTrade } from '@/lib/services/portfolio';
+import { requestScope } from '@/lib/session';
 
 const schema = z.object({
     symbol: z.string().trim().min(1).max(20),
@@ -16,7 +17,7 @@ const schema = z.object({
 // Simulation only. 409 names the profile conflict with the actual values; resending with acknowledgeConflict proceeds.
 // Messages and conflict details follow the request's language.
 export const POST = (req: NextRequest) => respond(async () => {
-    const outcome = await simulateTrade(schema.parse(await req.json()), await requestLocale(req));
+    const outcome = await simulateTrade(schema.parse(await req.json()), await requestLocale(req), await requestScope(req));
     if (outcome.status === 'conflict') {
         const { conflicts, signals, message } = outcome;
         return NextResponse.json({ conflicts, signals, message }, { status: 409 });

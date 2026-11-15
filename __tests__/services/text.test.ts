@@ -1,3 +1,4 @@
+import '@/__tests__/test-user';
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
@@ -48,6 +49,7 @@ const SAMPLES: { [K in ServiceTextKey]: Array<ServiceParams<K>> } = {
     'svc.http.bad_json': [{}],
     'svc.http.server_error': [{}],
     'svc.http.too_many': [{}],
+    'svc.http.reset_refused': [{}],
     'svc.http.give_symbol': [{}],
     'svc.validation': [
         { path: 'side', problem: 'not_accepted', detail: 'Invalid option', limit: null },

@@ -3,11 +3,12 @@
 
 import { randomBytes } from 'node:crypto';
 import { getAppLocale } from '@/i18n/locale';
-import { DEMO_USER } from '@/lib/demo-user';
 import type { FilterCheck, HoldingsSummary, Portfolio, Position, SignalSet, SimulatedTrade, Sourced, TextRef } from '@/lib/domain/types';
+import { isWeekday, newYorkNow, OPEN, sessionOf } from '@/lib/market-session';
 import { RULES, RULES_VERSION } from '@/lib/rules';
 import { marketDate } from '@/lib/sources/daily-signals';
 import type { DailyClose } from '@/lib/sources/types';
+import { currentScope, type Scope } from '@/lib/session';
 import { appendDecision, getProfile, listDecisions } from '@/lib/store';
 import { getEntry } from '@/lib/universe';
 import { checkProfileConflict } from '@/lib/watchlist/conflict';
@@ -44,6 +45,8 @@ export type PositionView = Position & {
     changePercent: Sourced | null;
     valueCad: number | null;
     returnPct: number | null;
+    dayChangeCad: number | null;                  // since the previous close; a part added in the session counts from its fill
+    dayChangePct: number | null;                  // dayChangeCad against the position's value at that close plus what was added since
 };
 
 export type PortfolioView = {
@@ -54,7 +57,9 @@ export type PortfolioView = {
     bySector: Record<string, number>;             // sector (or asset class when it has none) -> value in CAD
     history: Array<{ t: string; valueCad: number }>;
     historyNote: string;
-    dayChangeCad: number | null;
+    historyCloses: number;                        // daily closes in the history; 0 means only the start and now
+    dayChangeCad: number | null;                  // value now against the value at the previous close (trades since at their fill)
+    market: { open: boolean; lastSession: string };   // lastSession: the date (YYYY-MM-DD) the day change belongs to
     fxUsdCad: Sourced | null;
     unpriced: string[];                           // held symbols with no price right now; not counted in valueCad
     simulated: true;
@@ -92,36 +97,48 @@ export function replayTrades(trades: SimulatedTrade[], startingCashCad: number =
     return { cashCad: round2(cashCad), startingCashCad, positions: [...positions.values()], trades };
 }
 
-// Reading the log means reading every row of the user, large watchlist snapshots included, so the trades are
-// read once per process and each new trade is added as it is appended. This process is the log's only writer.
-const holder = globalThis as { __simulatedTrades?: Promise<SimulatedTrade[]> | null; __tradeQueue?: Promise<unknown> };
+// Reading the log means reading every row of the portfolio, so the trades are read once per process and each new
+// trade is added as it is appended. This process is the log's only writer. One entry per portfolio generation
+// (`${sessionId}:f${n}`): a portfolio reset moves to a new id, whose replay starts from the starting cash alone.
+const holder = globalThis as { __simulatedTrades?: Map<string, Promise<SimulatedTrade[]>>; __tradeQueue?: Promise<unknown> };
+// Each visitor adds an entry; the oldest are forgotten (and read again from the log if that visitor comes back)
+const MAX_CACHED_PORTFOLIOS = 1000;
 
-function loadTrades(): Promise<SimulatedTrade[]> {
-    holder.__simulatedTrades ??= listDecisions(DEMO_USER.id, { kind: 'simulated_trade' })
-        .then((rows) => rows.map((row) => (row.payload as { trade: SimulatedTrade }).trade))
-        .catch((error) => {
-            holder.__simulatedTrades = null;
-            throw error;
-        });
-    return holder.__simulatedTrades;
+function loadTrades(portfolioUserId: string): Promise<SimulatedTrade[]> {
+    const cache = (holder.__simulatedTrades ??= new Map());
+    let trades = cache.get(portfolioUserId);
+    if (!trades) {
+        trades = listDecisions(portfolioUserId, { kind: 'simulated_trade' })
+            .then((rows) => rows.map((row) => (row.payload as { trade: SimulatedTrade }).trade))
+            .catch((error) => {
+                cache.delete(portfolioUserId);
+                throw error;
+            });
+        if (cache.size >= MAX_CACHED_PORTFOLIOS) cache.delete(cache.keys().next().value as string);
+        cache.set(portfolioUserId, trades);
+    }
+    return trades;
 }
 
 /** Forgets the trades held in memory; the next read replays the log. */
 export function resetPortfolioCache(): void {
-    holder.__simulatedTrades = null;
+    holder.__simulatedTrades = new Map();
 }
 
-export async function getPortfolioState(): Promise<Portfolio> {
-    return replayTrades([...(await loadTrades())]);
+const scopeOr = async (scope?: Scope): Promise<Scope> => scope ?? currentScope();
+
+/** The simulated portfolio of the scope's portfolio generation (default: the current request's session). */
+export async function getPortfolioState(scope?: Scope): Promise<Portfolio> {
+    return replayTrades([...(await loadTrades((await scopeOr(scope)).portfolioUserId))]);
 }
 
 // ---------------------------------------------------------------- view
 
 const sectorKey = (position: Position) => position.sector ?? ({ etf: 'ETF', crypto: 'Crypto' } as Record<string, string>)[position.assetClass] ?? 'Other';
 
-async function priced(portfolio: Portfolio): Promise<{ positions: PositionView[]; fx: Sourced | null }> {
+async function priced(portfolio: Portfolio): Promise<{ positions: Array<Omit<PositionView, 'dayChangeCad' | 'dayChangePct'>>; fx: Sourced | null }> {
     const fx = await fxUsdCad().catch(() => null);
-    const positions = await Promise.all(portfolio.positions.map(async (position): Promise<PositionView> => {
+    const positions = await Promise.all(portfolio.positions.map(async (position) => {
         const entry = getEntry(position.symbol);
         const quote = entry ? await liveQuote(entry).catch(() => null) : null;
         const unitCad = quote ? toCad(quote.price.value, quote.price.currency, fx ?? undefined) : null;
@@ -143,10 +160,10 @@ async function priced(portfolio: Portfolio): Promise<{ positions: PositionView[]
 // A daily close is placed at 21:00 UTC, the end of the Toronto and New York session in winter time
 const closeTime = (day: string) => `${day}T21:00:00.000Z`;
 
-async function valueHistory(portfolio: Portfolio, fx: Sourced | null, now: string, valueNow: number | null, locale: Locale): Promise<{ history: PortfolioView['history']; note: string }> {
+async function valueHistory(portfolio: Portfolio, fx: Sourced | null, now: string, valueNow: number | null, locale: Locale): Promise<{ history: PortfolioView['history']; note: string; closes: number }> {
     const { trades } = portfolio;
     if (trades.length === 0) {
-        return { history: [{ t: now, valueCad: portfolio.startingCashCad }], note: renderText(serviceRef('svc.portfolio.no_trade', {}), locale) };
+        return { history: [{ t: now, valueCad: portfolio.startingCashCad }], note: renderText(serviceRef('svc.portfolio.no_trade', {}), locale), closes: 0 };
     }
     const history = [{ t: trades[0].at, valueCad: portfolio.startingCashCad }];
     const today = marketDate(new Date(now));
@@ -179,11 +196,73 @@ async function valueHistory(portfolio: Portfolio, fx: Sourced | null, now: strin
         }
         if (value !== null) history.push({ t: closeTime(day), valueCad: round2(value) });
     }
+    const closesShown = history.length - 1;
     if (valueNow !== null) history.push({ t: now, valueCad: valueNow });
 
     const sources = [...new Set([...closes.values()].map((series) => series.source))].join(', ');
     const note = renderText(serviceRef('svc.portfolio.history_note', { sources: days.length > 0 ? sources : null, withoutCloses }), locale);
-    return { history, note };
+    return { history, note, closes: closesShown };
+}
+
+// ---------------------------------------------------------------- session and day change
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const shiftDay = (day: string, by: number) => new Date(Date.parse(`${day}T12:00:00Z`) + by * DAY_MS).toISOString().slice(0, 10);
+const previousWeekday = (day: string) => {
+    let date = shiftDay(day, -1);
+    while (!isWeekday(new Date(`${date}T12:00:00Z`).getUTCDay())) date = shiftDay(date, -1);
+    return date;
+};
+
+/**
+ * The session the day change belongs to: today once the market has opened on a weekday, otherwise the weekday
+ * before. previousSession is the session before it, whose close is the day change's reference. Holidays are ignored.
+ */
+export function marketSession(now: Date): { open: boolean; lastSession: string; previousSession: string } {
+    const { weekday, minutes } = newYorkNow(now);
+    const today = marketDate(now);
+    const lastSession = isWeekday(weekday) && minutes >= OPEN ? today : previousWeekday(today);
+    return { open: sessionOf(weekday, minutes).phase === 'open', lastSession, previousSession: previousWeekday(lastSession) };
+}
+
+type DayChange = { change: number; base: number } | null;
+
+/**
+ * Each symbol's gain or loss since the previous close, so it adds up with the change since the start: the value now,
+ * minus the value at that close of the quantity then held, minus what was added since at its fill (plus what was
+ * taken out at its fill). A position bought in the session therefore starts at zero, not at the provider's day move.
+ */
+async function dayChanges(portfolio: Portfolio, positions: Array<Omit<PositionView, 'dayChangeCad' | 'dayChangePct'>>, previousSession: string): Promise<Map<string, DayChange>> {
+    const inSession = (trade: SimulatedTrade) => marketDate(new Date(trade.at)) > previousSession;
+    const atClose = replayTrades(portfolio.trades.filter((trade) => !inSession(trade)), portfolio.startingCashCad).positions;
+    const added = new Map<string, number>();
+    for (const trade of portfolio.trades.filter(inSession)) {
+        added.set(trade.symbol, (added.get(trade.symbol) ?? 0) + (trade.side === 'buy' ? trade.valueCad : -trade.valueCad));
+    }
+    // A position held at the close and wholly removed since still has a day result: priced at the quantity it had
+    const gone = atClose.filter((held) => !positions.some((position) => position.symbol === held.symbol));
+    const removed = gone.length > 0 ? (await priced({ ...portfolio, positions: gone })).positions : [];
+
+    const result = new Map<string, DayChange>();
+    for (const position of [...positions, ...removed]) {
+        const heldAtClose = atClose.find((held) => held.symbol === position.symbol)?.quantity ?? 0;
+        const valueNow = removed.includes(position) ? 0 : position.valueCad;
+        let valueAtClose = 0;
+        if (heldAtClose > 0) {
+            if (position.valueCad === null || !position.changePercent) {
+                result.set(position.symbol, null);
+                continue;
+            }
+            valueAtClose = (position.valueCad * heldAtClose / position.quantity) / (1 + position.changePercent.value / 100);
+        }
+        if (valueNow === null) {
+            result.set(position.symbol, null);
+            continue;
+        }
+        const base = valueAtClose + (added.get(position.symbol) ?? 0);
+        result.set(position.symbol, { change: valueNow - base, base });
+    }
+    return result;
 }
 
 /** A logged trade with its reason in the language (a reason given as plain text stays as given). */
@@ -195,12 +274,22 @@ export function renderTrade(trade: SimulatedTrade, locale: Locale): SimulatedTra
  * The simulated portfolio, valued now. Its notes, the trades' reasons and the names of the groups in bySector
  * (a sector, or ETF / Crypto / Other for a position with no sector) are in `locale` (default: the request's language).
  */
-export async function getPortfolio(locale?: Locale): Promise<PortfolioView> {
+export async function getPortfolio(locale?: Locale, scope?: Scope): Promise<PortfolioView> {
     const lang = locale ?? await getAppLocale();
-    const stored = await getPortfolioState();
+    const stored = await getPortfolioState(scope);
     const portfolio = { ...stored, trades: stored.trades.map((trade) => renderTrade(trade, lang)) };
     const now = new Date().toISOString();
-    const { positions, fx } = await priced(portfolio);
+    const { positions: valued, fx } = await priced(portfolio);
+    const session = marketSession(new Date(now));
+    const byDay = await dayChanges(portfolio, valued, session.previousSession);
+    const positions: PositionView[] = valued.map((position) => {
+        const day = byDay.get(position.symbol);
+        return {
+            ...position,
+            dayChangeCad: day ? round2(day.change) : null,
+            dayChangePct: day && day.base > 0 ? round2((day.change / day.base) * 100) : null,
+        };
+    });
     const unpriced = positions.filter((position) => position.valueCad === null).map((position) => position.symbol);
     const total = round2(portfolio.cashCad + positions.reduce((sum, position) => sum + (position.valueCad ?? 0), 0));
 
@@ -210,14 +299,16 @@ export async function getPortfolio(locale?: Locale): Promise<PortfolioView> {
         if (position.valueCad !== null) bySector[group] = round2((bySector[group] ?? 0) + position.valueCad);
     }
 
-    // Today's gain or loss: each position's value against its value at the previous close
+    // The session's gain or loss: the sum over every symbol held at the previous close or traded since (cash moves
+    // between positions and cash are not a gain), so a portfolio whose trades all date from the session matches the
+    // change since the start
     let dayChangeCad: number | null = 0;
-    for (const position of positions) {
-        if (position.valueCad === null || !position.changePercent) {
+    for (const day of byDay.values()) {
+        if (day === null) {
             dayChangeCad = null;
             break;
         }
-        dayChangeCad += position.valueCad * (1 - 1 / (1 + position.changePercent.value / 100));
+        dayChangeCad += day.change;
     }
 
     const priceSources = [...new Set(positions.flatMap((position) => (position.price ? [position.price.source] : [])))];
@@ -235,7 +326,7 @@ export async function getPortfolio(locale?: Locale): Promise<PortfolioView> {
             unpriced,
         }), lang),
     };
-    const { history, note } = await valueHistory(portfolio, fx, now, unpriced.length === 0 ? total : null, lang);
+    const { history, note, closes } = await valueHistory(portfolio, fx, now, unpriced.length === 0 ? total : null, lang);
     return {
         portfolio,
         valueCad,
@@ -244,7 +335,9 @@ export async function getPortfolio(locale?: Locale): Promise<PortfolioView> {
         bySector,
         history,
         historyNote: note,
+        historyCloses: closes,
         dayChangeCad: dayChangeCad === null ? null : round2(dayChangeCad),
+        market: { open: session.open, lastSession: session.lastSession },
         fxUsdCad: fx,
         unpriced,
         simulated: true,
@@ -264,8 +357,8 @@ export type HoldingDetail = {
  * What the watchlist's diversification factor reads, with the valuation of each position beside it.
  * A position with no price is counted at its cost, and its detail says so.
  */
-export async function holdingsWithDetail(): Promise<{ summary: HoldingsSummary; detail: HoldingDetail[] }> {
-    const portfolio = await getPortfolioState();
+export async function holdingsWithDetail(scope?: Scope): Promise<{ summary: HoldingsSummary; detail: HoldingDetail[] }> {
+    const portfolio = await getPortfolioState(scope);
     if (portfolio.positions.length === 0) return { summary: { totalValueCad: portfolio.cashCad, bySector: {}, byAssetClass: {}, symbols: [] }, detail: [] };
     const { positions, fx } = await priced(portfolio);
     const summary: HoldingsSummary = { totalValueCad: portfolio.cashCad, bySector: {}, byAssetClass: {}, symbols: positions.map((position) => position.symbol).sort() };
@@ -287,8 +380,8 @@ export async function holdingsWithDetail(): Promise<{ summary: HoldingsSummary; 
     return { summary, detail };
 }
 
-export async function holdingsSummary(): Promise<HoldingsSummary> {
-    return (await holdingsWithDetail()).summary;
+export async function holdingsSummary(scope?: Scope): Promise<HoldingsSummary> {
+    return (await holdingsWithDetail(scope)).summary;
 }
 
 // ---------------------------------------------------------------- trades
@@ -296,7 +389,7 @@ export async function holdingsSummary(): Promise<HoldingsSummary> {
 /** A filter check as a catalog reference, or its detail as written when it has none. */
 const refOf = (check: FilterCheck): TextRef | string => check.textRef ?? check.detail;
 
-async function fill(input: TradeInput, locale: Locale): Promise<TradeOutcome> {
+async function fill(input: TradeInput, locale: Locale, scope: Scope): Promise<TradeOutcome> {
     const entry = getEntry(input.symbol);
     if (!entry) throw new ServiceError(404, serviceRef('svc.trade.not_in_universe', { symbol: input.symbol }));
     if (!isTradable(entry)) throw new ServiceError(400, serviceRef('svc.reference_value', { name: entry.name }));
@@ -305,7 +398,7 @@ async function fill(input: TradeInput, locale: Locale): Promise<TradeOutcome> {
     if (hasAmount === (input.quantity !== undefined) || !(typeof given === 'number' && Number.isFinite(given) && given > 0)) {
         throw new ServiceError(400, serviceRef('svc.trade.amount_or_quantity', {}));
     }
-    const profile = await getProfile(DEMO_USER.id);
+    const profile = await getProfile(scope.profileUserId);
     if (!profile) throw new ServiceError(409, serviceRef('svc.no_profile', {}));
     const origin = input.origin ?? 'card';
 
@@ -318,7 +411,7 @@ async function fill(input: TradeInput, locale: Locale): Promise<TradeOutcome> {
     if (unitCad === null) throw new ServiceError(502, serviceRef('svc.trade.no_conversion', { symbol: entry.symbol, currency: price.currency ?? null }));
 
     // The amounts are checked before the conflict is logged, so the log holds no conflict for a trade that could not happen
-    const before = await getPortfolioState();
+    const before = await getPortfolioState(scope);
     const held = before.positions.find((position) => position.symbol === entry.symbol)?.quantity ?? 0;
     let quantity = hasAmount ? floorQuantity(given / unitCad) : roundQuantity(given);
     // An amount equal to the value of the whole position removes all of it, leaving no remainder from rounding
@@ -341,7 +434,7 @@ async function fill(input: TradeInput, locale: Locale): Promise<TradeOutcome> {
         if (conflicts.length > 0) {
             const proceeds = origin === 'rule' || input.acknowledgeConflict === true;
             const logged = await appendDecision({
-                userId: DEMO_USER.id,
+                userId: scope.portfolioUserId,
                 kind: 'profile_conflict',
                 symbol: entry.symbol,
                 ruleVersions: { rules: RULES_VERSION, filters: RULES.filters.version, level: profile.ruleVersions.level, risk: profile.ruleVersions.risk },
@@ -378,7 +471,7 @@ async function fill(input: TradeInput, locale: Locale): Promise<TradeOutcome> {
         simulated: true,
     };
     await appendDecision({
-        userId: DEMO_USER.id,
+        userId: scope.portfolioUserId,
         kind: 'simulated_trade',
         symbol: entry.symbol,
         at: trade.at,
@@ -386,8 +479,8 @@ async function fill(input: TradeInput, locale: Locale): Promise<TradeOutcome> {
         ruleVersions: { rules: RULES_VERSION, filters: RULES.filters.version },
         payload: { trade, unitPriceCad: unitCad, fxUsdCad: fx, conflicts, conflictDecisionId, cashBeforeCad: before.cashCad, simulated: true },
     });
-    (await loadTrades()).push(trade);
-    return { status: 'filled', trade, portfolio: await getPortfolioState(), conflicts, unitPriceCad: unitCad, fxUsdCad: fx ?? null };
+    (await loadTrades(scope.portfolioUserId)).push(trade);
+    return { status: 'filled', trade, portfolio: await getPortfolioState(scope), conflicts, unitPriceCad: unitCad, fxUsdCad: fx ?? null };
 }
 
 /**
@@ -397,8 +490,11 @@ async function fill(input: TradeInput, locale: Locale): Promise<TradeOutcome> {
  * Its messages, conflict details and reason are written in `locale` (default: the request's language); the trade
  * keeps its reason's catalog reference, so the log can show it in either language.
  */
-export function simulateTrade(input: TradeInput, locale?: Locale): Promise<TradeOutcome> {
-    const run = async () => fill(input, locale ?? await getAppLocale());
+export async function simulateTrade(input: TradeInput, locale?: Locale, scope?: Scope): Promise<TradeOutcome> {
+    // Resolved before queuing: the request's cookies are read while the request is still being served
+    const lang = locale ?? await getAppLocale();
+    const s = await scopeOr(scope);
+    const run = () => fill(input, lang, s);
     const result = (holder.__tradeQueue ?? Promise.resolve()).then(run, run);
     holder.__tradeQueue = result.catch(() => undefined);
     return result;

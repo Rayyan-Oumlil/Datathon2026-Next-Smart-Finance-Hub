@@ -1,0 +1,83 @@
+{
+  "description": "App symbol -> Yahoo Finance (yfinance) symbol, used by scripts/build_replay_dataset.py to build the replay snapshot and by lib/replay to read it. A tradable symbol not listed in 'map' is used as is (Canadian listings such as RY.TO, RCI-B.TO and BIP-UN.TO are already written the Yahoo way in data/universe.json).",
+  "map": {
+    "BTC": "BTC-USD",
+    "ETH": "ETH-USD",
+    "GOLD": "GLD",
+    "BRK.B": "BRK-B"
+  },
+  "replayClass": {
+    "_note": "Replay asset class where it cannot be read from data/universe.json (stock -> equity, etf -> etf_equity, crypto -> crypto). Bond and gold funds are told apart here.",
+    "XBB.TO": "etf_bond",
+    "ZST.TO": "etf_bond",
+    "AGG": "etf_bond",
+    "TLT": "etf_bond",
+    "GLD": "etf_commodity",
+    "GOLD": "etf_commodity"
+  },
+  "extras": [
+    {
+      "symbol": "XBB.TO",
+      "name": "iShares Core Canadian Universe Bond Index ETF",
+      "role": "Canadian bond ETF (60/40 benchmark bond leg, example portfolios)"
+    },
+    {
+      "symbol": "ZST.TO",
+      "name": "BMO Ultra Short-Term Bond ETF",
+      "role": "Canadian ultra-short bond ETF (example portfolios)"
+    },
+    {
+      "symbol": "AGG",
+      "name": "iShares Core U.S. Aggregate Bond ETF",
+      "role": "U.S. aggregate bond ETF (example portfolios)"
+    },
+    {
+      "symbol": "TLT",
+      "name": "iShares 20+ Year Treasury Bond ETF",
+      "role": "U.S. long Treasury ETF (example portfolios)"
+    },
+    {
+      "symbol": "QQQ",
+      "name": "Invesco QQQ ETF",
+      "role": "Nasdaq-100 ETF (example portfolios)"
+    },
+    {
+      "symbol": "ESGV",
+      "name": "Vanguard ESG U.S. Stock ETF",
+      "role": "U.S. ESG equity ETF (example portfolios)"
+    },
+    {
+      "symbol": "GLD",
+      "name": "SPDR Gold Shares",
+      "role": "gold ETF (example portfolios; the app's GOLD reference row is replayed through it)"
+    },
+    {
+      "symbol": "XIU.TO",
+      "name": "iShares S&P/TSX 60 Index ETF",
+      "role": "benchmark: S&P/TSX 60 (and 60/40 equity leg)"
+    },
+    {
+      "symbol": "SPY",
+      "name": "State Street SPDR S&P 500 ETF Trust",
+      "role": "benchmark: S&P 500"
+    }
+  ],
+  "fx": {
+    "symbol": "USDCAD=X",
+    "meaning": "CAD per 1 USD, daily close as published by Yahoo"
+  },
+  "notReplayable": [
+    {
+      "symbol": "CA2Y",
+      "reason": "not replayable: a yield is not a price"
+    },
+    {
+      "symbol": "CA5Y",
+      "reason": "not replayable: a yield is not a price"
+    },
+    {
+      "symbol": "CA10Y",
+      "reason": "not replayable: a yield is not a price"
+    }
+  ]
+}

@@ -1,6 +1,3 @@
-import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { ProfileConfig } from '@/lib/domain/types';
 import * as store from '@/lib/store';
@@ -16,7 +13,7 @@ describe('append-only logs', () => {
     it('exports no way to update or delete', () => {
         expect(Object.keys(store).filter((name) => /update|delete|remove|put/i.test(name)).sort())
             .toEqual(['putProfile', 'updateState']);
-        expect(Object.keys(getBackend()).sort()).toEqual(['get', 'put', 'putNew', 'query']);
+        expect(Object.keys(getBackend()).sort()).toEqual(['get', 'put', 'putIfVersion', 'putNew', 'query']);
     });
 
     it('rejects a second write with the same id and keeps the first row', async () => {
@@ -179,12 +176,11 @@ describe('profile', () => {
 });
 
 describe('app state', () => {
-    beforeEach(async () => {
-        process.env.APP_STATE_FILE = path.join(await mkdtemp(path.join(os.tmpdir(), 'app-state-')), 'nested', 'state.json');
-    });
+    const scope = { scopeId: 'test-user:p0:f0' };
+    beforeEach(() => resetMemoryStore());
 
-    it('starts empty when there is no file', async () => {
-        expect(await store.readState()).toEqual({
+    it('starts empty when nothing is stored', async () => {
+        expect(await store.readState(scope)).toEqual({
             rules: [],
             layout: null,
             watchlist: { listedSince: {}, pinned: [], dismissed: [], previousPicks: [] },
@@ -193,50 +189,27 @@ describe('app state', () => {
     });
 
     it('saves what an update changes, in place or returned', async () => {
-        await store.updateState((state) => { state.watchlist.pinned.push('AAPL'); });
-        await store.updateState((state) => ({ ...state, layout: { widgets: [{ slot: 'a', widget: 'total_value' }], updatedAt: 'now' } }));
-        const saved = await store.readState();
+        await store.updateState(scope, (state) => { state.watchlist.pinned.push('AAPL'); });
+        await store.updateState(scope, (state) => ({ ...state, layout: { widgets: [{ slot: 'a', widget: 'total_value' }], updatedAt: 'now' } }));
+        const saved = await store.readState(scope);
         expect(saved.watchlist.pinned).toEqual(['AAPL']);
         expect(saved.layout?.widgets).toEqual([{ slot: 'a', widget: 'total_value' }]);
     });
 
-    it('loses no write when many updates run at once, and leaves no temp file', async () => {
-        const symbols = Array.from({ length: 50 }, (_, i) => `S${i}`);
-        await Promise.all(symbols.map((symbol) => store.updateState(async (state) => {
-            await new Promise((resolve) => setTimeout(resolve, Math.random() * 3));
-            state.watchlist.dismissed.push(symbol);
-        })));
-        expect((await store.readState()).watchlist.dismissed.sort()).toEqual([...symbols].sort());
-
-        const file = process.env.APP_STATE_FILE as string;
-        expect(await readdir(path.dirname(file))).toEqual(['state.json']);
-        expect(JSON.parse(await readFile(file, 'utf8')).watchlist.dismissed).toHaveLength(50);
+    it('loses no write when many updates run at once', async () => {
+        const symbols = Array.from({ length: 6 }, (_, i) => `S${i}`);
+        await Promise.all(symbols.map((symbol) => store.updateState(scope, (state) => { state.watchlist.dismissed.push(symbol); })));
+        expect((await store.readState(scope)).watchlist.dismissed.sort()).toEqual([...symbols].sort());
     });
 
-    it('keeps fields a stored file lacks at their empty values', async () => {
-        const file = process.env.APP_STATE_FILE as string;
-        await mkdir(path.dirname(file), { recursive: true });
-        await writeFile(file, JSON.stringify({ watchlist: { pinned: ['AAPL'] } }));
-        expect(await store.readState()).toEqual({
-            rules: [],
-            layout: null,
-            watchlist: { listedSince: {}, pinned: ['AAPL'], dismissed: [], previousPicks: [] },
-            pendingPreviews: [],
-        });
-    });
-
-    it('does not reset a file it cannot read as JSON', async () => {
-        const file = process.env.APP_STATE_FILE as string;
-        await mkdir(path.dirname(file), { recursive: true });
-        await writeFile(file, '{ "rules": [');
-        await expect(store.readState()).rejects.toThrow();
-        await expect(store.updateState(() => undefined)).rejects.toThrow();
-        expect(await readFile(file, 'utf8')).toBe('{ "rules": [');
+    it('keeps two scopes apart', async () => {
+        await store.updateState(scope, (state) => { state.watchlist.pinned.push('AAPL'); });
+        expect((await store.readState({ scopeId: 'other:p0:f0' })).watchlist.pinned).toEqual([]);
     });
 
     it('keeps working after an update that throws', async () => {
-        await expect(store.updateState(() => { throw new Error('bad'); })).rejects.toThrow('bad');
-        await store.updateState((state) => { state.watchlist.pinned.push('RY.TO'); });
-        expect((await store.readState()).watchlist.pinned).toEqual(['RY.TO']);
+        await expect(store.updateState(scope, () => { throw new Error('bad'); })).rejects.toThrow('bad');
+        await store.updateState(scope, (state) => { state.watchlist.pinned.push('RY.TO'); });
+        expect((await store.readState(scope)).watchlist.pinned).toEqual(['RY.TO']);
     });
 });

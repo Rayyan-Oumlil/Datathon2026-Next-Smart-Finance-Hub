@@ -4,25 +4,27 @@ import { redirect } from "next/navigation";
 import HtmlLang from "@/components/HtmlLang";
 import AppShell from "@/components/shell/AppShell";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
-import { DEMO_USER } from "@/lib/demo-user";
+import { displayUser } from "@/lib/demo-user";
 import { getProfile } from "@/lib/services/profile";
+import { getSession } from "@/lib/session";
 
-// Every page under the shell reads the demo user's profile and live data: render per request, never at build time.
+// Every page under the shell reads the visitor's profile and live data: render per request, never at build time.
 export const dynamic = 'force-dynamic';
 
 const Layout = async ({ children }: { children: React.ReactNode }) => {
     // The app needs a level and a risk profile before it can show anything
     if (!(await getProfile())) redirect('/onboarding');
 
-    const [initialStocks, locale] = await Promise.all([
+    const [initialStocks, locale, session] = await Promise.all([
         searchStocks(),
         getLocale(),
+        getSession(),
     ]);
 
     return (
         <NextIntlClientProvider>
             <HtmlLang locale={locale} />
-            <AppShell user={DEMO_USER} initialStocks={initialStocks}>
+            <AppShell user={displayUser(session.sessionId)} initialStocks={initialStocks}>
                 {children}
             </AppShell>
         </NextIntlClientProvider>

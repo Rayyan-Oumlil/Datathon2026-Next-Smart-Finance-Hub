@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
+import { listScopeDecisions } from '@/lib/session';
 import { listDecisions } from '@/lib/store';
 import { editProfile, getProfile, previewProfileEdit, saveOnboarding } from '@/lib/services/profile';
 import { answers, freshWorld } from './helpers';
@@ -13,7 +14,7 @@ describe('profile service', () => {
         const profile = await saveOnboarding(answers());
         expect(profile).toMatchObject({ level: 'Intermediate', risk: 'Medium', levelOverridden: false });
         expect(await getProfile()).toEqual(profile);
-        const [logged] = await listDecisions(DEMO_USER.id, { kind: 'profile_change' });
+        const [logged] = await listScopeDecisions(TEST_SCOPE, { kind: 'profile_change' });
         expect(logged.ruleVersions).toEqual({ level: 'level-v1', risk: 'risk-v1' });
         expect(logged.payload).toMatchObject({ action: 'onboarding', answers: answers(), levelResult: { points: 2 }, riskResult: { points: 4 }, before: null, after: { level: 'Intermediate', risk: 'Medium' } });
     });
@@ -23,7 +24,7 @@ describe('profile service', () => {
         const edit = await editProfile({ answers: { selfRating: 'high', drop20: 'buy_more' } });      // 1 + 1 + 2 + 2 = 6: High
         expect(edit).toMatchObject({ before: { level: 'Intermediate', risk: 'Medium' }, after: { level: 'Intermediate', risk: 'High' } });
         expect(edit.profile.answers.sectors).toEqual(answers().sectors);
-        expect(await listDecisions(DEMO_USER.id, { kind: 'profile_change' })).toHaveLength(2);
+        expect(await listScopeDecisions(TEST_SCOPE, { kind: 'profile_change' })).toHaveLength(2);
     });
 
     it('stores an explicit level as an override that survives later edits, until null drops it', async () => {
@@ -38,7 +39,7 @@ describe('profile service', () => {
         const message = 'High is not available: you answered "reduce my position" to the 20% drop question, which limits the risk profile to Medium.';
         await expect(previewProfileEdit({ risk: 'High' })).rejects.toMatchObject({ status: 400, message });
         await expect(editProfile({ risk: 'High' })).rejects.toMatchObject({ status: 400, message });
-        expect(await listDecisions(DEMO_USER.id, { kind: 'profile_change' })).toHaveLength(1);
+        expect(await listScopeDecisions(TEST_SCOPE, { kind: 'profile_change' })).toHaveLength(1);
         expect((await editProfile({ risk: 'Low' })).profile).toMatchObject({ risk: 'Low', riskOverridden: true });
     });
 

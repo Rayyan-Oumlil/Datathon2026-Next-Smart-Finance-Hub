@@ -191,7 +191,9 @@ export type WatchlistResult = {
 
 // ---------------------------------------------------------------- logs (append-only)
 
-export type DecisionLogKind = 'watchlist_run' | 'pick' | 'user_action' | 'simulated_trade' | 'profile_conflict' | 'profile_change';
+// session_reset: a visitor opened a new generation (lib/session/reset.ts); logged under `${sessionId}:session`
+// replay_run: a replay or a sensitivity run of the time machine (lib/services/replay.ts), with its replay id(s) and snapshot id
+export type DecisionLogKind = 'watchlist_run' | 'pick' | 'user_action' | 'simulated_trade' | 'profile_conflict' | 'profile_change' | 'session_reset' | 'replay_run';
 
 export type DecisionLogEntry = {
     userId: string;

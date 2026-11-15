@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import { sourceLabel } from "@/lib/source-label";
 import { useLocale, useTranslations } from "next-intl";
 import { Pin, PinOff, Plus, X } from "lucide-react";
 import ChangePill from "@/components/ChangePill";
@@ -83,7 +84,7 @@ export default function PickCard({ pick, level, pinned, busy, rules, ruleVersion
                     {signals.closes1m && signals.closes1m.value.length > 1 && (
                         <div className="flex flex-col items-end">
                             <Sparkline closes={signals.closes1m.value} label={t('card.sparklineLabel', { symbol: pick.symbol })} />
-                            <span className="text-[11px] text-faint">{t('card.oneMonth', { source: signals.closes1m.source })}</span>
+                            <span className="text-[11px] text-faint">{t('card.oneMonth', { source: sourceLabel(signals.closes1m.source, locale) })}</span>
                         </div>
                     )}
                 </div>

@@ -12,16 +12,18 @@ const PERIOD_KEY: Record<Period, string> = { '1D': 'd1', '1W': 'w1', '1M': 'm1',
 const W = 600;
 const H = 200;
 
-type Props = { history: HistoryPoint[]; startingCashCad: number; note: string; level: Level };
+type Props = { history: HistoryPoint[]; dailyCloses: number; startingCashCad: number; note: string; level: Level };
 
 // The simulated value over time against the starting amount. A plain SVG line: the series is a few dozen points.
-export default function PerformanceChart({ history, startingCashCad, note, level }: Props) {
+export default function PerformanceChart({ history, dailyCloses, startingCashCad, note, level }: Props) {
     const t = useTranslations('Portfolio');
     const { money, signed, cad, when } = useFmt();
     const [period, setPeriod] = useState<Period>('All');
     const [hover, setHover] = useState<number | null>(null);
     const points = useMemo(() => pointsFor(history, period, Date.now()), [history, period]);
-    const drawable = points.length >= 2;
+    // Trades but no daily close yet: the series is only the start and now, a line that would say nothing
+    const awaitingClose = history.length >= 2 && dailyCloses === 0;
+    const drawable = points.length >= 2 && !awaitingClose;
     const box = drawable ? chartBox(points, startingCashCad) : null;
     const first = points[0];
     const last = points[points.length - 1];
@@ -61,7 +63,12 @@ export default function PerformanceChart({ history, startingCashCad, note, level
             )}
             bodyClassName="p-4"
         >
-            {!box ? (
+            {awaitingClose ? (
+                <div className="empty-state">
+                    <h3>{t('performance.noCloseTitle')}</h3>
+                    <p className="max-w-md text-[13px]">{t('performance.noCloseBody')}</p>
+                </div>
+            ) : !box ? (
                 <div className="empty-state">
                     <h3>{t('performance.emptyTitle')}</h3>
                     <p className="max-w-md text-[13px]">

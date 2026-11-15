@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import { sourceLabel } from "@/lib/source-label";
 import { CircleCheck, CircleX } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { runDetail, type RunDetail } from "@/app/(root)/overview/actions";
@@ -188,7 +189,7 @@ export default function WhyPanel({ symbol, rules, onClose }: { symbol: string; r
                                                         <span className="num text-right font-semibold text-foreground">{formatSignal(key, sourced, t, locale)}</span>
                                                     </div>
                                                     <dl className="mt-0.5 grid gap-x-3 text-[11.5px] leading-snug text-faint sm:grid-cols-[auto_1fr]">
-                                                        <dt>{t('why.source')}</dt><dd className="break-words">{sourced.source}</dd>
+                                                        <dt>{t('why.source')}</dt><dd className="break-words">{sourceLabel(sourced.source, locale)}</dd>
                                                         {sourced.endpoint && <><dt>{t('why.endpoint')}</dt><dd className="mono break-all">{sourced.endpoint}</dd></>}
                                                         <dt>{t('why.fetched')}</dt><dd>{formatTime(sourced.fetchedAt, t, locale)}{stale && <span className="font-bold text-warn">{t('why.stale')}</span>}</dd>
                                                         <dt>{t('why.providerTime')}</dt><dd>{sourced.asOf ? formatTime(sourced.asOf, t, locale) : t('why.noProviderTime')}</dd>

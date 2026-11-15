@@ -5,6 +5,7 @@
 import type { Locale } from '@/i18n/config';
 import { getAppLocale } from '@/i18n/locale';
 import type { Level, OnboardingAnswers, Risk } from '@/lib/domain/types';
+import type { Scope } from '@/lib/session';
 import type { AgentPage } from './page';
 import { getLayout } from '@/lib/services/layout';
 import { getPortfolioState } from '@/lib/services/portfolio';
@@ -24,8 +25,10 @@ export type AgentContext = {
 };
 
 /** `language` is the reply language (the message's own, see language.ts); without one the app's language is used. */
-export async function buildContext(language?: Locale): Promise<{ context: AgentContext; snapshotId: string | null }> {
-    const [profile, portfolio, watchlist, layout, locale] = await Promise.all([getProfile(), getPortfolioState(), getWatchlist(), getLayout(), language ?? getAppLocale()]);
+export async function buildContext(language: Locale | undefined, scope: Scope): Promise<{ context: AgentContext; snapshotId: string | null }> {
+    const [profile, portfolio, watchlist, layout, locale] = await Promise.all([
+        getProfile(undefined, scope), getPortfolioState(scope), getWatchlist(undefined, scope), getLayout(undefined, scope), language ?? getAppLocale(),
+    ]);
     const context: AgentContext = {
         locale,
         ...(profile ? { level: profile.level, risk: profile.risk, agentStyle: profile.answers.agentStyle, profile: profile.answers } : {}),

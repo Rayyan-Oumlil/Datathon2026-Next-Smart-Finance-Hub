@@ -1,0 +1,3752 @@
+{
+ "snapshotId": "yf-2026-11-15",
+ "source": "Yahoo Finance, read with the yfinance Python library (unofficial, not certified)",
+ "sourceUrl": "https://finance.yahoo.com",
+ "library": {
+  "name": "yfinance",
+  "version": "1.8.0",
+  "pandas": "3.1.1",
+  "python": "3.13.12"
+ },
+ "call": "yf.Ticker(symbol).history(start, end, auto_adjust=False, actions=True)",
+ "extractedAt": "2026-11-15T17:29:37+00:00",
+ "extractionDate": "2026-11-15",
+ "window": {
+  "requestedFrom": "2020-12-01",
+  "requestedTo": "2026-11-14",
+  "from": "2020-12-01",
+  "to": "2026-11-14"
+ },
+ "columns": {
+  "prices.csv": "date (exchange-local trading day), symbol (Yahoo), open/high/low/close (split-adjusted, not dividend-adjusted), adj_close (split- and dividend-adjusted: total return), volume, currency",
+  "actions.csv": "date (ex-date), symbol (Yahoo), type (dividend | split | capital_gain), value (per share in the listing currency; split = new shares per old share)",
+  "fx.csv": "date, usdcad = CAD per 1 USD (USDCAD=X daily close)"
+ },
+ "symbolMap": "data/replay/symbol-map.json",
+ "files": {
+  "prices.csv": {
+   "sha256": "0ef90d99e5f8a77f7b2b3efb8220ffe65558ab72c2e4182158c1037a2a1b1227",
+   "rows": 315268,
+   "bytes": 24351652
+  },
+  "actions.csv": {
+   "sha256": "cc13e92816df6616bde43591350f6c4cd982558ccf5c572d3d03e1dc4cb3ed26",
+   "rows": 4677,
+   "bytes": 141903
+  },
+  "fx.csv": {
+   "sha256": "f5b01908dc52655cd2d798e08b39d0e5e6db1575e50b2f540c610e413a1e68e5",
+   "rows": 1549,
+   "bytes": 29033
+  }
+ },
+ "qualityChecks": {
+  "hard (symbol excluded)": [
+   "download failed after retries",
+   "currency unknown or not CAD/USD",
+   "no usable price rows",
+   "zero or negative price",
+   "history ends more than 7 days before the window end",
+   "missing trading days > 2% of the symbol's own exchange calendar (and more than 3)"
+  ],
+  "soft (symbol kept, warning listed)": [
+   "history starts more than 7 days after the window start",
+   "a few missing trading days",
+   "day-to-day moves over 25% in adj_close",
+   "zero-volume days",
+   "rows with no close price dropped (counted)"
+  ],
+  "exchangeCalendars": "TSX and U.S. calendars are derived from the snapshot itself: a day belongs to an exchange when at least 50% of its symbols live that day have a row. Crypto is expected every calendar day, USD/CAD every weekday.",
+  "neverCorrected": "Values are written as Yahoo returned them (rounded to 6 decimals); nothing is filled in."
+ },
+ "calendarDays": {
+  "TSX": {
+   "first": "2020-12-01",
+   "last": "2026-11-13",
+   "days": 1494
+  },
+  "US": {
+   "first": "2020-12-01",
+   "last": "2026-11-13",
+   "days": 1496
+  }
+ },
+ "fx": {
+  "yahooSymbol": "USDCAD=X",
+  "firstDate": "2020-12-01",
+  "lastDate": "2026-11-13",
+  "rows": 1549,
+  "warnings": [
+   "5 missing trading days against the fx calendar (0.3%): 2025-01-01, 2025-04-18, 2025-04-21, 2025-12-25, 2026-01-01"
+  ]
+ },
+ "symbols": [
+  {
+   "yahooSymbol": "AAPL",
+   "appSymbols": [
+    "AAPL"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ABBV",
+   "appSymbols": [
+    "ABBV"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ABNB",
+   "appSymbols": [
+    "ABNB"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-10",
+   "lastDate": "2026-11-13",
+   "rows": 1489,
+   "warnings": [
+    "incomplete history: starts late (2020-12-10; window starts 2020-12-01)"
+   ]
+  },
+  {
+   "yahooSymbol": "ABT",
+   "appSymbols": [
+    "ABT"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ABX.TO",
+   "appSymbols": [
+    "ABX.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ADP",
+   "appSymbols": [
+    "ADP"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "AEM.TO",
+   "appSymbols": [
+    "AEM.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "AEP",
+   "appSymbols": [
+    "AEP"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "AGG",
+   "appSymbols": [
+    "AGG"
+   ],
+   "origins": [
+    "extra"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSEArca",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "AMAT",
+   "appSymbols": [
+    "AMAT"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "AMD",
+   "appSymbols": [
+    "AMD"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "AMGN",
+   "appSymbols": [
+    "AMGN"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "AMT",
+   "appSymbols": [
+    "AMT"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "AMZN",
+   "appSymbols": [
+    "AMZN"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "APD",
+   "appSymbols": [
+    "APD"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "APP",
+   "appSymbols": [
+    "APP"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2021-04-15",
+   "lastDate": "2026-11-13",
+   "rows": 1404,
+   "warnings": [
+    "incomplete history: starts late (2021-04-15; window starts 2020-12-01)",
+    "5 day-to-day moves over 25% in adj_close: 2022-05-12 (+34.7%), 2023-02-09 (+27.1%), 2023-08-10 (+26.5%), 2024-11-07 (+46.3%), 2026-11-05 (+31.0%)"
+   ]
+  },
+  {
+   "yahooSymbol": "ATD.TO",
+   "appSymbols": [
+    "ATD.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "AVGO",
+   "appSymbols": [
+    "AVGO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "AXP",
+   "appSymbols": [
+    "AXP"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BA",
+   "appSymbols": [
+    "BA"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BAC",
+   "appSymbols": [
+    "BAC"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BAM.TO",
+   "appSymbols": [
+    "BAM.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2022-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 992,
+   "warnings": [
+    "incomplete history: starts late (2022-12-01; window starts 2020-12-01)",
+    "1 zero-volume days: 2022-12-06"
+   ]
+  },
+  {
+   "yahooSymbol": "BCE.TO",
+   "appSymbols": [
+    "BCE.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BIP-UN.TO",
+   "appSymbols": [
+    "BIP-UN.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BKNG",
+   "appSymbols": [
+    "BKNG"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BLK",
+   "appSymbols": [
+    "BLK"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BMO.TO",
+   "appSymbols": [
+    "BMO.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BN.TO",
+   "appSymbols": [
+    "BN.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BNS.TO",
+   "appSymbols": [
+    "BNS.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BRK-B",
+   "appSymbols": [
+    "BRK.B"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BTC-USD",
+   "appSymbols": [
+    "BTC"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "crypto",
+   "currency": "USD",
+   "exchange": "CCC",
+   "exchangeTimezone": "UTC",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-14",
+   "rows": 2175,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "C",
+   "appSymbols": [
+    "C"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CAE.TO",
+   "appSymbols": [
+    "CAE.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CAT",
+   "appSymbols": [
+    "CAT"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CBRE",
+   "appSymbols": [
+    "CBRE"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CCI",
+   "appSymbols": [
+    "CCI"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CCL-B.TO",
+   "appSymbols": [
+    "CCL-B.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CCO.TO",
+   "appSymbols": [
+    "CCO.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CEG",
+   "appSymbols": [
+    "CEG"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2022-01-19",
+   "lastDate": "2026-11-13",
+   "rows": 1211,
+   "warnings": [
+    "incomplete history: starts late (2022-01-19; window starts 2020-12-01)",
+    "1 day-to-day moves over 25% in adj_close: 2025-01-10 (+25.2%)"
+   ]
+  },
+  {
+   "yahooSymbol": "CL",
+   "appSymbols": [
+    "CL"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CLS.TO",
+   "appSymbols": [
+    "CLS.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": [
+    "1 day-to-day moves over 25% in adj_close: 2025-01-27 (-28.0%)"
+   ]
+  },
+  {
+   "yahooSymbol": "CM.TO",
+   "appSymbols": [
+    "CM.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CMCSA",
+   "appSymbols": [
+    "CMCSA"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CNQ.TO",
+   "appSymbols": [
+    "CNQ.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CNR.TO",
+   "appSymbols": [
+    "CNR.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "COP",
+   "appSymbols": [
+    "COP"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "COST",
+   "appSymbols": [
+    "COST"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CP.TO",
+   "appSymbols": [
+    "CP.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CRH",
+   "appSymbols": [
+    "CRH"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CSCO",
+   "appSymbols": [
+    "CSCO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CSU.TO",
+   "appSymbols": [
+    "CSU.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CTC-A.TO",
+   "appSymbols": [
+    "CTC-A.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CVE.TO",
+   "appSymbols": [
+    "CVE.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "CVX",
+   "appSymbols": [
+    "CVX"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "D",
+   "appSymbols": [
+    "D"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "DE",
+   "appSymbols": [
+    "DE"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "DHR",
+   "appSymbols": [
+    "DHR"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "DIS",
+   "appSymbols": [
+    "DIS"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "DLR",
+   "appSymbols": [
+    "DLR"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "DOL.TO",
+   "appSymbols": [
+    "DOL.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "DUK",
+   "appSymbols": [
+    "DUK"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ECL",
+   "appSymbols": [
+    "ECL"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ED",
+   "appSymbols": [
+    "ED"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "EMA.TO",
+   "appSymbols": [
+    "EMA.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ENB.TO",
+   "appSymbols": [
+    "ENB.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "EOG",
+   "appSymbols": [
+    "EOG"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "EQIX",
+   "appSymbols": [
+    "EQIX"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ESGV",
+   "appSymbols": [
+    "ESGV"
+   ],
+   "origins": [
+    "extra"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "Cboe US",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ETH-USD",
+   "appSymbols": [
+    "ETH"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "crypto",
+   "currency": "USD",
+   "exchange": "CCC",
+   "exchangeTimezone": "UTC",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-14",
+   "rows": 2175,
+   "warnings": [
+    "3 day-to-day moves over 25% in adj_close: 2021-01-03 (+25.9%), 2021-05-19 (-27.2%), 2021-05-24 (+25.3%)"
+   ]
+  },
+  {
+   "yahooSymbol": "ETN",
+   "appSymbols": [
+    "ETN"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ETR",
+   "appSymbols": [
+    "ETR"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "EXC",
+   "appSymbols": [
+    "EXC"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "FCX",
+   "appSymbols": [
+    "FCX"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "FFH.TO",
+   "appSymbols": [
+    "FFH.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "FM.TO",
+   "appSymbols": [
+    "FM.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": [
+    "1 day-to-day moves over 25% in adj_close: 2023-10-30 (-28.5%)"
+   ]
+  },
+  {
+   "yahooSymbol": "FNV.TO",
+   "appSymbols": [
+    "FNV.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "FSV.TO",
+   "appSymbols": [
+    "FSV.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "FTS.TO",
+   "appSymbols": [
+    "FTS.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "GE",
+   "appSymbols": [
+    "GE"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "GEV",
+   "appSymbols": [
+    "GEV"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2024-03-27",
+   "lastDate": "2026-11-13",
+   "rows": 662,
+   "warnings": [
+    "incomplete history: starts late (2024-03-27; window starts 2020-12-01)"
+   ]
+  },
+  {
+   "yahooSymbol": "GIB-A.TO",
+   "appSymbols": [
+    "GIB-A.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "GIL.TO",
+   "appSymbols": [
+    "GIL.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "GILD",
+   "appSymbols": [
+    "GILD"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "GLD",
+   "appSymbols": [
+    "GOLD",
+    "GLD"
+   ],
+   "origins": [
+    "universe",
+    "extra"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSEArca",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "GOOGL",
+   "appSymbols": [
+    "GOOGL"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "GS",
+   "appSymbols": [
+    "GS"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "H.TO",
+   "appSymbols": [
+    "H.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "HD",
+   "appSymbols": [
+    "HD"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "HLT",
+   "appSymbols": [
+    "HLT"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ICLN",
+   "appSymbols": [
+    "ICLN"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGM",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "IFC.TO",
+   "appSymbols": [
+    "IFC.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "IMO.TO",
+   "appSymbols": [
+    "IMO.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "INTC",
+   "appSymbols": [
+    "INTC"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": [
+    "2 day-to-day moves over 25% in adj_close: 2024-08-02 (-26.1%), 2026-10-30 (-28.6%)"
+   ]
+  },
+  {
+   "yahooSymbol": "ISRG",
+   "appSymbols": [
+    "ISRG"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "IVV",
+   "appSymbols": [
+    "IVV"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSEArca",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "JNJ",
+   "appSymbols": [
+    "JNJ"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "JPM",
+   "appSymbols": [
+    "JPM"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "K.TO",
+   "appSymbols": [
+    "K.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "KMB",
+   "appSymbols": [
+    "KMB"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "KMI",
+   "appSymbols": [
+    "KMI"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "KO",
+   "appSymbols": [
+    "KO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "L.TO",
+   "appSymbols": [
+    "L.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "LIN",
+   "appSymbols": [
+    "LIN"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "LLY",
+   "appSymbols": [
+    "LLY"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "LMT",
+   "appSymbols": [
+    "LMT"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "LOW",
+   "appSymbols": [
+    "LOW"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "LYV",
+   "appSymbols": [
+    "LYV"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MA",
+   "appSymbols": [
+    "MA"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MAR",
+   "appSymbols": [
+    "MAR"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MCD",
+   "appSymbols": [
+    "MCD"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MDLZ",
+   "appSymbols": [
+    "MDLZ"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "META",
+   "appSymbols": [
+    "META"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": [
+    "1 day-to-day moves over 25% in adj_close: 2022-02-03 (-26.4%)"
+   ]
+  },
+  {
+   "yahooSymbol": "MFC.TO",
+   "appSymbols": [
+    "MFC.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MG.TO",
+   "appSymbols": [
+    "MG.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MLM",
+   "appSymbols": [
+    "MLM"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MNST",
+   "appSymbols": [
+    "MNST"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MO",
+   "appSymbols": [
+    "MO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MPC",
+   "appSymbols": [
+    "MPC"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MRK",
+   "appSymbols": [
+    "MRK"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MRU.TO",
+   "appSymbols": [
+    "MRU.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MS",
+   "appSymbols": [
+    "MS"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MSFT",
+   "appSymbols": [
+    "MSFT"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "MU",
+   "appSymbols": [
+    "MU"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "NA.TO",
+   "appSymbols": [
+    "NA.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "NEE",
+   "appSymbols": [
+    "NEE"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "NEM",
+   "appSymbols": [
+    "NEM"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "NFLX",
+   "appSymbols": [
+    "NFLX"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": [
+    "1 day-to-day moves over 25% in adj_close: 2022-04-20 (-35.1%)"
+   ]
+  },
+  {
+   "yahooSymbol": "NTR.TO",
+   "appSymbols": [
+    "NTR.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "NUE",
+   "appSymbols": [
+    "NUE"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "NVDA",
+   "appSymbols": [
+    "NVDA"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "O",
+   "appSymbols": [
+    "O"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ORCL",
+   "appSymbols": [
+    "ORCL"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": [
+    "1 day-to-day moves over 25% in adj_close: 2025-09-10 (+35.9%)"
+   ]
+  },
+  {
+   "yahooSymbol": "OTEX.TO",
+   "appSymbols": [
+    "OTEX.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "OXY",
+   "appSymbols": [
+    "OXY"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "PEP",
+   "appSymbols": [
+    "PEP"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "PFE",
+   "appSymbols": [
+    "PFE"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "PG",
+   "appSymbols": [
+    "PG"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "PH",
+   "appSymbols": [
+    "PH"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "PLD",
+   "appSymbols": [
+    "PLD"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "PLTR",
+   "appSymbols": [
+    "PLTR"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": [
+    "3 day-to-day moves over 25% in adj_close: 2021-01-22 (+25.4%), 2024-02-06 (+30.8%), 2026-08-04 (+29.5%)"
+   ]
+  },
+  {
+   "yahooSymbol": "PM",
+   "appSymbols": [
+    "PM"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "POW.TO",
+   "appSymbols": [
+    "POW.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "PPG",
+   "appSymbols": [
+    "PPG"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "PPL.TO",
+   "appSymbols": [
+    "PPL.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "PSA",
+   "appSymbols": [
+    "PSA"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "PSX",
+   "appSymbols": [
+    "PSX"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "QQQ",
+   "appSymbols": [
+    "QQQ"
+   ],
+   "origins": [
+    "universe",
+    "extra"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGM",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "QSR.TO",
+   "appSymbols": [
+    "QSR.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "RCI-B.TO",
+   "appSymbols": [
+    "RCI-B.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "RCL",
+   "appSymbols": [
+    "RCL"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "RTX",
+   "appSymbols": [
+    "RTX"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "RY.TO",
+   "appSymbols": [
+    "RY.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SAP.TO",
+   "appSymbols": [
+    "SAP.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SBUX",
+   "appSymbols": [
+    "SBUX"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SCHW",
+   "appSymbols": [
+    "SCHW"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SHOP.TO",
+   "appSymbols": [
+    "SHOP.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SHW",
+   "appSymbols": [
+    "SHW"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SLB",
+   "appSymbols": [
+    "SLB"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SLF.TO",
+   "appSymbols": [
+    "SLF.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SO",
+   "appSymbols": [
+    "SO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SPCX",
+   "appSymbols": [
+    "SPCX"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2026-06-12",
+   "lastDate": "2026-11-13",
+   "rows": 108,
+   "warnings": [
+    "incomplete history: starts late (2026-06-12; window starts 2020-12-01)"
+   ]
+  },
+  {
+   "yahooSymbol": "SPG",
+   "appSymbols": [
+    "SPG"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SPY",
+   "appSymbols": [
+    "SPY"
+   ],
+   "origins": [
+    "universe",
+    "extra"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSEArca",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SRE",
+   "appSymbols": [
+    "SRE"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "STLD",
+   "appSymbols": [
+    "STLD"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "SU.TO",
+   "appSymbols": [
+    "SU.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "T",
+   "appSymbols": [
+    "T"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "T.TO",
+   "appSymbols": [
+    "T.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TD.TO",
+   "appSymbols": [
+    "TD.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TECK-B.TO",
+   "appSymbols": [
+    "TECK-B.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TGT",
+   "appSymbols": [
+    "TGT"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TJX",
+   "appSymbols": [
+    "TJX"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TLT",
+   "appSymbols": [
+    "TLT"
+   ],
+   "origins": [
+    "extra"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGM",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TMO",
+   "appSymbols": [
+    "TMO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TMUS",
+   "appSymbols": [
+    "TMUS"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TOU.TO",
+   "appSymbols": [
+    "TOU.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TRGP",
+   "appSymbols": [
+    "TRGP"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TRI.TO",
+   "appSymbols": [
+    "TRI.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TRP.TO",
+   "appSymbols": [
+    "TRP.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TSLA",
+   "appSymbols": [
+    "TSLA"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TTWO",
+   "appSymbols": [
+    "TTWO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "TXN",
+   "appSymbols": [
+    "TXN"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "UBER",
+   "appSymbols": [
+    "UBER"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "UNH",
+   "appSymbols": [
+    "UNH"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "UNP",
+   "appSymbols": [
+    "UNP"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "V",
+   "appSymbols": [
+    "V"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "VCN.TO",
+   "appSymbols": [
+    "VCN.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "VFV.TO",
+   "appSymbols": [
+    "VFV.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "VLO",
+   "appSymbols": [
+    "VLO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "VMC",
+   "appSymbols": [
+    "VMC"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "VMRK",
+   "appSymbols": [
+    "VMRK"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "VOO",
+   "appSymbols": [
+    "VOO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSEArca",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "VST",
+   "appSymbols": [
+    "VST"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": [
+    "1 day-to-day moves over 25% in adj_close: 2025-01-27 (-28.3%)"
+   ]
+  },
+  {
+   "yahooSymbol": "VTI",
+   "appSymbols": [
+    "VTI"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSEArca",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "VTR",
+   "appSymbols": [
+    "VTR"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "VYM",
+   "appSymbols": [
+    "VYM"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSEArca",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "VZ",
+   "appSymbols": [
+    "VZ"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "WCN.TO",
+   "appSymbols": [
+    "WCN.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "WELL",
+   "appSymbols": [
+    "WELL"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "WFC",
+   "appSymbols": [
+    "WFC"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "WMB",
+   "appSymbols": [
+    "WMB"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "WMT",
+   "appSymbols": [
+    "WMT"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "WN.TO",
+   "appSymbols": [
+    "WN.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "WPM.TO",
+   "appSymbols": [
+    "WPM.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "WSP.TO",
+   "appSymbols": [
+    "WSP.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "XBB.TO",
+   "appSymbols": [
+    "XBB.TO"
+   ],
+   "origins": [
+    "extra"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "XEI.TO",
+   "appSymbols": [
+    "XEI.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "XEL",
+   "appSymbols": [
+    "XEL"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NasdaqGS",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "XIC.TO",
+   "appSymbols": [
+    "XIC.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "XIU.TO",
+   "appSymbols": [
+    "XIU.TO"
+   ],
+   "origins": [
+    "universe",
+    "extra"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "XOM",
+   "appSymbols": [
+    "XOM"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": "NYSE",
+   "exchangeTimezone": "America/New_York",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1496,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "ZST.TO",
+   "appSymbols": [
+    "ZST.TO"
+   ],
+   "origins": [
+    "extra"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": "Toronto",
+   "exchangeTimezone": "America/Toronto",
+   "firstDate": "2020-12-01",
+   "lastDate": "2026-11-13",
+   "rows": 1494,
+   "warnings": [
+    "1 zero-volume days: 2022-07-06"
+   ]
+  }
+ ],
+ "excluded": [],
+ "notReplayable": [
+  {
+   "symbol": "CA2Y",
+   "reason": "not replayable: a yield is not a price"
+  },
+  {
+   "symbol": "CA5Y",
+   "reason": "not replayable: a yield is not a price"
+  },
+  {
+   "symbol": "CA10Y",
+   "reason": "not replayable: a yield is not a price"
+  }
+ ],
+ "limitations": [
+  "Unofficial source: Yahoo Finance data read with yfinance, not certified; yfinance is meant for personal and research use, so this snapshot is for demonstration only, not commercial use.",
+  "Survivorship bias: the universe is today's list of large companies, replayed into the past.",
+  "No fees and no taxes by default.",
+  "Currency effect included: USD assets are converted to CAD at the day's USD/CAD rate.",
+  "The window starts in December 2020, close to a market top (2021) before the 2022 decline.",
+  "Adjusted closes depend on the extraction date: a new extraction can change past adjusted values, which is why the snapshot is frozen and identified."
+ ]
+}

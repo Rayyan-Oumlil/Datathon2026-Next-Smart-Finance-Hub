@@ -12,11 +12,17 @@ export type QueryInput = {
     filter?: Record<string, string>;   // equality on non-key attributes
 };
 
-/** The four operations the stores need. There is deliberately no update and no delete. */
+/** The operations the stores need. There is deliberately no update and no delete. */
 export interface Backend {
     get(table: string, key: Item): Promise<Item | undefined>;
     /** Overwrites. Only the profile table accepts this; any other table throws. */
     put(table: string, item: Item): Promise<void>;
+    /**
+     * Overwrites only when the stored row's `version` is `expected` (0: no row with this key yet), for the mutable
+     * documents kept in the profile table (session record, app state). Throws VersionConflictError otherwise.
+     * The item carries its new version. Only the profile table accepts this; any other table throws.
+     */
+    putIfVersion(table: string, item: Item, expected: number): Promise<void>;
     /** Writes only when no row has this key; otherwise throws AlreadyExistsError. */
     putNew(table: string, item: Item): Promise<void>;
     /** Every matching row, oldest first (by id). */
@@ -27,6 +33,13 @@ export class AlreadyExistsError extends Error {
     constructor(table: string, id: unknown) {
         super(`${table}: a row with id ${String(id)} already exists; the log is append-only`);
         this.name = 'AlreadyExistsError';
+    }
+}
+
+export class VersionConflictError extends Error {
+    constructor(table: string, key: unknown) {
+        super(`${table}: ${String(key)} changed since it was read`);
+        this.name = 'VersionConflictError';
     }
 }
 
@@ -70,6 +83,22 @@ const dynamoBackend: Backend = {
     async put(table, item) {
         assertOverwritable(table);
         await getDocumentClient().send(new PutCommand({ TableName: table, Item: item }));
+    },
+
+    async putIfVersion(table, item, expected) {
+        assertOverwritable(table);
+        try {
+            await getDocumentClient().send(new PutCommand({
+                TableName: table,
+                Item: item,
+                ...(expected === 0
+                    ? { ConditionExpression: 'attribute_not_exists(userId)' }
+                    : { ConditionExpression: '#v = :v', ExpressionAttributeNames: { '#v': 'version' }, ExpressionAttributeValues: { ':v': expected } }),
+            }));
+        } catch (error) {
+            if ((error as Error).name === 'ConditionalCheckFailedException') throw new VersionConflictError(table, item.userId);
+            throw error;
+        }
     },
 
     async putNew(table, item) {

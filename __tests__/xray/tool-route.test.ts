@@ -4,7 +4,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as TOOL } from '@/app/api/internal/tools/portfolio-xray/route';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
 import { simulateTrade } from '@/lib/services/portfolio';
 import { freshWorld, market, sourced } from '../services/helpers';
 
@@ -24,7 +24,7 @@ const closesOf = (list: string[], currency: string) => sourced(list.map((date, i
 
 const tool = (body: unknown) =>
     TOOL(new NextRequest('http://localhost/api/internal/tools/portfolio-xray', {
-        method: 'POST', body: JSON.stringify({ userId: DEMO_USER.id, ...(body as object) }), headers: { 'x-internal-token': TOKEN },
+        method: 'POST', body: JSON.stringify({ userId: TEST_SCOPE.scopeId, ...(body as object) }), headers: { 'x-internal-token': TOKEN },
     }));
 
 beforeEach(async () => {

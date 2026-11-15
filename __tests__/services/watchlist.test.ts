@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
+import { listScopeDecisions } from '@/lib/session';
 import type { UniverseEntry } from '@/lib/domain/types';
 import { RULE_VERSIONS } from '@/lib/rules';
 import { getProfile, listDecisions, readState, updateState } from '@/lib/store';
@@ -22,7 +23,7 @@ beforeEach(async () => {
     vi.mocked(loadDailySignals).mockClear();
 });
 
-const runs = () => listDecisions(DEMO_USER.id, { kind: 'watchlist_run' });
+const runs = () => listScopeDecisions(TEST_SCOPE, { kind: 'watchlist_run' });
 const built = async () => {
     await buildStatus().promise;
     return getWatchlist();
@@ -72,14 +73,14 @@ describe('watchlist service', () => {
         expect(payload.result.picks).toHaveLength(9);
         expect(payload.candidates.filter((candidate) => ['IVV', 'SPY', 'VOO', 'VTI', 'VCN.TO', 'VFV.TO', 'XIC.TO', 'XIU.TO'].includes(candidate.symbol))).toHaveLength(8);    // every blue-chip ETF, both markets
 
-        const picks = await listDecisions(DEMO_USER.id, { kind: 'pick', snapshotId: run.snapshotId });
+        const picks = await listScopeDecisions(TEST_SCOPE, { kind: 'pick', snapshotId: run.snapshotId });
         expect(picks.map((pick) => pick.symbol)).toEqual(view.result!.picks.map((pick) => pick.symbol));
         const aapl = picks.find((pick) => pick.symbol === 'AAPL')!.payload as { reason: { templateId: string; text: string; sources: string[] }; sources: Array<{ signal: string; source: string; fetchedAt: string }> };
         expect(aapl.reason.text).toBeTruthy();
         expect(aapl.reason.sources.length).toBeGreaterThan(0);
         expect(aapl.sources).toEqual(expect.arrayContaining([expect.objectContaining({ signal: 'volatility1y', source: 'derived', fetchedAt: expect.any(String) })]));
 
-        const state = await readState();
+        const state = await readState(TEST_SCOPE);
         expect(state.watchlist.previousPicks).toEqual(view.result!.picks.map((pick) => pick.symbol));
         expect(Object.keys(state.watchlist.listedSince).sort()).toEqual([...state.watchlist.previousPicks].sort());
     });
@@ -200,7 +201,7 @@ describe('watchlist service', () => {
         expect((await userAction(top, 'add')).state.dismissed).toEqual([]);
         expect((await userAction(second, 'unpin')).state.pinned).toEqual([]);
         await expect(userAction('NOPE', 'pin')).rejects.toMatchObject({ status: 404 });
-        const actions = await listDecisions(DEMO_USER.id, { kind: 'user_action' });
+        const actions = await listScopeDecisions(TEST_SCOPE, { kind: 'user_action' });
         expect(actions.map((entry) => [entry.symbol, (entry.payload as { action: string }).action])).toEqual([[top, 'dismiss'], [second, 'pin'], [top, 'add'], [second, 'unpin']]);
         expect(actions[0].snapshotId).toBe(view.result!.snapshotId);
     });
@@ -211,13 +212,13 @@ describe('watchlist service', () => {
         for (const symbol of ['COP', 'XOM', 'IVV', 'VCN.TO', 'VTI', 'XIC.TO', 'XIU.TO', 'SPY', 'VOO', 'VFV.TO']) market.signals[symbol] = { volatility1y: sourced(0.15, { source: 'derived' }) };
         await getWatchlist();
         const medium = await built();
-        const mediumHash = profileHash((await getProfile(DEMO_USER.id))!);
+        const mediumHash = profileHash((await getProfile(TEST_SCOPE.profileUserId))!);
         await editProfile({ risk: 'Low' });
         await getWatchlist();
         const low = await built();
-        const lowHash = profileHash((await getProfile(DEMO_USER.id))!);
+        const lowHash = profileHash((await getProfile(TEST_SCOPE.profileUserId))!);
         expect(symbols(low)).not.toEqual(symbols(medium));
-        expect((await readState()).watchlist).toMatchObject({ previousPicks: symbols(low), stateProfileHash: lowHash });
+        expect((await readState(TEST_SCOPE)).watchlist).toMatchObject({ previousPicks: symbols(low), stateProfileHash: lowHash });
 
         await editProfile({ risk: 'Medium' });
         await getWatchlist();
@@ -231,13 +232,13 @@ describe('watchlist service', () => {
         expect(logged[1].incumbentsReset).toEqual({ reason: 'profile_changed', fromProfileHash: mediumHash, toProfileHash: lowHash, dropped: symbols(medium) });
         expect(logged[2].incumbentsReset).toEqual({ reason: 'profile_changed', fromProfileHash: lowHash, toProfileHash: mediumHash, dropped: symbols(low) });
         expect(logged[2].previous).toEqual({ listedSince: {}, previousPicks: [] });
-        expect((await readState()).watchlist).toMatchObject({ previousPicks: symbols(medium), stateProfileHash: mediumHash });
+        expect((await readState(TEST_SCOPE)).watchlist).toMatchObject({ previousPicks: symbols(medium), stateProfileHash: mediumHash });
     });
 
     it('a same-profile run on the next day keeps the incumbents', async () => {
         await getWatchlist();
         const first = await built();
-        const listedSince = (await readState()).watchlist.listedSince;
+        const listedSince = (await readState(TEST_SCOPE)).watchlist.listedSince;
         vi.useFakeTimers({ toFake: ['Date'] });
         vi.setSystemTime(Date.now() + 86_400_000);
         try {
@@ -251,7 +252,7 @@ describe('watchlist service', () => {
         const [, second] = await runs();
         expect(second.payload).not.toHaveProperty('incumbentsReset');
         expect((second.payload as { previous: unknown }).previous).toEqual({ listedSince, previousPicks: first.result!.picks.map((pick) => pick.symbol) });
-        expect((await readState()).watchlist.listedSince).toEqual(listedSince);       // they stay, so their dates do not move
+        expect((await readState(TEST_SCOPE)).watchlist.listedSince).toEqual(listedSince);       // they stay, so their dates do not move
     });
 
     it('names the incumbents that kept a passing candidate out, with the minimum stay and the margin from the rules file', async () => {
@@ -261,7 +262,7 @@ describe('watchlist service', () => {
         market.signals.MSFT = weak;
         market.signals.NVDA = weak;
         const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
-        await updateState((state) => {
+        await updateState(TEST_SCOPE, (state) => {
             state.watchlist.previousPicks = ['MSFT', 'NVDA', 'VTI'];
             state.watchlist.listedSince = { MSFT: daysAgo(2), NVDA: daysAgo(2), VTI: daysAgo(10) };
         });

@@ -1,3 +1,4 @@
+import '@/__tests__/test-user';
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/voice/speak/route';
@@ -100,7 +101,7 @@ describe('POST /api/voice/speak', () => {
         const budget = limited.mock.calls.find(([key]) => String(key).startsWith('voice-speak-chars'));
         expect(budget).toEqual([expect.stringContaining('voice-speak-chars'), 60_000, 3600, 'An ETF is a fund.'.length]);
         const keys = limited.mock.calls.map(([key, max, window, cost]) => [key, max, window, cost]);
-        expect(keys).toContainEqual([expect.stringMatching(/^voice-speak-chars:user:/), 240_000, 3600, 'An ETF is a fund.'.length]);
+        expect(keys).toContainEqual([expect.stringMatching(/^voice-speak-chars:session:/), 240_000, 3600, 'An ETF is a fund.'.length]);
     });
 
     it('refuses with a 429 when the character budget is spent, and does not call Polly', async () => {
@@ -154,7 +155,7 @@ describe('POST /api/voice/speak', () => {
         const keys = limited.mock.calls.map(([key, max, window]) => [key, max, window]);
         expect(keys).toContainEqual(['voice-speak:ip:10.0.0.2', 20, 60]);
         expect(keys).toContainEqual(['voice-speak-chars:ip:10.0.0.2', 60_000, 3600]);
-        expect(keys).toContainEqual([expect.stringMatching(/^voice-speak:user:/), 60, 60]);
+        expect(keys).toContainEqual([expect.stringMatching(/^voice-speak:session:/), 60, 60]);
     });
 
     it('refuses with a 429 when one address has spent its character budget, and does not call Polly', async () => {

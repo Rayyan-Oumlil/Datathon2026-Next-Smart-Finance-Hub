@@ -1,3 +1,4 @@
+import '@/__tests__/test-user';
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET, POST } from '@/app/api/voice/token/route';
@@ -122,7 +123,7 @@ describe('POST /api/voice/token', () => {
         const keys = limited.mock.calls.map(([key, max, window]) => [key, max, window]);
         expect(keys).toContainEqual(['voice:ip:10.0.0.2:minute', 6, 60]);
         expect(keys).toContainEqual(['voice:ip:10.0.0.2:hour', 60, 3600]);
-        expect(keys).toContainEqual([expect.stringMatching(/^voice:user:/), 30, 60]);
+        expect(keys).toContainEqual([expect.stringMatching(/^voice:session:/), 30, 60]);
     });
 
     it('refuses with a 429 when one address is over its limit, and mints nothing', async () => {

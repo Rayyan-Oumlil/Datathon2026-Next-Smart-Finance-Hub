@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
 import { buildProfile } from '@/lib/rules/profile';
 import { putProfile, updateState } from '@/lib/store';
 import { WIDGET_LIBRARY, defaultLayout, getLayout, putLayout, validateLayout } from '@/lib/services/layout';
@@ -18,7 +18,7 @@ describe('layout', () => {
 
     it('starts from the level template of the profile, Novice when there is none', async () => {
         expect((await getLayout()).layout).toEqual(defaultLayout('Novice'));
-        await putProfile(buildProfile(DEMO_USER.id, answers(), NOW));
+        await putProfile(buildProfile(TEST_SCOPE.profileUserId, answers(), NOW));
         expect(await getLayout()).toMatchObject({ layout: defaultLayout('Intermediate'), saved: false });
     });
 
@@ -47,7 +47,7 @@ describe('layout', () => {
     });
 
     it('drops an id that left the library from a saved layout on read', async () => {
-        await updateState((state) => {
+        await updateState(TEST_SCOPE, (state) => {
             state.layout = { widgets: ['total_value', 'smart_watchlist', 'holdings', 'price_alerts'].map((widget, i) => ({ slot: `s-${i}`, widget })), updatedAt: NOW };
         });
         expect(await getLayout()).toMatchObject({ layout: ['total_value', 'holdings'], saved: true });

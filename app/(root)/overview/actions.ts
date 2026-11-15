@@ -1,7 +1,7 @@
 'use server';
 
-import { DEMO_USER } from '@/lib/demo-user';
 import type { FilterCheck, SignalSet } from '@/lib/domain/types';
+import { requestScope } from '@/lib/session';
 import { getDecision } from '@/lib/store';
 
 export type RunDetail = { filters: FilterCheck[] | null; signals: SignalSet | null };
@@ -12,7 +12,7 @@ export type RunDetail = { filters: FilterCheck[] | null; signals: SignalSet | nu
  */
 export async function runDetail(decisionId: string, symbol: string): Promise<RunDetail> {
     if (typeof decisionId !== 'string' || decisionId.length > 80 || typeof symbol !== 'string' || symbol.length > 20) return { filters: null, signals: null };
-    const run = await getDecision(DEMO_USER.id, decisionId);
+    const run = await getDecision((await requestScope()).scopeId, decisionId);
     if (!run || run.kind !== 'watchlist_run') return { filters: null, signals: null };
     const payload = run.payload as { candidates?: Array<{ symbol: string; filters: FilterCheck[] }>; snapshot?: { signals?: SignalSet[] } };
     return {

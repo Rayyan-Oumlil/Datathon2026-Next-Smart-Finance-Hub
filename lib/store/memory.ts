@@ -1,4 +1,4 @@
-import { AlreadyExistsError, assertOverwritable, type Backend, type Item } from './client';
+import { AlreadyExistsError, VersionConflictError, assertOverwritable, type Backend, type Item } from './client';
 
 // Kept on globalThis so a dev-server module reload does not empty the store.
 const holder = globalThis as { __storeMemoryTables?: Map<string, Map<string, Item>> };
@@ -25,6 +25,15 @@ export const memoryBackend: Backend = {
         rows(table).set(keyOf(item), copy(item));
     },
 
+    async putIfVersion(table, item, expected) {
+        assertOverwritable(table);
+        // Read and write with no await between them: no other call can run in the middle
+        const stored = rows(table).get(keyOf(item));
+        const current = stored === undefined ? 0 : Number(stored.version ?? NaN);
+        if (current !== expected) throw new VersionConflictError(table, item.userId);
+        rows(table).set(keyOf(item), copy(item));
+    },
+
     async putNew(table, item) {
         if (rows(table).has(keyOf(item))) throw new AlreadyExistsError(table, item.id);
         rows(table).set(keyOf(item), copy(item));
@@ -42,4 +51,9 @@ export const memoryBackend: Backend = {
 /** Test helper: empties the in-memory tables. Has no effect on DynamoDB. */
 export function resetMemoryStore(): void {
     holder.__storeMemoryTables = new Map();
+}
+
+/** Test helper: a deep copy of every row of a table, in key order, to compare the store before and after a change. */
+export function memorySnapshot(table: string): Item[] {
+    return [...rows(table).entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([, item]) => copy(item));
 }

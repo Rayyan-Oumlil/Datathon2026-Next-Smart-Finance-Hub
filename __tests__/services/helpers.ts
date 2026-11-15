@@ -3,7 +3,7 @@ import { mkdtempSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import type { OnboardingAnswers } from '@/lib/domain/types';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
 import { buildProfile } from '@/lib/rules/profile';
 import { putProfile } from '@/lib/store';
 import { resetMemoryStore } from '@/lib/store/memory';
@@ -34,5 +34,5 @@ export async function freshWorld(withProfile = true): Promise<void> {
     market.signals = {};
     market.closes = {};
     market.fxHistory = [];
-    if (withProfile) await putProfile(buildProfile(DEMO_USER.id, answers(), NOW));
+    if (withProfile) await putProfile(buildProfile(TEST_SCOPE.profileUserId, answers(), NOW));
 }

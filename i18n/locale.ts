@@ -1,7 +1,7 @@
 import { cookies, headers } from 'next/headers';
 import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from '@/i18n/config';
 
-// Saved choice first, then the browser's Accept-Language (in its order of preference), then English
+// Saved choice first, then the browser's Accept-Language (in its order of preference), then French
 export async function resolveLocale(): Promise<Locale> {
     const saved = (await cookies()).get(LOCALE_COOKIE)?.value;
     if (isLocale(saved)) return saved;
@@ -16,7 +16,7 @@ export async function resolveLocale(): Promise<Locale> {
 
 /**
  * The language of the current request, for server code (pages, layouts, route handlers, server actions).
- * Outside a request (tests, scripts) there is no cookie or header to read, so it answers English.
+ * Outside a request (tests, scripts) there is no cookie or header to read, so it answers French.
  */
 export async function getAppLocale(): Promise<Locale> {
     try {

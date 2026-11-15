@@ -27,7 +27,7 @@ const Sidebar = ({ user }: SidebarProps) => {
     return (
         <aside className="sidebar">
             <Link href="/portfolio" className="px-2 pt-1 pb-2 text-[19px] font-bold tracking-[-0.03em] text-foreground" aria-label={ts('logoLabel')}>
-                Alpha<span className="text-brand-ink">Forge</span>
+                Smart <span className="text-brand-ink">Finance Hub</span>
             </Link>
 
             <button type="button" onClick={openSearch} className="side-cta">

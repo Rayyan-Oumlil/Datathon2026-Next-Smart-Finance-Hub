@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
+import { listScopeDecisions } from '@/lib/session';
 import { RULES, RULES_VERSION } from '@/lib/rules';
 import { listDecisions } from '@/lib/store';
 import { getPortfolioState, simulateTrade } from '@/lib/services/portfolio';
@@ -62,7 +63,7 @@ describe('evaluateRules', () => {
         // A once-rule that has fired cannot be resumed into an active rule that does nothing
         await expect(setRuleStatus(rule.id, 'active')).rejects.toMatchObject({ status: 409 });
         expect(await listRules()).toEqual([expect.objectContaining({ status: 'paused' })]);
-        expect(await listDecisions(DEMO_USER.id, { kind: 'simulated_trade' })).toHaveLength(1);
+        expect(await listScopeDecisions(TEST_SCOPE, { kind: 'simulated_trade' })).toHaveLength(1);
     });
 
     it('does not fire at the trigger value itself, in either direction, and fires one cent past it', async () => {
@@ -84,7 +85,7 @@ describe('evaluateRules', () => {
         const { fired, checks } = await evaluateRules();
         expect(fired).toEqual([]);
         expect(checks).toEqual([expect.objectContaining({ ruleId: rule.id, hit: true, fired: false })]);
-        expect(await listDecisions(DEMO_USER.id, { kind: 'profile_conflict' })).toEqual([]);
+        expect(await listScopeDecisions(TEST_SCOPE, { kind: 'profile_conflict' })).toEqual([]);
     });
 
     it('fires a repeating rule at most once per market day', async () => {
@@ -117,7 +118,7 @@ describe('evaluateRules', () => {
         const { fired } = await evaluateRules();
         expect(fired).toHaveLength(1);
         expect(fired[0].reason).toContain('profile conflict logged: volatility');
-        const [conflict] = await listDecisions(DEMO_USER.id, { kind: 'profile_conflict' });
+        const [conflict] = await listScopeDecisions(TEST_SCOPE, { kind: 'profile_conflict' });
         expect(conflict.payload).toMatchObject({ origin: 'rule', ruleId: rule.id, proceeded: true, acknowledged: false });
     });
 
@@ -136,7 +137,7 @@ describe('evaluateRules', () => {
         const rule = await createRule(below100);
         await setRuleStatus(rule.id, 'paused');
         await expect(setRuleStatus('rule_missing', 'paused')).rejects.toMatchObject({ status: 404 });
-        const rows = await listDecisions(DEMO_USER.id, { kind: 'user_action' });
+        const rows = await listScopeDecisions(TEST_SCOPE, { kind: 'user_action' });
         expect(rows.map((entry) => (entry.payload as { action: string }).action)).toEqual(['rule_create', 'rule_pause']);
         for (const row of rows) expect(row.ruleVersions).toEqual({ rules: RULES_VERSION, filters: RULES.filters.version });
     });

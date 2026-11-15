@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { LOCALES } from '@/i18n/config';
 import { agentText } from '@/lib/agent/text';
-import { DEMO_USER } from '@/lib/demo-user';
 import { failsWordCheck } from '@/lib/agent/wording';
 import { clientIp, isRateLimited } from '@/lib/rate-limit';
 import { ServiceError } from '@/lib/services/errors';
@@ -12,6 +11,7 @@ import { assertSameOrigin, assertVoiceEnabled, voiceText } from '@/lib/voice/gua
 import { synthesizeSpeech } from '@/lib/voice/polly';
 import { readLimitedText } from '@/lib/voice/body';
 import { speakable } from '@/lib/voice/speakable';
+import { getSession } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +36,7 @@ export const POST = (req: NextRequest) => respond(async () => {
     assertSameOrigin(req, appLocale);
     const ip = clientIp(req);
     if (await isRateLimited(`voice-speak:ip:${ip}`, MAX_PER_MINUTE_PER_IP, 60)
-        || await isRateLimited(`voice-speak:user:${DEMO_USER.id}`, MAX_PER_MINUTE, 60)) {
+        || await isRateLimited(`voice-speak:session:${(await getSession(req)).sessionId}`, MAX_PER_MINUTE, 60)) {
         throw new ServiceError(429, agentText(appLocale).tooMany);
     }
     // Requiring JSON also makes a cross-site form post impossible without a preflight
@@ -50,7 +50,7 @@ export const POST = (req: NextRequest) => respond(async () => {
     // The endpoint reads only what the app itself may say: the same bilingual check as on agent replies
     if (failsWordCheck(speech)) throw new ServiceError(400, voiceText(locale, 'wording'));
     if (await isRateLimited(`voice-speak-chars:ip:${ip}`, MAX_CHARS_PER_HOUR_PER_IP, 3600, speech.length)
-        || await isRateLimited(`voice-speak-chars:user:${DEMO_USER.id}`, MAX_CHARS_PER_HOUR, 3600, speech.length)) {
+        || await isRateLimited(`voice-speak-chars:session:${(await getSession(req)).sessionId}`, MAX_CHARS_PER_HOUR, 3600, speech.length)) {
         throw new ServiceError(429, agentText(locale).tooMany);
     }
 

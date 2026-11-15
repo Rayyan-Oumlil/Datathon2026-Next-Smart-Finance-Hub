@@ -1,6 +1,6 @@
-# AlphaForge
+# Next Smart Finance Hub
 
-A profile-aware stock quotes app with a traceable AI agent, built for a datathon on AI for investment decisions.
+A profile-aware stock quotes app with a traceable AI agent, built for the AlphaForge AI datathon challenge (AI for investment decisions).
 
 **Simulation only.** The app places no real trades and gives no investment advice. Every number that enters the watchlist, the portfolio or an agent reply is stored with its source and the time it was fetched, and every suggestion can be traced back to the inputs and rule versions that produced it. The stock page inherited from OpenStock shows the provider and quote time under its figures; its charts are TradingView widgets.
 
