@@ -1,0 +1,143 @@
+{
+  "title": "Portfolio X-ray",
+  "sub": "How the simulated holdings are spread, and how this mix would have moved in past periods.",
+  "simulated": "simulated",
+  "labels": { "fact": "Fact", "scenario": "Scenario", "assumption": "Assumption" },
+  "window": {
+    "label": "Period",
+    "full": "Whole history",
+    "y2022": "Calendar 2022",
+    "last12m": "Last 12 months",
+    "range": "{from} to {to}",
+    "unavailable": "Not enough price history for this period.",
+    "noHoldings": "No positions to replay."
+  },
+  "scope": {
+    "measured": "Measured here",
+    "notMeasured": "Not measured here",
+    "market": "Market",
+    "concentration": "Concentration",
+    "currency": "Currency",
+    "credit": "Credit",
+    "liquidity": "Liquidity",
+    "rates": "Interest rates"
+  },
+  "tiles": {
+    "largest": "Largest holding",
+    "largestNovice": "Biggest position",
+    "effective": "Effective holdings",
+    "effectiveNovice": "Spread across",
+    "effectiveSub": "of {count} held",
+    "effectiveSubNovice": "about {count} equal-sized positions",
+    "volatility": "Volatility",
+    "volatilityNovice": "Ups and downs",
+    "volatilitySub": "annualised",
+    "volatilitySubNovice": "typical yearly swing",
+    "worstFall": "Worst fall",
+    "worstFallNovice": "Biggest drop",
+    "worstFallSub": "{peak} to {trough}",
+    "notAvailable": "not available"
+  },
+  "band": {
+    "title": "Against your risk profile",
+    "limit": "{risk} profile limit: {limit}",
+    "within": "Within the limit",
+    "above": "Above the limit",
+    "note": "The limit is the one the watchlist applies to single assets for your risk profile. It is the app's own band, not a regulatory threshold.",
+    "risk": { "Low": "Low", "Medium": "Medium", "High": "High" }
+  },
+  "valueRisk": {
+    "title": "Where the value sits, and where the risk sits",
+    "sub": "Each holding's share of the portfolio's value, next to its share of the risk in this period.",
+    "value": "Value",
+    "risk": "Risk",
+    "lead": "{symbol} is {value} of the value and {risk} of the risk.",
+    "leadNovice": "{symbol} carries {risk} of the ups and downs with {value} of the money.",
+    "notAvailable": "The replay never moved, so the risk cannot be split.",
+    "more": "{count, plural, one {+ # more holding} other {+ # more holdings}}"
+  },
+  "move": {
+    "title": "How this mix would have moved",
+    "sub": "Today's proportions applied to every day of the period, indexed to 100 at the start.",
+    "chartLabel": "Replay from {from} to {to}: starts at 100, ends at {last}. Worst fall {pct} from {peak} to {trough}.",
+    "worst": "Worst fall {pct}, {peak} to {trough}",
+    "regained": "Regained on {date}",
+    "notRegained": "Not regained by {date}",
+    "legendReplay": "Replay",
+    "legendStart": "Start (100)",
+    "legendFall": "Worst fall",
+    "yourAnswer": "You answered \"{answer}\" to the 20% drop question. In this replay the mix fell {pct} from its peak.",
+    "answers": { "sell": "Reduce my position", "wait": "Wait", "buy_more": "Add to my position" },
+    "worstDay": "Worst day",
+    "worstSpan": "Worst 20 trading days"
+  },
+  "together": {
+    "title": "Moves together",
+    "sub": "Pairs of holdings whose daily moves were most alike (1 means identical).",
+    "none": "Needs at least two holdings with price history.",
+    "ratio": "Diversification ratio",
+    "ratioNote": "1.0 means the holdings added no cushion against each other; higher means they offset each other more."
+  },
+  "exposure": {
+    "title": "Exposure",
+    "sector": "Sector",
+    "assetClass": "Kind of asset",
+    "currency": "Currency",
+    "cash": "Cash",
+    "stock": "Stocks",
+    "etf": "Funds",
+    "crypto": "Crypto"
+  },
+  "whatIf": {
+    "title": "Test a change",
+    "sub": "See the X-ray before and after a hypothetical change. Nothing is traded or saved.",
+    "asset": "Asset",
+    "assetPlaceholder": "Search a name or ticker",
+    "amount": "Amount (CAD)",
+    "add": "Add",
+    "reduce": "Reduce",
+    "run": "Run the test",
+    "running": "Running…",
+    "clear": "Clear",
+    "before": "Before",
+    "after": "After",
+    "scenarioNote": "Scenario: simulated only. Nothing is traded or saved.",
+    "conflictsTitle": "Where this meets your profile filters",
+    "noConflicts": "No conflict with your profile filters.",
+    "pickFirst": "Choose an asset first.",
+    "amountInvalid": "Enter an amount above zero.",
+    "failed": "The test could not run: {error}",
+    "heldOnly": "Only held assets can be reduced.",
+    "metrics": {
+      "largest": "Largest holding",
+      "effective": "Effective holdings",
+      "volatility": "Volatility",
+      "worstFall": "Worst fall",
+      "cash": "Cash"
+    }
+  },
+  "limits": {
+    "title": "Limits",
+    "period": "Period: {from} to {to}, {count} daily returns.",
+    "scenario": "Today's proportions are applied to every past day: this is a scenario, not what the simulated portfolio earned.",
+    "priceOnly": "Price changes only: dividends and fees are not included.",
+    "currency": "Returns are in Canadian dollars; US prices are converted at the Bank of Canada rate of each day.",
+    "notForecast": "Past behaviour does not predict future results. Simulation only, not advice.",
+    "coverage": "This period covers {share} of the portfolio's value. Left out for lack of history: {list}.",
+    "noHistory": "No price history available for: {list}.",
+    "unpriced": "No price right now, so not included: {list}.",
+    "methodLabel": "Method",
+    "sourcesLabel": "Where the data comes from",
+    "computed": "Computed {when}."
+  },
+  "states": {
+    "loading": "Reading the holdings and their price history…",
+    "error": "The X-ray could not be loaded: {error}",
+    "retry": "Try again",
+    "emptyTitle": "Nothing to X-ray yet",
+    "empty": "The portfolio holds only cash. The X-ray appears once a simulated position exists."
+  },
+  "novice": {
+    "summary": "{symbol} is the biggest position, at {share} of the portfolio."
+  }
+}

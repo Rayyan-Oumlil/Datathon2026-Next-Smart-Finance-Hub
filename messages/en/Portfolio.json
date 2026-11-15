@@ -11,6 +11,7 @@
     "performance": "Performance chart",
     "holdings": "Holdings",
     "sector_allocation": "Sector allocation",
+    "xray": "Portfolio X-ray",
     "investment_rules": "Investment rules (simulated)"
   },
   "assetClass": {

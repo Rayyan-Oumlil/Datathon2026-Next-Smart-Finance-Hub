@@ -394,6 +394,10 @@ Where this section and an earlier one disagree, this section describes what was 
 - **Diversification factor.** A new sector scores highest (see `rules/v1.json`, score version `score-v1.1`).
 - **ESG** is a filter only: it adds no candidate and no fit points.
 - **Stock page.** The technical-analysis widget was removed; the Adanos sentiment card takes its place, labelled display only.
+- **Portfolio X-ray** (method `xray-v1`), read-only: concentration (largest holding, top 3, effective holdings, groups, asset classes, currencies) and each holding's share of the portfolio's risk.
+- **X-ray replay** is a scenario with constant weights: today's proportions applied to past daily closes in CAD, over three windows (full period of up to five years, calendar 2022, last 12 months). Each window states its dates and coverage; price changes only, no dividends. It is not what the portfolio earned and not a forecast.
+- **X-ray what-if:** a hypothetical addition or reduction in CAD shows the X-ray before and after, and for an addition the profile conflicts with their actual values. Nothing is traded or stored.
+- **X-ray infrastructure:** no new AWS service and no new table. The agent reaches it through the `get_portfolio_xray` tool of the portfolio subagent (`/api/internal/tools/portfolio-xray`).
 - **Not built:** price alerts, the earnings calendar, layout editing on the Overview tab, drag-and-drop widget editing, AgentCore Memory, Gateway and Code Interpreter.
 - **Gold** has no value: the only free source found refused the calls. The card says "not available".
 - **State kept in the container** (layout, rules, pins, the watchlist's listed-since dates) is lost on restart; see the README.

@@ -1,0 +1,143 @@
+{
+  "title": "Radiographie du portefeuille",
+  "sub": "Comment les positions simulées sont réparties, et comment ce mélange aurait évolué dans le passé.",
+  "simulated": "simulé",
+  "labels": { "fact": "Fait", "scenario": "Scénario", "assumption": "Hypothèse" },
+  "window": {
+    "label": "Période",
+    "full": "Tout l’historique",
+    "y2022": "Année 2022",
+    "last12m": "12 derniers mois",
+    "range": "du {from} au {to}",
+    "unavailable": "L’historique de cours est insuffisant pour cette période.",
+    "noHoldings": "Aucune position à rejouer."
+  },
+  "scope": {
+    "measured": "Mesuré ici",
+    "notMeasured": "Non mesuré ici",
+    "market": "Marché",
+    "concentration": "Concentration des avoirs",
+    "currency": "Devise",
+    "credit": "Crédit",
+    "liquidity": "Liquidité",
+    "rates": "Taux d’intérêt"
+  },
+  "tiles": {
+    "largest": "Plus grande position",
+    "largestNovice": "Position la plus importante",
+    "effective": "Positions effectives",
+    "effectiveNovice": "Réparti sur",
+    "effectiveSub": "sur {count} détenues",
+    "effectiveSubNovice": "environ {count} positions de taille égale",
+    "volatility": "Volatilité",
+    "volatilityNovice": "Hausses et baisses",
+    "volatilitySub": "annualisée",
+    "volatilitySubNovice": "variation annuelle typique",
+    "worstFall": "Pire baisse",
+    "worstFallNovice": "Plus forte baisse",
+    "worstFallSub": "du {peak} au {trough}",
+    "notAvailable": "non disponible"
+  },
+  "band": {
+    "title": "Par rapport à votre profil de risque",
+    "limit": "Limite du profil {risk} : {limit}",
+    "within": "Sous la limite",
+    "above": "Au-dessus de la limite",
+    "note": "La limite est celle que la liste de surveillance applique à un actif seul pour votre profil de risque. C’est la fourchette propre à l’application, pas un seuil réglementaire.",
+    "risk": { "Low": "faible", "Medium": "moyen", "High": "élevé" }
+  },
+  "valueRisk": {
+    "title": "Où se trouve la valeur, et où se trouve le risque",
+    "sub": "La part de chaque position dans la valeur du portefeuille, à côté de sa part du risque sur cette période.",
+    "value": "Valeur",
+    "risk": "Risque",
+    "lead": "{symbol} représente {value} de la valeur et {risk} du risque.",
+    "leadNovice": "{symbol} porte {risk} des hausses et des baisses avec {value} de l’argent.",
+    "notAvailable": "Le rejeu n’a jamais varié : le risque ne peut pas être réparti.",
+    "more": "{count, plural, one {+ # autre position} other {+ # autres positions}}"
+  },
+  "move": {
+    "title": "Comment ce mélange aurait évolué",
+    "sub": "Les proportions d’aujourd’hui appliquées à chaque jour de la période, indexées à 100 au départ.",
+    "chartLabel": "Rejeu du {from} au {to} : départ à 100, arrivée à {last}. Pire baisse {pct}, du {peak} au {trough}.",
+    "worst": "Pire baisse {pct}, du {peak} au {trough}",
+    "regained": "Retrouvé le {date}",
+    "notRegained": "Pas retrouvé au {date}",
+    "legendReplay": "Rejeu",
+    "legendStart": "Départ (100)",
+    "legendFall": "Pire baisse",
+    "yourAnswer": "Vous avez répondu « {answer} » à la question sur une baisse de 20 %. Dans ce rejeu, le mélange a reculé de {pct} depuis son sommet.",
+    "answers": { "sell": "Réduire ma position", "wait": "Attendre", "buy_more": "Ajouter à ma position" },
+    "worstDay": "Pire journée",
+    "worstSpan": "Pires 20 jours de bourse"
+  },
+  "together": {
+    "title": "Évoluent ensemble",
+    "sub": "Les paires de positions dont les variations quotidiennes se ressemblaient le plus (1 signifie identiques).",
+    "none": "Au moins deux positions avec un historique de cours sont nécessaires.",
+    "ratio": "Ratio de diversification",
+    "ratioNote": "1,0 signifie que les positions ne se compensent pas ; plus il est élevé, plus elles se compensent."
+  },
+  "exposure": {
+    "title": "Exposition",
+    "sector": "Secteur",
+    "assetClass": "Type d’actif",
+    "currency": "Devise",
+    "cash": "Liquidités",
+    "stock": "Actions",
+    "etf": "Fonds",
+    "crypto": "Cryptomonnaies"
+  },
+  "whatIf": {
+    "title": "Tester une modification",
+    "sub": "Voyez la radiographie avant et après une modification hypothétique. Rien n’est négocié ni enregistré.",
+    "asset": "Actif",
+    "assetPlaceholder": "Chercher un nom ou un symbole",
+    "amount": "Montant (CAD)",
+    "add": "Ajouter",
+    "reduce": "Réduire",
+    "run": "Lancer le test",
+    "running": "Calcul en cours…",
+    "clear": "Effacer",
+    "before": "Avant",
+    "after": "Après",
+    "scenarioNote": "Scénario : simulation seulement. Rien n’est négocié ni enregistré.",
+    "conflictsTitle": "Où cela rencontre les filtres de votre profil",
+    "noConflicts": "Aucun conflit avec les filtres de votre profil.",
+    "pickFirst": "Choisissez d’abord un actif.",
+    "amountInvalid": "Entrez un montant supérieur à zéro.",
+    "failed": "Le test n’a pas pu s’exécuter : {error}",
+    "heldOnly": "Seuls les actifs détenus peuvent être réduits.",
+    "metrics": {
+      "largest": "Plus grande position",
+      "effective": "Positions effectives",
+      "volatility": "Volatilité",
+      "worstFall": "Pire baisse",
+      "cash": "Liquidités"
+    }
+  },
+  "limits": {
+    "title": "Limites",
+    "period": "Période : du {from} au {to}, {count} rendements quotidiens.",
+    "scenario": "Les proportions d’aujourd’hui sont appliquées à chaque jour passé : c’est un scénario, pas ce que le portefeuille simulé a rapporté.",
+    "priceOnly": "Variations de cours seulement : les dividendes et les frais ne sont pas inclus.",
+    "currency": "Les rendements sont en dollars canadiens ; les cours américains sont convertis au taux de la Banque du Canada de chaque jour.",
+    "notForecast": "Le comportement passé ne prédit pas les résultats futurs. Simulation seulement, pas un avis.",
+    "coverage": "Cette période couvre {share} de la valeur du portefeuille. Exclus faute d’historique : {list}.",
+    "noHistory": "Aucun historique de cours disponible pour : {list}.",
+    "unpriced": "Aucun cours en ce moment, donc non inclus : {list}.",
+    "methodLabel": "Méthode",
+    "sourcesLabel": "D’où viennent les données",
+    "computed": "Calculé {when}."
+  },
+  "states": {
+    "loading": "Lecture des positions et de leur historique de cours…",
+    "error": "La radiographie n’a pas pu être chargée : {error}",
+    "retry": "Réessayer",
+    "emptyTitle": "Rien à radiographier pour l’instant",
+    "empty": "Le portefeuille ne contient que des liquidités. La radiographie apparaît dès qu’une position simulée existe."
+  },
+  "novice": {
+    "summary": "{symbol} est la position la plus importante, à {share} du portefeuille."
+  }
+}

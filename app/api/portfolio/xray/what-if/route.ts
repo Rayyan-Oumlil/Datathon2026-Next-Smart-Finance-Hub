@@ -12,7 +12,7 @@ export const maxDuration = 60;
 
 const MAX_PER_MINUTE = 20;
 
-export const whatIfSchema = z.object({
+const whatIfSchema = z.object({
     symbol: z.string().trim().min(1).max(20),
     amountCad: z.number().positive().max(1_000_000_000),
     direction: z.enum(['add', 'reduce']),

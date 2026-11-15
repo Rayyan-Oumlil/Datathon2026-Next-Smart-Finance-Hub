@@ -81,6 +81,44 @@ def get_portfolio_stats(metric: str, period: str, symbols: list[str] | None = No
     return call_web("portfolio-stats", body)
 
 
+XRAY_DIRECTIONS = ("add", "reduce")
+
+
+@tool
+def get_portfolio_xray(symbol: str | None = None, amount_cad: float | None = None,
+                       direction: str | None = None) -> dict:
+    """The X-ray of the simulated portfolio. Read-only: nothing is traded or stored.
+
+    Without arguments: concentration (largest holding, top 3, effective holdings, groups, asset classes,
+    currencies), each holding's share of the risk, and three replay windows (full period, calendar 2022, last
+    12 months) with volatility, maximum drawdown, worst day, worst twenty-trading-day span (worstSpan20) and correlations, plus the
+    user's risk band and answer to the profile's market-drop question. The replay is a scenario: today's proportions applied
+    to past days. It is not what the portfolio earned and never a forecast.
+
+    With symbol, amount_cad and direction (all three together): the X-ray before and after that hypothetical
+    change, and the profile conflicts an addition would raise, with their values.
+
+    Args:
+        symbol: the asset to add or reduce.
+        amount_cad: the amount of the change in CAD, greater than 0.
+        direction: "add" or "reduce".
+    """
+    given = [value is not None for value in (symbol, amount_cad, direction)]
+    body: dict = {"locale": trace.current().locale}
+    if not any(given):
+        return call_web("portfolio-xray", body)
+    if not all(given):
+        return {"error": "symbol, amount_cad and direction must be given together, or none of them"}
+    if direction not in XRAY_DIRECTIONS:
+        return {"error": 'direction must be "add" or "reduce"'}
+    if isinstance(amount_cad, bool) or not isinstance(amount_cad, (int, float)) or not amount_cad > 0:
+        return {"error": "amount_cad must be a number greater than 0"}
+    if not str(symbol).strip():
+        return {"error": "symbol must not be empty"}
+    change = {"symbol": str(symbol).strip(), "amountCad": amount_cad, "direction": direction}
+    return call_web("portfolio-xray", {"change": change, **body})
+
+
 # ---- rules
 @tool
 def validate_rule(text: str, symbol: str, trigger_type: str, trigger_value: float, side: str,

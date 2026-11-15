@@ -92,6 +92,15 @@ The daily snapshot (`lib/sources/daily-signals.ts`) is one file per Toronto day,
 - **Terms** (https://www.kraken.com/en-ca/legal/global-terms): forbids to "distribute or otherwise commercially exploit or make available to any third party Our Content". Whether that covers public API market data is unclear; no market-data licence or attribution clause was found.
 - **Labels in the UI:** source "Kraken". The % change is computed by us from Kraken's last and open, and its note says "change since today's opening price (00:00 UTC)". The ticker carries no timestamp, so `asOf` is empty for quotes.
 
+## Long history for the X-ray
+
+The portfolio X-ray replays up to five years of daily closes. The watchlist's 1-year path above is unchanged; the X-ray uses its own longer requests, cached 24 hours. The terms are the same as already documented for each source.
+
+- **TMX Money:** `getTimeSeriesData(symbol, freq: "day", start)` with a start five years back. Verified on 2026-11-15: 1,256 daily rows from 2021-11-12 for RY, XIU, `AAPL:US` and `SPY:US`; 2,510 rows for SHOP over ten years.
+- **Yahoo chart:** `range=5y&interval=1d`, as a fallback only.
+- **Kraken:** `/OHLC` returns 720 daily bars at most (about two years), so a crypto holding is left out of a window it does not cover, and the window's coverage says so.
+- **Bank of Canada Valet:** `FXUSDCAD/json?start_date=YYYY-MM-DD` for the USD/CAD history (1,246 daily rows from 2021-11-12). There is no rate on Canadian holidays, so the last rate on or before the day is used.
+
 ## Derived values
 
 Computed by our code from the values above; source label "derived", with the inputs and formula in the note.

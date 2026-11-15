@@ -14,6 +14,7 @@ import Holdings from './Holdings';
 import PerformanceChart from './PerformanceChart';
 import SectorAllocation from './SectorAllocation';
 import TotalValue from './TotalValue';
+import Xray from './xray/Xray';
 import { PORTFOLIO_MODULES, api, mergeLayout, modulesOf, moveModule, type ModuleId } from './logic';
 import { useFmt } from './useFmt';
 
@@ -21,7 +22,7 @@ type LibraryItem = { id: string; title: string; tab: 'portfolio' | 'overview'; f
 type Evaluation = { fired: SimulatedTrade[]; checkedAt: string; checks: RuleCheck[] };
 
 const CHECK_EVERY_MS = 60_000;
-const MODULE_IDS: Record<ModuleId, true> = { total_value: true, performance: true, holdings: true, sector_allocation: true, investment_rules: true };
+const MODULE_IDS: Record<ModuleId, true> = { total_value: true, performance: true, holdings: true, sector_allocation: true, xray: true, investment_rules: true };
 
 // The Portfolio tab: loads the simulated portfolio, draws the modules in the saved order and runs the rules check.
 export default function PortfolioBoard() {
@@ -122,6 +123,7 @@ export default function PortfolioBoard() {
         performance: () => <PerformanceChart history={view!.history} startingCashCad={view!.portfolio.startingCashCad} note={view!.historyNote} level={level} />,
         holdings: () => <Holdings positions={view!.positions} totalCad={view!.valueCad.value} level={level} onChanged={refresh} />,
         sector_allocation: () => <SectorAllocation bySector={view!.bySector} cashCad={view!.cashCad} totalCad={view!.valueCad.value} unpriced={view!.unpriced} level={level} />,
+        xray: () => <Xray level={level} refreshKey={view!.portfolio.trades.length} />,
         investment_rules: () => (
             <RulesModule
                 rules={rules}

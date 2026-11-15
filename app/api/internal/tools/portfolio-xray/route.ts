@@ -17,8 +17,7 @@ const forAgent = (view: XrayView) => ({
     ...view,
     windows: Object.fromEntries(Object.entries(view.windows).map(([id, window]) => {
         if (!window.available) return [id, window];
-        const { curve: _curve, ...rest } = window;
-        return [id, rest];
+        return [id, Object.fromEntries(Object.entries(window).filter(([key]) => key !== 'curve'))];
     })),
 });
 
