@@ -118,7 +118,7 @@ async function layoutPreview(after: string[], locale: Locale, scope: Scope): Pro
     const title = await widgetTitles(locale);
     const listed = (values: readonly string[]) => (values.length > 0 ? values.join(', ') : text.none);
     const onTab = (ids: string[], tab: string) => listed(ids.filter((id) => WIDGET_LIBRARY.find((widget) => widget.id === id)?.tab === tab).map(title));
-    // Only the Portfolio tab is drawn from the layout; the Overview tab is fixed.
+    // The Portfolio tab is drawn in the layout's order; the Overview tab shows the panels that are in it (a panel left out is hidden).
     const removed = before.filter((id) => !after.includes(id)).map(title);
     const added = after.filter((id) => !before.includes(id)).map(title);
     return {
@@ -126,6 +126,7 @@ async function layoutPreview(after: string[], locale: Locale, scope: Scope): Pro
         summary: text.layoutSummary(removed, added),
         rows: [
             { label: text.portfolioTab, before: onTab(before, 'portfolio'), after: onTab(after, 'portfolio') },
+            { label: text.overviewTab, before: onTab(before, 'overview'), after: onTab(after, 'overview') },
         ],
         facts: [],
     };

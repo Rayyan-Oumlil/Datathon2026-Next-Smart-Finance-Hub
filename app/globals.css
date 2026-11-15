@@ -197,6 +197,7 @@
     }
 
     .workspace {
+        container-type: inline-size; /* @-breakpoints in the pages follow this width, so they adapt when the agent panel opens or is resized */
         min-width: 0;
         min-height: 0;
         overflow-y: auto;
@@ -490,7 +491,9 @@
         background: var(--card);
         box-shadow: inset 0 1px 0 oklch(0 0 0 / 0.05);
     }
-    @media (max-width: 1023px) { .bento-tile { grid-column: span 6; } }
+    /* By the room the workspace has (it shrinks when the agent panel is open or widened), not by the screen's width */
+    @container (max-width: 760px) { .bento-tile { grid-column: span 6; } }
+    @container (max-width: 440px) { .bento-tile { grid-column: span 12; } }
 
     .bento-head {
         display: flex;

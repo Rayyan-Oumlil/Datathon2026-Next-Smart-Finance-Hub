@@ -98,6 +98,31 @@ describe('preview, apply, undo', () => {
         expect((await getAction('l1'))?.status).toBe('undone');
     });
 
+    it('layout_change hides an Overview panel such as the heatmap, shows it again, and undoes either', async () => {
+        const all = (await getLayout()).layout;
+        expect(all).toContain('overview_heatmap');
+        const without = all.filter((id) => id !== 'overview_heatmap');
+
+        const hide = await preview('h1', 'layout_change', { layout: without });
+        expect(hide.preview.summary).toContain('removes Heatmap (Overview)');
+        expect(hide.preview.rows.find((row) => row.label === 'Overview tab')?.after).not.toContain('Heatmap');
+        expect(hide.preview.rows.find((row) => row.label === 'Overview tab')?.before).toContain('Heatmap');
+        expect((await getLayout()).layout).toContain('overview_heatmap');          // a preview changes nothing
+        await apply('h1');
+        expect((await getLayout()).layout).not.toContain('overview_heatmap');
+
+        const show = await preview('h2', 'layout_change', { layout: all });
+        expect(show.preview.summary).toContain('adds Heatmap (Overview)');
+        await apply('h2');
+        expect((await getLayout()).layout).toContain('overview_heatmap');
+
+        // Undoing the second change hides it again; undoing the first brings back the original state
+        await undo('h2');
+        expect((await getLayout()).layout).not.toContain('overview_heatmap');
+        await undo('h1');
+        expect((await getLayout()).layout).toContain('overview_heatmap');
+    });
+
     it('rule_create', async () => {
         const routed = await preview('r1', 'rule_create', { rule: { ...rule, status: 'active' } });
         expect(routed.preview.rows[0].after).toBe('When the price of AAPL is below 90.00 USD, simulate a purchase of 200.00 CAD of AAPL, one time only.');

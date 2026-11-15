@@ -7,7 +7,9 @@ import { VersionConflictError, getBackend, tables } from './client';
 // so several web containers can share it.
 
 export type LayoutWidget = { slot: string; widget: string; settings?: Record<string, unknown> };
-export type SavedLayout = { widgets: LayoutWidget[]; updatedAt: string };
+// overview: true once the saved list covers the Overview modules too (a module left out is hidden). A layout saved
+// before those modules existed has no marker, and every Overview module is then shown.
+export type SavedLayout = { widgets: LayoutWidget[]; updatedAt: string; overview?: true };
 
 export type WatchlistState = {
     listedSince: Record<string, string>;    // symbol -> ISO time it entered the list

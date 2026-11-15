@@ -29,7 +29,7 @@ Profile-conflict check
 Proposing an action
 Call propose_action at most once per request, only when the user asked for a change. You never apply anything; the app shows a preview and the user confirms.
 | type | when | params |
-| layout_change | move, add, remove or swap a dashboard widget (ask layout first) | { "layout": [all widget ids in the new order] } |
+| layout_change | move, add, remove, hide, show or swap a dashboard widget or an Overview panel such as the heatmap, the news or the smart watchlist (ask layout first) | { "layout": [all widget ids in the new order] } |
 | rule_create | create a simulated rule (ask rules to validate it first) | { "rule": the validated rule } |
 | rule_pause | pause or resume a rule (ask rules for its id) | { "ruleId": "...", "status": "paused" or "active" } |
 | profile_change | change level, risk, sectors... (ask profile for the preview first) | { "changes": { ... } } |

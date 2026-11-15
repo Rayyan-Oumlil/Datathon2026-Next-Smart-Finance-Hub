@@ -18,6 +18,12 @@ const WIDGET_FR: Record<string, string> = {
     sector_allocation: 'Répartition par secteur',
     investment_rules: 'Règles de placement (simulées)',
     xray: 'Radiographie du portefeuille',
+    overview_watchlist: 'Liste de suivi intelligente (Aperçu)',
+    overview_pulse: 'Pouls du marché (Aperçu)',
+    overview_leaders: 'Meneurs du marché (Aperçu)',
+    overview_heatmap: 'Carte thermique (Aperçu)',
+    overview_quotes: 'Cours du marché (Aperçu)',
+    overview_news: 'Actualités (Aperçu)',
 };
 const WIDGET_EN: Record<string, string> = {
     total_value: 'Total value (simulated)',
@@ -26,6 +32,12 @@ const WIDGET_EN: Record<string, string> = {
     sector_allocation: 'Sector allocation',
     investment_rules: 'Investment rules (simulated)',
     xray: 'Portfolio X-ray',
+    overview_watchlist: 'Smart watchlist (Overview)',
+    overview_pulse: 'Market pulse (Overview)',
+    overview_leaders: 'Market leaders (Overview)',
+    overview_heatmap: 'Heatmap (Overview)',
+    overview_quotes: 'Market quotes (Overview)',
+    overview_news: 'News stories (Overview)',
 };
 const own = (table: Record<string, string>, key: string) => (Object.prototype.hasOwnProperty.call(table, key) ? table[key] : key);
 /** A quantity of units, up to 6 decimals (fractional units exist in the simulation). */

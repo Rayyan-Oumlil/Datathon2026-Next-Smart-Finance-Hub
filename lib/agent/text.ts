@@ -51,6 +51,7 @@ const en = {
         return `Dashboard layout: ${parts.length > 0 ? parts.join('; ') : 'changes the order of the widgets'}.`;
     },
     portfolioTab: 'Portfolio tab',
+    overviewTab: 'Overview tab',
     layoutApplied: 'The dashboard layout was changed.',
     layoutRestored: 'The previous dashboard layout is back.',
     // rules
@@ -152,6 +153,7 @@ const fr: AgentText = {
         return `Disposition du tableau de bord : ${parts.length > 0 ? parts.join('; ') : 'modifie l’ordre des modules'}.`;
     },
     portfolioTab: 'Onglet Portefeuille',
+    overviewTab: 'Onglet Aperçu',
     layoutApplied: 'La disposition du tableau de bord a été modifiée.',
     layoutRestored: 'La disposition précédente du tableau de bord est rétablie.',
     ruleSentence: (rule, currency = '') => {

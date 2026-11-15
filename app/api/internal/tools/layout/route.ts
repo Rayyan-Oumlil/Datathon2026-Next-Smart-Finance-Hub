@@ -13,6 +13,6 @@ export const POST = internalTool(z.object({ locale: z.enum(LOCALES).optional() }
         current: layout,
         hidden: library.filter((widget) => !layout.includes(widget.id)).map((widget) => widget.id),
         library: library.map((widget) => ({ ...widget, title: titles[widget.id] ?? widget.title })),
-        note: 'A layout is the ordered list of the widget ids that are shown. A widget left out of the list is hidden; a widget of the library added to the list is shown. Fixed widgets must stay in the list. minLevel is only the level whose starting layout holds the widget; any level may show any widget.',
+        note: 'A layout is the ordered list of the widget ids that are shown. A widget left out of the list is hidden; a widget of the library added to the list is shown. Fixed widgets must stay in the list. minLevel is only the level whose starting layout holds the widget; any level may show any widget. Each widget has a tab: portfolio widgets are drawn in the list order; overview widgets (ids starting with overview_) are panels of the Overview page, shown when they are in the list and hidden when left out (their order on the page is fixed). To hide a panel, send the current list without its id and with every other id unchanged; to bring it back, add its id again.',
     };
 });

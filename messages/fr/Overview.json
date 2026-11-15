@@ -1,4 +1,5 @@
 {
   "title": "Aperçu",
-  "sub": "Votre liste de suivi intelligente, puis les marchés. Simulation seulement, il ne s’agit pas de conseils en placement."
+  "sub": "Votre liste de suivi intelligente, puis les marchés. Simulation seulement, il ne s’agit pas de conseils en placement.",
+  "hiddenNote": "{count, plural, one {# panneau est masqué.} other {# panneaux sont masqués.}} Demandez à l’agent de {count, plural, one {le} other {les}} remettre."
 }

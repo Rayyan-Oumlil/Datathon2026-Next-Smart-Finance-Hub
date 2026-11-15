@@ -270,7 +270,7 @@ describe('routes in French', () => {
     });
 
     it('layout and portfolio: titles, problems and notes in French', async () => {
-        expect((await getLayout('fr')).library.map((widget) => widget.title)).toEqual(['Valeur totale (simulée)', 'Graphique de rendement', 'Positions détenues', 'Répartition par secteur', 'Radiographie du portefeuille', 'Règles de placement (simulées)']);
+        expect((await getLayout('fr')).library.map((widget) => widget.title)).toEqual(['Valeur totale (simulée)', 'Graphique de rendement', 'Positions détenues', 'Répartition par secteur', 'Radiographie du portefeuille', 'Règles de placement (simulées)', 'Liste de suivi intelligente (Aperçu)', 'Pouls du marché (Aperçu)', 'Meneurs du marché (Aperçu)', 'Carte thermique (Aperçu)', 'Cours du marché (Aperçu)', 'Actualités (Aperçu)']);
         expect((await getLayout('en')).library[0].title).toBe('Total value (simulated)');
         expect(validateLayout(['holdings', 'holdings'], 'fr')).toEqual(['Indiqués plus d’une fois : holdings.'.replace(' :', `${NBSP}:`), `Les modules fixes ne peuvent pas être retirés${NBSP}: Valeur totale (simulée).`]);
         expect(validateLayout(['holdings'])).toEqual(['Fixed widgets cannot be removed: Total value (simulated).']);

@@ -326,7 +326,7 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
                                 </p>
                             </div>
                         ) : (
-                            <ul className={cn('grid gap-3', level === 'Expert' ? 'xl:grid-cols-2' : 'md:grid-cols-2 2xl:grid-cols-3')}>
+                            <ul className={cn('grid gap-3', level === 'Expert' ? '@4xl:grid-cols-2' : '@2xl:grid-cols-2 @6xl:grid-cols-3')}>
                                 {picks.map((pick) => (
                                     <PickCard
                                         key={pick.symbol} pick={pick} level={level} rules={rules} ruleVersions={result.ruleVersions}
@@ -360,7 +360,7 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
                                     <h3 className="kicker">{t('list.referenceTitle')}</h3>
                                     <p className="text-[12.5px] text-faint">{t('list.referenceBody')}</p>
                                 </div>
-                                <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                <ul className="grid gap-3 @xl:grid-cols-2 @4xl:grid-cols-4">
                                     {result.referenceCards.map((signals) => <ReferenceCard key={signals.symbol} signals={signals} quoteStaleSeconds={rules.quoteStaleSeconds} />)}
                                 </ul>
                             </div>
