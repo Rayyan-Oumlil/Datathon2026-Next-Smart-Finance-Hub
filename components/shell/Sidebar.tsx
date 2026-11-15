@@ -1,36 +1,32 @@
 'use client';
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { BookOpen, Code2, Heart, Info, LayoutDashboard, LifeBuoy, Search } from "lucide-react";
+import { LayoutDashboard, Search, UserRound, Wallet } from "lucide-react";
 import { openSearch } from "@/components/SearchCommand";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { cn } from "@/lib/utils";
-import { SIDEBAR_SPONSOR_SLOTS, sidebarSponsors } from "@/lib/sponsors";
 
 type SidebarProps = {
     user: User;
 };
 
-const RESOURCES = [
-    { href: '/help', label: 'help', icon: LifeBuoy },
-    { href: '/api-docs', label: 'apiDocs', icon: Code2 },
-    { href: '/about', label: 'about', icon: Info },
-    { href: '/terms', label: 'terms', icon: BookOpen },
+// The three tabs of the dashboard (spec section 10). Portfolio is home.
+const NAV = [
+    { href: '/portfolio', label: 'Portfolio', icon: Wallet },
+    { href: '/overview', label: 'Overview', icon: LayoutDashboard },
+    { href: '/profile', label: 'Profile', icon: UserRound },
 ] as const;
 
 const Sidebar = ({ user }: SidebarProps) => {
     const t = useTranslations('Sidebar');
     const pathname = usePathname();
-    const partners = sidebarSponsors();
-    const openSlots = SIDEBAR_SPONSOR_SLOTS - partners.length;
 
     return (
         <aside className="sidebar">
-            <Link href="/dashboard" className="px-2 pt-1 pb-2" aria-label={t('homeAria')}>
-                <Image src="/assets/images/logo.png" alt="OpenStock" width={150} height={38} priority />
+            <Link href="/portfolio" className="px-2 pt-1 pb-2 text-[19px] font-bold tracking-[-0.03em] text-foreground" aria-label={t('homeAria')}>
+                Alpha<span className="text-brand-ink">Forge</span>
             </Link>
 
             <button type="button" onClick={openSearch} className="side-cta">
@@ -40,43 +36,23 @@ const Sidebar = ({ user }: SidebarProps) => {
             </button>
 
             <nav className="flex flex-col gap-0.5">
-                <Link href="/dashboard" className={cn('side-item', pathname === '/dashboard' && 'is-active')}>
-                    <LayoutDashboard /> {t('overview')}
-                </Link>
+                {NAV.map(({ href, label, icon: Icon }) => (
+                    <Link key={href} href={href} className={cn('side-item', pathname === href && 'is-active')}>
+                        <Icon /> {label}
+                    </Link>
+                ))}
             </nav>
 
-            <div className="mt-auto flex flex-col gap-0.5">
-                {RESOURCES.map(({ href, label, icon: Icon }) => (
-                    <Link key={href} href={href} className={cn('side-item h-8', pathname === href && 'is-active')}>
-                        <Icon /> {t(`resources.${label}`)}
-                    </Link>
-                ))}
-                <button
-                    type="button"
-                    onClick={() => window.dispatchEvent(new CustomEvent('open-donate-popup'))}
-                    className="side-item h-8 text-start"
-                >
-                    <Heart /> {t('support')}
-                </button>
+            <div className="mt-auto flex flex-col gap-2">
+                <p className="rounded-[11px] px-3 py-2.5 text-[12px] leading-snug text-faint shadow-[inset_0_0_0_1px_var(--line)]">
+                    Simulation only. No real trades and no investment advice. Every number shows its source and time.
+                </p>
                 <LanguageSwitcher />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-                {partners.map((sponsor) => (
-                    <a key={sponsor.name} href={sponsor.url} target="_blank" rel="noreferrer" title={sponsor.name} className="flex h-11 items-center gap-2.5 rounded-[11px] px-3 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-white/5">
-                        {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-5 w-auto max-w-[120px]" />}
-                        {(!sponsor.logo || sponsor.iconOnly) && <span className="truncate text-[13px] font-semibold text-muted-foreground">{sponsor.name}</span>}
-                        <span className="kicker ms-auto">{t('sponsor')}</span>
-                    </a>
-                ))}
-                {openSlots > 0 && (
-                    <Link href="/sponsor#tiers" className="group flex flex-col gap-0.5 rounded-[11px] px-3 py-2.5 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-white/5">
-                        <span className="kicker flex items-center gap-1.5 text-brand-ink">
-                            <span className="live-dot" /> {openSlots === SIDEBAR_SPONSOR_SLOTS ? t('sponsorSlotsOpen') : t('sponsorSlotsLeft', { count: openSlots })}
-                        </span>
-                        <span className="text-[12.5px] text-faint transition-colors group-hover:text-muted-foreground">{t('sponsorPitch')}</span>
-                    </Link>
-                )}
+                <p className="px-2.5 text-[11.5px] text-faint">
+                    Built on{' '}
+                    <a href="https://github.com/Open-Dev-Society/OpenStock" target="_blank" rel="noreferrer" className="underline">OpenStock</a>
+                    {' '}by Open Dev Society, AGPL-3.0.
+                </p>
             </div>
 
             <div className="flex items-center gap-2.5 border-t border-line pt-3 px-1">

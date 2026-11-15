@@ -1,38 +1,31 @@
-# Node 22 LTS (Node 20 reached end of life in April 2026)
-FROM node:22-alpine
-
-# Set working directory
+# Web app image. Built for linux/amd64 and run on ECS Fargate.
+FROM node:22-alpine AS deps
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
 
-# Copy package.json and package-lock.json to leverage Docker cache
-COPY package*.json ./
-# Uncomment the next line if you use pnpm and have pnpm-lock.yaml
-# COPY pnpm-lock.yaml ./
-
-# Install exactly what package-lock.json pins (choose npm or pnpm)
-RUN npm ci
-# If using pnpm, replace with:
-# RUN npm install -g pnpm && pnpm install
-
-# Copy all project files
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# The build needs no secrets or database: pass every variable at runtime (FINNHUB_API_KEY, not NEXT_PUBLIC_*,
-# which Next.js freezes at build time and would record in the image layers).
-# The one setting the browser needs at build time, and not a secret: "cached" (hourly quotes, the default) or
-# "realtime" (every 15 seconds, with price alerts). docker compose passes it from .env.
-ARG NEXT_PUBLIC_OPENSTOCK_DATA_MODE=cached
+# The build needs no secrets: every key is read at runtime. The one build-time setting is not a secret:
+# "cached" (hourly quotes, the default) or "realtime" (every 15 seconds).
+ARG NEXT_PUBLIC_OPENSTOCK_DATA_MODE=realtime
 ENV NEXT_PUBLIC_OPENSTOCK_DATA_MODE=$NEXT_PUBLIC_OPENSTOCK_DATA_MODE
-
-# Build the Next.js application
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
-# Or if using pnpm:
-# RUN pnpm run build
 
-# Expose the port Next.js runs on
+FROM node:22-alpine AS run
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
+COPY --from=build /app/public ./public
+COPY --from=build /app/rules ./rules
+COPY --from=build /app/data ./data
+# Writable folder for the provider cache and the small app-state file (rules, layout)
+RUN mkdir -p /app/.data && chown -R app:app /app/.data
+USER app
 EXPOSE 3000
-
-# Start the Next.js production server
-CMD ["npm", "start"]
-# Or if using pnpm:
-# CMD ["pnpm", "start"]
+CMD ["node", "server.js"]

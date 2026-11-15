@@ -52,7 +52,7 @@ const tvLocale = (locale: Locale) => (locale === 'ar' ? 'ar_AE' : locale);
 type SymbolGroup = { title: string; symbols: [symbol: string, name: string][] };
 
 export const marketOverviewConfig = (groups: SymbolGroup[], locale: Locale = 'en') => ({
-    colorTheme: 'dark',
+    colorTheme: 'light',
     dateRange: '12M',
     locale: tvLocale(locale),
     largeChartUrl: '',
@@ -76,7 +76,7 @@ export const marketOverviewConfig = (groups: SymbolGroup[], locale: Locale = 'en
 export const marketQuotesConfig = (groups: SymbolGroup[], locale: Locale = 'en') => ({
     locale: tvLocale(locale),
     showSymbolLogo: true,
-    colorTheme: 'dark',
+    colorTheme: 'light',
     isTransparent: true,
     symbolsGroups: groups.map(({ title, symbols }) => ({ name: title, symbols: symbols.map(([name, displayName]) => ({ name, displayName })) })),
 });
@@ -89,7 +89,7 @@ export const STOCK_HEATMAP_CONFIG = {
     isTransparent: true,
     locale: 'en',
     symbolUrl: '',
-    colorTheme: 'dark',
+    colorTheme: 'light',
     exchanges: [],
     hasTopBar: false,
     isDataSetEnabled: false,
@@ -104,7 +104,7 @@ export const CRYPTO_HEATMAP_CONFIG = {
     blockColor: 'change',
     locale: 'en',
     symbolUrl: '',
-    colorTheme: 'dark',
+    colorTheme: 'light',
     hasTopBar: false,
     isDataSetEnabled: false,
     isZoomEnabled: true,
@@ -116,7 +116,7 @@ export const CRYPTO_HEATMAP_CONFIG = {
 export const timelineConfig = (market: 'stock' | 'crypto' | 'forex', locale: Locale = 'en') => ({
     displayMode: 'regular',
     feedMode: 'market',
-    colorTheme: 'dark',
+    colorTheme: 'light',
     isTransparent: true,
     locale: tvLocale(locale),
     market,
@@ -124,7 +124,7 @@ export const timelineConfig = (market: 'stock' | 'crypto' | 'forex', locale: Loc
 
 export const symbolInfoConfig = (symbol: string, locale: Locale = 'en') => ({
     symbol,
-    colorTheme: 'dark',
+    colorTheme: 'light',
     isTransparent: true,
     locale: tvLocale(locale),
     width: '100%',
@@ -132,7 +132,7 @@ export const symbolInfoConfig = (symbol: string, locale: Locale = 'en') => ({
 
 export const singleQuoteConfig = (symbol: string, locale: Locale = 'en') => ({
     symbol,
-    colorTheme: 'dark',
+    colorTheme: 'light',
     isTransparent: true,
     locale: tvLocale(locale),
 });
@@ -151,9 +151,9 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en'
     save_image: false,
     style: 1,
     symbol: symbol.toUpperCase(),
-    theme: 'dark',
+    theme: 'light',
     timezone: 'exchange',
-    backgroundColor: '#1f1e1a', // --card
+    backgroundColor: '#ffffff', // --card
     gridColor: 'rgba(255, 255, 255, 0.04)',
     watchlist: [],
     withdateranges: false,
@@ -165,7 +165,7 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en'
 
 export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en') => ({
     symbol: symbol.toUpperCase(),
-    colorTheme: 'dark',
+    colorTheme: 'light',
     isTransparent: true,
     locale: tvLocale(locale),
     width: '100%',
@@ -177,7 +177,7 @@ export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string, locale: Locale 
 // embed-widget-company-profile.js was retired by TradingView (403); symbol-profile.js takes the same config
 export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en') => ({
     symbol: symbol.toUpperCase(),
-    colorTheme: 'dark',
+    colorTheme: 'light',
     isTransparent: true,
     locale: tvLocale(locale),
     width: '100%',
@@ -186,7 +186,7 @@ export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string, locale: Locale = '
 
 export const COMPANY_FINANCIALS_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en') => ({
     symbol: symbol.toUpperCase(),
-    colorTheme: 'dark',
+    colorTheme: 'light',
     isTransparent: true,
     locale: tvLocale(locale),
     width: '100%',

@@ -5,9 +5,12 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
     devIndicators: false,
-    // /whats-new was live briefly before the changelog replaced it
+    // One self-contained server folder, so the container image carries only what the app needs
+    output: 'standalone',
+    // Read at runtime by the watchlist pipeline and the stores; keep them in the standalone trace
+    outputFileTracingIncludes: { '/**': ['./rules/**', './data/**'] },
     async redirects() {
-        return [{ source: '/whats-new', destination: '/changelog', permanent: true }];
+        return [{ source: '/dashboard', destination: '/overview', permanent: false }];
     },
     turbopack: {
         root: process.cwd(),

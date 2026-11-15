@@ -8,13 +8,14 @@ import { LayoutDashboard, Menu, Plus, X } from "lucide-react";
 import { openSearch } from "@/components/SearchCommand";
 import { cn } from "@/lib/utils";
 
-const PINNED = ['/dashboard'];
+const PINNED = ['/portfolio', '/overview', '/profile'];
 const STORAGE_KEY = 'openstock-tabs';
 const MAX_TABS = 12;
 
-// Message keys under TabBar.pages
-const PAGE_LABELS: Record<string, 'overview'> = {
-    '/dashboard': 'overview',
+const PAGE_LABELS: Record<string, string> = {
+    '/portfolio': 'Portfolio',
+    '/overview': 'Overview',
+    '/profile': 'Profile',
 };
 
 // Pages become browser-style tabs; stock pages are labelled by their symbol.
@@ -61,13 +62,13 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
         el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }, [pathname, tabs]);
 
-    const tabLabel = (path: string) => stockSymbol(path) ?? (PAGE_LABELS[path] ? t(`pages.${PAGE_LABELS[path]}`) : null);
+    const tabLabel = (path: string) => stockSymbol(path) ?? (PAGE_LABELS[path] ?? null);
 
     const closeTab = (path: string) => {
         const index = tabs.indexOf(path);
         const next = tabs.filter((t) => t !== path);
         setTabs(next);
-        if (path === pathname) router.push(next[Math.max(0, index - 1)] ?? '/dashboard');
+        if (path === pathname) router.push(next[Math.max(0, index - 1)] ?? '/portfolio');
     };
 
     return (
@@ -99,7 +100,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                         >
                             {/* Stretched link: the whole tab navigates, while the close button stays a real, focusable button */}
                             <Link href={path} aria-current={active ? 'page' : undefined} className="flex min-w-0 flex-1 items-center gap-2 before:absolute before:inset-0 before:content-['']">
-                                {path === '/dashboard' && <LayoutDashboard />}
+                                {path === '/overview' && <LayoutDashboard />}
                                 <span className={cn('tab-label', isStock && 'mono text-[13px]')}>{tabLabel(path)}</span>
                             </Link>
                             {!pinned && (

@@ -2,12 +2,10 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useTranslations } from "next-intl";
 import Sidebar from "@/components/shell/Sidebar";
 import TabBar from "@/components/shell/TabBar";
 import SearchCommand from "@/components/SearchCommand";
 import { cn } from "@/lib/utils";
-import UpdateBanner from "@/components/UpdateBanner";
 
 type AppShellProps = {
     user: User;
@@ -16,7 +14,6 @@ type AppShellProps = {
 };
 
 const AppShell = ({ user, initialStocks, children }: AppShellProps) => {
-    const t = useTranslations('UpdateBanner');
     const pathname = usePathname();
     const [navOpen, setNavOpen] = useState(false);
     const workspaceRef = useRef<HTMLElement>(null);
@@ -45,9 +42,8 @@ const AppShell = ({ user, initialStocks, children }: AppShellProps) => {
             <div className="shell-container">
                 <div className="app">
                     <TabBar onMenu={() => setNavOpen(true)} />
-                    <main ref={workspaceRef} className={cn('workspace', pathname === '/dashboard' && 'is-first-tab')}>
+                    <main ref={workspaceRef} className={cn('workspace', pathname === '/portfolio' && 'is-first-tab')}>
                         <div className="workspace-inner">
-                            <UpdateBanner labels={{ new: t('new'), seeWhatsNew: t('seeWhatsNew'), fullChangelog: t('fullChangelog') }} />
                             {children}
                         </div>
                     </main>

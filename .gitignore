@@ -43,3 +43,9 @@ next-env.d.ts
 /dist/
 .vinext/
 .wrangler/
+
+# local caches, app state and the agent virtualenv
+.data/
+agent/.venv/
+agent/**/__pycache__/
+.pytest_cache/

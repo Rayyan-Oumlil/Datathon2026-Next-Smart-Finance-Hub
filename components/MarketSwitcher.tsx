@@ -21,7 +21,7 @@ export default function MarketSwitcher({ active, openIds }: { active: MarketId; 
                 return (
                     <Link
                         key={m.id}
-                        href={`/dashboard?market=${m.id}`}
+                        href={`/overview?market=${m.id}`}
                         onClick={() => remember(m.id)}
                         aria-current={selected ? 'page' : undefined}
                         className={cn(

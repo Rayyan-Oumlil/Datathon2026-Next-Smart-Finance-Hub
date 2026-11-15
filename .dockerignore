@@ -9,3 +9,8 @@ coverage
 .env*
 npm-debug.log*
 *.tsbuildinfo
+agent
+.data
+docs
+__tests__
+*.png
