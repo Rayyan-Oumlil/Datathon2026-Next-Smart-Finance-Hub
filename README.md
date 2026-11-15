@@ -1,12 +1,20 @@
-# Next Smart Finance Hub
+# Smart Finance Hub
 
 **Market information that a beginner can actually use, and that an expert can check.**
 
-AlphaForge is a stock and portfolio app with an AI assistant. It takes market data that is scattered, full of jargon and hard to trust, and turns it into plain explanations matched to each investor's experience and risk profile. Every figure it shows can be traced back to where it came from.
+[Français](README.fr.md) · [Specification](docs/spec.md) · [Agent API](docs/agent-api.md) · [Data sources](docs/data-sources.md)
 
-Built for a datathon on AI for investment decisions.
+![AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-blue) ![Next.js](https://img.shields.io/badge/web-Next.js-black) ![Python](https://img.shields.io/badge/agent-Python%20%2B%20Strands-3776AB) ![AWS](https://img.shields.io/badge/AWS-Bedrock%20%C2%B7%20AgentCore%20%C2%B7%20DynamoDB-FF9900) ![Simulation](https://img.shields.io/badge/money-simulated%20only-red)
 
-> **Simulation only.** AlphaForge places no real trades and gives no investment advice. The portfolio uses pretend money.
+Smart Finance Hub is a stock and portfolio app with an AI assistant. It takes market data that is scattered, full of jargon and hard to trust, and turns it into plain explanations matched to each investor's experience and risk profile. Every figure it shows can be traced back to where it came from.
+
+Built for the PolyFinances datathon 2026 (challenge "AlphaForge AI": AI for investment decisions).
+
+> **Simulation only.** The app places no real trades and gives no investment advice. The portfolio uses pretend money.
+
+![The Overview tab: index pulse, sector leaders and an S&P 500 heatmap. The assistant proposed the two highlighted panels; nothing is kept until the user presses Save.](docs/images/overview-heatmap.png)
+
+*The Overview tab. The two outlined panels were proposed by the assistant: they stay a preview until the user presses **Save** (or **Cancel**).*
 
 ---
 
@@ -24,64 +32,147 @@ Most people who want to start investing run into the same walls:
 
 The result: the people who most need clear information are the ones least able to get it.
 
-## How AlphaForge solves it
+## How Smart Finance Hub solves it
 
-| Barrier | What AlphaForge does |
+| Barrier | What the app does |
 |---|---|
 | Scattered information | One app pulls quotes, fundamentals, exchange rates, bond yields and crypto from several sources and shows them together, each figure labelled with its **source and the time it was fetched**. |
 | Jargon | An **AI assistant** explains any term or figure in plain words, adapted to the user's level (Novice, Intermediate, Expert). It answers in **English or French**, typed or **spoken**. |
 | One size fits all | A short **onboarding** sets the user's experience level and risk profile. The **watchlist** is ranked for that profile, and the assistant **names the conflict** with the actual values when a request goes beyond it (for example: "this stock's volatility is 48 %, your limit is 25 %"). |
 | Black boxes | Stock selection uses **fixed, published rules** ([rules/v1.json](rules/v1.json)), not an AI model. A **"Why?"** button on each pick shows every check with its actual values. The assistant may only state numbers that came from the app's own data: a reply with an unsourced number is rejected before it reaches the user. |
-| Fear of the first step | A **simulated portfolio** with $10,000 CAD of pretend money, simulated trades and automatic rules ("buy 200 CAD of AAPL when it drops below 150"), so users learn without risking anything. |
+| Fear of the first step | A **simulated portfolio** with $10,000 CAD of pretend money, simulated trades, automatic rules, and a **time machine** that replays a strategy on real history, so users learn without risking anything. |
+
+## The user journey
+
+```mermaid
+flowchart LR
+    W([Welcome page]) --> O[Onboarding<br/>level + risk profile]
+    O --> S[Suggested portfolios<br/>for that profile]
+    S --> P[Simulated portfolio]
+    O --> L[Smart watchlist<br/>with Why?]
+    P --> X[Portfolio X-ray<br/>concentration and risk]
+    P --> R[Strategy<br/>rule cards]
+    R --> T[Time machine<br/>replay 2020 to 2026]
+    A{{AI assistant<br/>explains, proposes, never applies}} -.-> L
+    A -.-> P
+    A -.-> X
+    A -.-> R
+    A -.-> T
+```
 
 ## What a user sees
 
-1. **Onboarding**: a few questions, then an experience level (Novice, Intermediate, Expert) and a risk profile (Low, Medium, High) computed with versioned rules.
-2. **Smart watchlist**: assets ranked for that profile by filters, a four-factor score and a selection step. No AI model takes part in filtering, scoring or ranking. "Why?" shows the score, each filter check with its actual values, and each input with its source and time.
-3. **Simulated portfolio**: trades are filled at the last price held and written to an append-only log; the portfolio is a replay of that log.
-4. **Portfolio X-ray**: its own tab, opened from a summary card. It shows concentration and each holding's share of the risk, replays today's proportions over past periods (up to five years, three years, one year) as a scenario, and shows "what if I add or reduce X" before and after, with any profile conflicts. Read-only; also available to the assistant, through an "Explain this X-ray" button. Its results are checked against an independent computation in `__tests__/xray/validation.test.ts`.
-5. **Investment rules**: "when AAPL is below 150, simulate a purchase of 200 CAD", checked against live quotes, filled in simulation only.
-6. **Stock pages**: price, chart and company data, with the provider and quote time under each figure. Charts are TradingView widgets; clicking a symbol in one opens our own stock page.
-7. **Assistant panel**: answers questions, explains picks and proposes changes (layout, rules, profile, simulated trades). It never applies anything itself: each change shows a before/after preview, waits for confirmation and can be undone. When a request conflicts with the user's profile, it names the conflict with the actual values and still lets the user proceed in simulation. Its steps stream live, and each reply has a Trace section that links to the audit trail.
+1. **Welcome page and onboarding**: a few questions, then an experience level (Novice, Intermediate, Expert) and a risk profile (Low, Medium, High) computed with versioned rules. Three example profiles (`/u/amira`, `/u/mateo`, `/u/robert`) let a demo skip the questions; `/u/new` starts a fresh user.
+2. **Suggested portfolios**: a few portfolio options for that profile, built from a versioned rules table (not by the model) and labelled as teaching examples.
+3. **Smart watchlist**: assets ranked for that profile by filters, a four-factor score and a selection step. No AI model takes part in filtering, scoring or ranking. "Why?" shows the score, each filter check with its actual values, and each input with its source and time.
+4. **Simulated portfolio**: trades are filled at the last price held and written to an append-only log; the portfolio is a replay of that log.
+5. **Portfolio X-ray**: concentration and each holding's share of the risk, today's proportions replayed over past periods (1, 3 and up to 5 years) as a scenario, and "what if I add or reduce X" before and after, with any profile conflicts. Read-only; the assistant can explain it. Its results are checked against an independent computation in `__tests__/xray/validation.test.ts`.
+6. **Strategy**: a strategy is a named set of rule cards (price threshold, allocation target, weight cap, drawdown guard, periodic purchase), built by hand or proposed by the assistant, with a live check against the user's profile.
+7. **Time machine**: replays the portfolio on a frozen Yahoo Finance snapshot (212 symbols, December 2020 to November 2026, dividends reinvested), with and without the strategy, side by side, with a benchmark and a compare mode for several runs. Illustrative history, not a prediction.
+8. **Stock pages**: price, chart and company data, with the provider and quote time under each figure. Charts are TradingView widgets; clicking a symbol in one opens our own stock page.
+9. **Assistant panel** (resizable, with the page it is on in mind): answers questions, explains picks and proposes changes (layout, rules, strategy, profile, simulated trades). It never applies anything itself: each change shows a before/after preview on the page it belongs to, waits for confirmation and can be undone. Its steps stream live, and each reply has a Trace section that links to the audit trail. It can remember the recent conversation (Amazon Bedrock AgentCore Memory, optional).
 
 The full specification is in [docs/spec.md](docs/spec.md).
+
+### How a pick is scored
+
+Every watchlist score is the same four fixed factors, each from 0 to 100 (see `score-v1.1` in [rules/v1.json](rules/v1.json)). The weights are public and no model changes them.
+
+```mermaid
+pie showData title Weights of the watchlist score
+    "Profile match" : 40
+    "Risk band" : 25
+    "Fundamentals" : 20
+    "Diversification" : 15
+```
 
 ---
 
 ## How it is built
 
-```
-Browser
-  └─ Web app (Next.js, repository root)       onboarding, tabs, assistant panel, API routes
-       ├─ lib/rules, lib/watchlist            level and risk rules, watchlist pipeline (pure functions)
-       ├─ lib/sources                         Finnhub, TMX Money, Yahoo chart, Bank of Canada, Kraken
-       ├─ lib/services                        profile, watchlist, portfolio, X-ray, rules engine, layout
-       ├─ lib/store                           DynamoDB: profile_config, decision_log, agent_action_log
-       ├─ lib/voice                           Amazon Transcribe (speech in), Amazon Polly (speech out)
-       └─ lib/agent  ──HTTP / AgentCore──►  Agent service (agent/, Python, Strands Agents SDK)
-                                               orchestrator (Claude Sonnet 5.5) + seven subagents (Claude Haiku 5.5)
-                                               on Amazon Bedrock, with a Bedrock Guardrail
+```mermaid
+flowchart TB
+    B([Browser]) --> WEB
+    subgraph WEB["Web app: Next.js, repository root"]
+        direction TB
+        UI[Onboarding, tabs, assistant panel] --> API[API routes]
+        API --> RULES["lib/rules, lib/watchlist<br/>pure, tested functions"]
+        API --> SRC["lib/sources<br/>Finnhub, TMX Money, Yahoo, Bank of Canada, Kraken"]
+        API --> SVC["lib/services<br/>profile, watchlist, portfolio, X-ray, replay, strategy"]
+        API --> VOICE["lib/voice<br/>Amazon Transcribe in, Amazon Polly out"]
+    end
+    SVC --> DB[("DynamoDB<br/>profile_config, decision_log, agent_action_log")]
+    API <-->|HTTP or AgentCore| AG
+    subgraph AG["Agent service: agent/, Python, Strands Agents SDK"]
+        direction TB
+        ORC["Orchestrator<br/>Claude Sonnet 5.5"] --> SUB["Seven subagents<br/>Claude Haiku 5.5"]
+        ORC --> CHK["Checks: sourced numbers, forbidden words"]
+    end
+    AG --> BR[Amazon Bedrock + Guardrail]
+    AG -.->|tools call the internal API| API
 ```
 
 One design rule makes the assistant trustworthy: **the AI never computes a figure.** The agent service has no calculators. Its tools call the web app's internal API, so every number is computed once, in plain tested code, and the AI only explains it. The contract between the two is in [docs/agent-api.md](docs/agent-api.md); the agent's own checks are described in [agent/README.md](agent/README.md).
 
+### What happens when the assistant proposes a change
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant W as Web app
+    participant A as Agent service
+    participant L as Audit logs
+    U->>W: "Hide the news panel"
+    W->>A: message + the page the user is on
+    A->>W: tool calls (internal API)
+    W-->>A: figures computed by tested code
+    A-->>W: reply + proposal
+    Note over W: Checks: every number sourced,<br/>no forbidden word, Bedrock Guardrail
+    W-->>U: before / after preview on the page
+    U->>W: Confirm
+    W->>L: append-only action log
+    U->>W: Undo (optional)
+    W->>L: undo is logged too, nothing is deleted
+```
+
 | Folder | Contents |
 |---|---|
 | [app/](app/) | Next.js pages and API routes (`app/api/*`) |
-| [lib/](lib/) | Business logic: rules, watchlist, sources, services, stores, voice, agent client |
+| [lib/](lib/) | Business logic: rules, watchlist, sources, services, replay, strategy, stores, voice, agent client |
+| [components/](components/) | Interface: watchlist, portfolio, X-ray, strategy, replay, agent panel |
 | [agent/](agent/) | Python agent service: orchestrator, subagents, checks, prompts, glossary |
 | [rules/v1.json](rules/v1.json) | Every threshold, weight and formula |
-| [messages/](messages/) | Interface text in English and French |
-| [scripts/](scripts/) | Table creation, data cache, universe builders, `.env` check |
+| [data/](data/) | Stock universe, example profiles, frozen replay snapshot (`data/replay/`) |
+| [messages/](messages/) | Interface text in French and English |
+| [scripts/](scripts/) | Table creation, data cache, universe builders, replay snapshot builder, `.env` check |
 | [infra/](infra/) | AWS setup and deploy scripts |
-| [docs/](docs/) | Specification, agent API, data sources |
-| [\_\_tests\_\_/](__tests__/) | Web tests (Vitest) |
+| [docs/](docs/) | Specification, agent API, data sources, design notes ([index](docs/README.md)) |
+| [\_\_tests\_\_/](__tests__/) | Web tests (Vitest); agent tests are in [agent/tests/](agent/tests/) |
+
+## Built during the hackathon
+
+The project started from the open-source OpenStock app (see [Licence and credits](#licence-and-credits)) on 14 November 2026 and was rebuilt around an assistant that explains but never calculates.
+
+```mermaid
+timeline
+    title From a quotes app to a traceable assistant in about 24 hours
+    14 Nov, evening : Specification and rule values
+                    : Sign-in, email and MongoDB removed, DynamoDB stores added
+                    : Agent service with guardrail checks and action log
+                    : Three-tab app, onboarding, watchlist with the Why? button
+    15 Nov, early morning : Voice in and out with Amazon Transcribe and Polly
+                          : Portfolio X-ray, live agent steps, page-aware assistant
+    15 Nov, day : CloudFront HTTPS, per-visitor sessions, example profiles
+                : Strategy builder and time machine on a frozen snapshot
+                : Suggested portfolios, compare mode, welcome page, asset logos
+                : Agent proposals previewed on the page, resizable panel, memory
+```
 
 ---
 
 ## Setting it up
 
-There are two ways to run AlphaForge:
+There are two ways to run Smart Finance Hub:
 
 - **Locally**, for development and demos (steps 1 to 7). Needs an AWS account for the AI assistant and DynamoDB, or DynamoDB Local.
 - **On AWS**, as a hosted site (see [Deploy to AWS](#deploy-to-aws)).
@@ -279,7 +370,7 @@ Details, endpoints and terms of use are in [docs/data-sources.md](docs/data-sour
 - Privacy consent and legal disclaimers have not had a legal review.
 - The site has no sign-in, and every visitor shares the one demo user. HTTPS comes from CloudFront in front of the load balancer; the load balancer's own address is still reachable over plain HTTP. The agent route is limited to 10 requests a minute; the voice routes have per-visitor limits and a daily cap. Do not share the link widely; set a new `DEMO_USER_ID` before a presentation to start from a clean history.
 - The X-ray replay counts price changes only (no dividends). Crypto history is about two years (Kraken's 720 daily bars), so a window it does not cover leaves it out and says so.
-- Price alerts and the earnings calendar are not built. The Overview tab has a fixed layout; only the Portfolio tab's modules can be rearranged.
+- Price alerts and the earnings calendar are not built. On the Overview tab the assistant can hide or show panels but not reorder them; only the Portfolio tab's modules can be rearranged.
 
 ## Licence and credits
 

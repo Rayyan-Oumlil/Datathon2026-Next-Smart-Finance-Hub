@@ -54,3 +54,11 @@ infra/outputs.env
 # replay snapshot builder (scripts/build_replay_dataset.py): its virtualenv and download cache
 scripts/.venv/
 scripts/.cache/
+
+# editor files, screenshots and working folders kept out of the repository
+.idea/
+.playwright-mcp/
+/[0-9][0-9]-*.png
+/mcp-*.png
+/ad-assets/
+/context/

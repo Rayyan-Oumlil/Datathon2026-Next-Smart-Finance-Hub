@@ -2,8 +2,8 @@
 
 Written from the two boards in this folder and the build brief, on 2026-11-14.
 
-- **T** = `Tech-stack-documentation.png` (newer; wins on any conflict)
-- **F** = `OpenStock-flow.png` (design board; older)
+- **T** = `docs/boards/tech-stack-board.png` (newer; wins on any conflict)
+- **F** = `docs/boards/flow-board.png` (design board; older)
 - **B** = the build brief
 
 Every threshold, weight and point value lives in [`rules/v1.json`](../rules/v1.json). This file describes behaviour; it does not repeat the numbers except where needed to read a rule.
