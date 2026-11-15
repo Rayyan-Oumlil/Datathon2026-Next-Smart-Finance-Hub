@@ -12,7 +12,7 @@ TMP=$(mktemp -d)
 echo "== secret"
 SECRET_JSON=$(python3 - <<PY
 import json, os
-print(json.dumps({k: os.environ.get(k, "") for k in ["FINNHUB_API_KEY", "ADANOS_API_KEY", "INTERNAL_API_TOKEN"]}))
+print(json.dumps({k: os.environ.get(k, "") for k in ["FINNHUB_API_KEY", "ADANOS_API_KEY", "INTERNAL_API_TOKEN", "SESSION_SECRET"]}))
 PY
 )
 if aws secretsmanager describe-secret --region "$REGION" --secret-id "${NAME}/web" >/dev/null 2>&1; then

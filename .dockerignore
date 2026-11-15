@@ -15,3 +15,5 @@ agent
 docs
 __tests__
 *.png
+scripts/.venv
+scripts/.cache
