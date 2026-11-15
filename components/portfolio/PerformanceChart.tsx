@@ -1,0 +1,143 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import type { Level } from '@/lib/domain/types';
+import Panel from '@/components/Panel';
+import { PERIODS, chartBox, money, pointsFor, signed, when, type HistoryPoint, type Period } from './logic';
+
+const W = 600;
+const H = 200;
+
+type Props = { history: HistoryPoint[]; startingCashCad: number; note: string; level: Level };
+
+// The simulated value over time against the starting amount. A plain SVG line: the series is a few dozen points.
+export default function PerformanceChart({ history, startingCashCad, note, level }: Props) {
+    const [period, setPeriod] = useState<Period>('All');
+    const [hover, setHover] = useState<number | null>(null);
+    const points = useMemo(() => pointsFor(history, period, Date.now()), [history, period]);
+    const drawable = points.length >= 2;
+    const box = drawable ? chartBox(points, startingCashCad) : null;
+    const first = points[0];
+    const last = points[points.length - 1];
+    const shown = box && hover !== null ? box.dots[hover] : null;
+
+    const onMove = (event: React.PointerEvent<HTMLDivElement>) => {
+        if (!box) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width;
+        let nearest = 0;
+        box.dots.forEach((dot, index) => {
+            if (Math.abs(dot.x - x) < Math.abs(box.dots[nearest].x - x)) nearest = index;
+        });
+        setHover(nearest);
+    };
+
+    return (
+        <Panel
+            className="[&>.section-head]:flex-wrap"
+            title="Performance (simulated)"
+            sub="Value of the simulated portfolio against the starting amount"
+            action={(
+                <div role="radiogroup" aria-label="Period" className="flex flex-none gap-1">
+                    {PERIODS.map((option) => (
+                        <button
+                            key={option}
+                            type="button"
+                            role="radio"
+                            aria-checked={period === option}
+                            onClick={() => { setPeriod(option); setHover(null); }}
+                            className={`h-7 rounded-full px-2.5 text-[12px] font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${period === option ? 'bg-brand-soft text-brand-ink' : 'text-muted-foreground hover:bg-hover hover:text-foreground'}`}
+                        >
+                            {option}
+                        </button>
+                    ))}
+                </div>
+            )}
+            bodyClassName="p-4"
+        >
+            {!box ? (
+                <div className="empty-state">
+                    <h3>No data for this period yet</h3>
+                    <p className="max-w-md text-[13px]">
+                        {history.length < 2
+                            ? 'The chart starts with the first simulated trade. Until then the value is the starting amount.'
+                            : `The series has ${points.length === 0 ? 'no point' : 'one point'} inside ${period}. Try a longer period.`}
+                    </p>
+                </div>
+            ) : (
+                <>
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-[13px]">
+                        <p className="num text-muted-foreground" aria-live="polite">
+                            {shown
+                                ? <><span className="font-bold text-foreground">{money(shown.point.valueCad)} CAD</span> · {when(shown.point.t)}</>
+                                : <><span className="font-bold text-foreground">{signed(last.valueCad - first.valueCad)} CAD</span> over this period · {signed(last.valueCad - startingCashCad)} CAD against the starting amount</>}
+                        </p>
+                        <p className="flex items-center gap-3 text-[12px] text-faint">
+                            <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 rounded bg-brand" />simulated value</span>
+                            <span className="flex items-center gap-1.5"><span className="w-4 border-t border-dashed border-line-strong" />starting amount</span>
+                        </p>
+                    </div>
+
+                    <div className="mt-3 flex gap-2">
+                        <div className="num flex flex-none flex-col justify-between py-0.5 text-right text-[11px] text-faint" aria-hidden>
+                            <span>{money(box.high)}</span>
+                            <span>{money(box.low)}</span>
+                        </div>
+                        <div className="relative min-w-0 flex-1 touch-none" style={{ height: H }} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
+                            <svg
+                                viewBox={`0 0 ${W} ${H}`}
+                                preserveAspectRatio="none"
+                                className="size-full overflow-visible"
+                                role="img"
+                                aria-label={`Simulated value from ${when(first.t)} to ${when(last.t)}: ${money(first.valueCad)} CAD to ${money(last.valueCad)} CAD. Starting amount ${money(startingCashCad)} CAD.`}
+                            >
+                                <line x1={0} x2={W} y1={box.baselineY * H} y2={box.baselineY * H} stroke="var(--line-strong)" strokeWidth={1} strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
+                                <polyline
+                                    points={box.dots.map((dot) => `${(dot.x * W).toFixed(1)},${(dot.y * H).toFixed(1)}`).join(' ')}
+                                    fill="none"
+                                    stroke="var(--brand)"
+                                    strokeWidth={2}
+                                    strokeLinejoin="round"
+                                    strokeLinecap="round"
+                                    vectorEffect="non-scaling-stroke"
+                                />
+                            </svg>
+                            {/* Markers are HTML so the stretched SVG does not squash them */}
+                            {(shown ? [shown] : box.dots.length <= 12 ? box.dots : []).map((dot) => (
+                                <span
+                                    key={dot.point.t}
+                                    className="pointer-events-none absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand ring-2 ring-card"
+                                    style={{ left: `${dot.x * 100}%`, top: `${dot.y * 100}%` }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    <div className="mt-1 flex justify-between ps-16 text-[11px] text-faint">
+                        <span>{when(first.t)}</span>
+                        <span>{when(last.t)}</span>
+                    </div>
+
+                    {level === 'Expert' && (
+                        <div className="mt-3 max-h-48 overflow-auto rounded-[10px] border border-line">
+                            <table className="data-table text-[12.5px]">
+                                <thead><tr><th>Time</th><th className="is-num">Value (CAD)</th><th className="is-num">Against start</th></tr></thead>
+                                <tbody>
+                                    {[...points].reverse().map((point) => (
+                                        <tr key={point.t}>
+                                            <td className="!h-8">{when(point.t)}</td>
+                                            <td className="is-num !h-8">{money(point.valueCad)}</td>
+                                            <td className="is-num !h-8">{signed(point.valueCad - startingCashCad)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </>
+            )}
+            <p className="mt-3 text-[12px] leading-relaxed text-faint">
+                Starting amount: {money(startingCashCad)} CAD (simulated). {note}
+            </p>
+        </Panel>
+    );
+}

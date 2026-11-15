@@ -49,3 +49,4 @@ next-env.d.ts
 agent/.venv/
 agent/**/__pycache__/
 .pytest_cache/
+infra/outputs.env

@@ -52,6 +52,31 @@ describe('selection: caps', () => {
         const etf = { assetClass: 'etf' as const, sector: undefined };
         expect(symbols([scored('F1', 90, etf), scored('F2', 80, etf), scored('F3', 70, etf)])).toEqual(['F1', 'F2', 'F3']);
     });
+    describe('at most max_etfs_per_index funds per tracked index', () => {
+        const fund = (index?: string) => ({ assetClass: 'etf' as const, sector: undefined, ...(index === undefined ? {} : { etf: { index, holdings: 500, issuerUrl: 'https://issuer.example/fund' } }) });
+        it('the rules allow 1 fund per index', () => {
+            expect(RULES.selection.max_etfs_per_index).toBe(1);
+        });
+        it('two funds on the same index: only the better-ranked one is picked', () => {
+            expect(symbols([scored('SPA', 70, fund('S&P 500 Index')), scored('SPB', 80, fund('S&P 500 Index')), scored('AAA', 50)])).toEqual(['SPB', 'AAA']);
+            // equal totals: the lower volatility wins the index
+            expect(symbols([scored('SPA', 70, fund('S&P 500 Index'), 0.20), scored('SPB', 70, fund('S&P 500 Index'), 0.15)])).toEqual(['SPB']);
+        });
+        it('funds on different indexes are both picked', () => {
+            expect(symbols([scored('SPA', 80, fund('S&P 500 Index')), scored('TSX', 70, fund('S&P/TSX 60 Index'))])).toEqual(['SPA', 'TSX']);
+        });
+        it('a seed fund is not dropped by the cap, but it uses up its index for the others', () => {
+            const list = [scored('SPA', 90, fund('S&P 500 Index')), scored('SEED', 40, fund('S&P 500 Index')), scored('TSX', 60, fund('S&P/TSX 60 Index'))];
+            const picks = selectPicks(list, profile('Intermediate', 'High', { brands: ['SEED'] }), RULES, NONE, NOW).picks;
+            expect(picks.map((pick) => [pick.symbol, pick.kept])).toEqual([['TSX', 'new'], ['SEED', 'seed']]);
+        });
+        it('two seed funds on the same index are both kept', () => {
+            expect(symbols([scored('SPA', 90, fund('S&P 500 Index')), scored('SPB', 80, fund('S&P 500 Index'))], 'Intermediate', NONE, ['SPA', 'SPB'])).toEqual(['SPA', 'SPB']);
+        });
+        it('a fund with no known index is not capped', () => {
+            expect(symbols([scored('F1', 90, fund()), scored('F2', 80, fund()), scored('F3', 70, fund('S&P 500 Index')), scored('F4', 60, fund('S&P 500 Index'))])).toEqual(['F1', 'F2', 'F3']);
+        });
+    });
     it('keeps at most 1 crypto: the higher total', () => {
         expect(symbols([scored('BTC', 60, crypto), scored('ETH', 70, crypto), scored('AAA', 50)])).toEqual(['ETH', 'AAA']);
     });

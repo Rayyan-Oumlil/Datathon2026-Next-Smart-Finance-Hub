@@ -7,6 +7,9 @@ import Panel from "@/components/Panel";
 import IndexPulse, { PulseSkeleton } from "@/components/IndexPulse";
 import { LocalizedDataFreshness } from "@/components/DataFreshness";
 import MarketSwitcher from "@/components/MarketSwitcher";
+import SmartWatchlist from "@/components/watchlist/SmartWatchlist";
+import type { WatchlistRulesView } from "@/components/watchlist/format";
+import { RULES } from "@/lib/rules";
 import YahooQuotesTable, { YahooMovers } from "@/components/YahooQuotes";
 import {
     CRYPTO_HEATMAP_CONFIG,
@@ -22,6 +25,27 @@ const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
 type GroupKey = keyof Messages['Markets']['groups'];
 type FeedKey = keyof Messages['Markets']['feed'];
+
+// What the watchlist UI states about the rules, read from rules/v1.json so no weight or limit is repeated in a component
+const { score, selection, reasons, data_freshness } = RULES;
+const watchlistRules: WatchlistRulesView = {
+    scoreVersion: score.version,
+    weights: score.weights,
+    totalFormula: score.total,
+    factors: {
+        profile_fit: { meaning: score.factor_formulas.profile_fit.meaning, formula: score.factor_formulas.profile_fit.formula },
+        risk_fit: { meaning: score.factor_formulas.risk_fit.meaning, formula: score.factor_formulas.risk_fit.formula },
+        fundamentals: { meaning: score.factor_formulas.fundamentals.meaning, formula: score.factor_formulas.fundamentals.formula },
+        diversification: { meaning: score.factor_formulas.diversification.meaning, formula: score.factor_formulas.diversification.formula },
+    },
+    removedFromScore: score.removed_from_score,
+    neverAnInput: score.never_an_input,
+    topN: selection.top_n_by_level,
+    maxPerSector: selection.max_per_sector,
+    maxCrypto: selection.max_crypto,
+    quoteStaleSeconds: data_freshness.quote_stale_after_seconds,
+    reasonTemplates: reasons.allowed_templates,
+};
 
 // Widgets come from TradingView (live, no Finnhub quota) and render immediately; the tiles stream in.
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ market?: string }> }) {
@@ -48,7 +72,16 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <>
             <header className="page-head">
                 <div>
-                    <h1 className="page-title">{t('title')}</h1>
+                    <h1 className="page-title">Overview</h1>
+                    <p className="page-sub">Your smart watchlist, then the markets. Simulation only, not investment advice.</p>
+                </div>
+            </header>
+
+            <SmartWatchlist rules={watchlistRules} />
+
+            <header className="page-head mt-4">
+                <div>
+                    <h2 className="page-title">{t('title')}</h2>
                     <p className="page-sub">{t('sub', { market: name, status: open ? 'open' : 'closed', feed })}</p>
                 </div>
             </header>

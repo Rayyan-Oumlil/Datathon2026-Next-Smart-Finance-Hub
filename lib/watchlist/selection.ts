@@ -39,6 +39,8 @@ export function compareRank(a: Scored, b: Scored): number {
  *       Group c obeys the sector cap, counting the picks of groups a and b already in that sector.
  * 3. Hard limits for every group: N picks in total and max_crypto crypto assets (a seed does not lift these).
  *    The sector cap applies to assets that have a sector; ETFs and crypto have none.
+ *    ETFs have their own cap instead: at most max_etfs_per_index funds tracking the same index (group c only,
+ *    counting ETFs of groups a and b), so the list does not fill up with several funds holding the same companies.
  * 4. The margin and the minimum stay decide who is ON the list. The rank shown is always the plain tie-break
  *    order of the picks, so the ranking stays explainable from the scores alone.
  * 5. listedSince for the next run: unchanged for a symbol that stays, `now` for one that enters.
@@ -78,14 +80,18 @@ export function selectPicks(
 
     const chosen: Scored[] = [];
     const perSector = new Map<string, number>();
+    const perIndex = new Map<string, number>();
     let crypto = 0;
     for (const candidate of order) {
         if (chosen.length >= limit) break;
-        const { assetClass, sector } = candidate.signals.entry;
+        const { assetClass, sector, etf } = candidate.signals.entry;
+        const index = assetClass === 'etf' ? etf?.index : undefined;
         if (assetClass === 'crypto' && crypto >= rule.max_crypto) continue;
         if (group(candidate) === 2 && sector !== undefined && (perSector.get(sector) ?? 0) >= rule.max_per_sector) continue;
+        if (group(candidate) === 2 && index !== undefined && (perIndex.get(index) ?? 0) >= rule.max_etfs_per_index) continue;
         chosen.push(candidate);
         if (assetClass === 'crypto') crypto++;
+        if (index !== undefined) perIndex.set(index, (perIndex.get(index) ?? 0) + 1);
         if (sector !== undefined) perSector.set(sector, (perSector.get(sector) ?? 0) + 1);
     }
 

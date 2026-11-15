@@ -1,0 +1,130 @@
+{
+  "name": "datathon-no-advice",
+  "description": "Blocks recommendation wording and ungrounded replies; masks personal data; detects (logs) the investment-advice topic and low relevance without blocking.",
+  "topicPolicyConfig": {
+    "topicsConfig": [
+      {
+        "name": "InvestmentAdvice",
+        "definition": "Recommending or discouraging buying, selling or holding a specific investment, predicting its price, or judging that it suits the person.",
+        "examples": [
+          "You should buy NVDA now.",
+          "This stock is a safe choice for you.",
+          "I recommend selling your Shopify shares.",
+          "Bitcoin will rise next month.",
+          "This ETF fits you well."
+        ],
+        "type": "DENY",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "NONE",
+        "outputEnabled": true
+      }
+    ]
+  },
+  "wordPolicyConfig": {
+    "wordsConfig": [
+      {
+        "text": "buy",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "sell",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "should",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "good",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "safe",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "will rise",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "fits you",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "recommended",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      }
+    ]
+  },
+  "sensitiveInformationPolicyConfig": {
+    "piiEntitiesConfig": [
+      {
+        "type": "EMAIL",
+        "action": "ANONYMIZE"
+      },
+      {
+        "type": "PHONE",
+        "action": "ANONYMIZE"
+      },
+      {
+        "type": "ADDRESS",
+        "action": "ANONYMIZE"
+      },
+      {
+        "type": "CREDIT_DEBIT_CARD_NUMBER",
+        "action": "BLOCK"
+      },
+      {
+        "type": "CA_SOCIAL_INSURANCE_NUMBER",
+        "action": "BLOCK"
+      },
+      {
+        "type": "US_SOCIAL_SECURITY_NUMBER",
+        "action": "BLOCK"
+      }
+    ]
+  },
+  "contextualGroundingPolicyConfig": {
+    "filtersConfig": [
+      {
+        "type": "GROUNDING",
+        "threshold": 0.5,
+        "action": "BLOCK",
+        "enabled": true
+      },
+      {
+        "type": "RELEVANCE",
+        "threshold": 0.5,
+        "action": "NONE",
+        "enabled": true
+      }
+    ]
+  },
+  "blockedInputMessaging": "This request cannot be processed.",
+  "blockedOutputsMessaging": "I can show the facts and where they come from, but I cannot give investment advice."
+}

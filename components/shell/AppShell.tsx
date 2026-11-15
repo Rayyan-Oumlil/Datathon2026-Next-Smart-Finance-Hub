@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Sidebar from "@/components/shell/Sidebar";
 import TabBar from "@/components/shell/TabBar";
 import SearchCommand from "@/components/SearchCommand";
+import AgentPanel from "@/components/agent/AgentPanel";
 import { cn } from "@/lib/utils";
 
 type AppShellProps = {
@@ -16,6 +17,8 @@ type AppShellProps = {
 const AppShell = ({ user, initialStocks, children }: AppShellProps) => {
     const pathname = usePathname();
     const [navOpen, setNavOpen] = useState(false);
+    const [agentOpen, setAgentOpen] = useState(false);
+    const [dataVersion, setDataVersion] = useState(0);
     const workspaceRef = useRef<HTMLElement>(null);
 
     // The workspace is the scroll container, so reset it on navigation
@@ -25,7 +28,7 @@ const AppShell = ({ user, initialStocks, children }: AppShellProps) => {
     }, [pathname]);
 
     return (
-        <div className="shell">
+        <div className={cn('shell', agentOpen && 'lg:grid-cols-[248px_minmax(0,1fr)_minmax(320px,400px)]')}>
             <div
                 className={cn(
                     // The drawer slides in from the reading side: the right in Arabic
@@ -43,12 +46,15 @@ const AppShell = ({ user, initialStocks, children }: AppShellProps) => {
                 <div className="app">
                     <TabBar onMenu={() => setNavOpen(true)} />
                     <main ref={workspaceRef} className={cn('workspace', pathname === '/portfolio' && 'is-first-tab')}>
-                        <div className="workspace-inner">
+                        {/* Pages fetch their data when they mount; a change applied by the agent remounts them */}
+                        <div className="workspace-inner" key={dataVersion}>
                             {children}
                         </div>
                     </main>
                 </div>
             </div>
+
+            <AgentPanel open={agentOpen} onOpenChange={setAgentOpen} onDataChanged={() => setDataVersion((version) => version + 1)} />
 
             <SearchCommand initialStocks={initialStocks} />
         </div>

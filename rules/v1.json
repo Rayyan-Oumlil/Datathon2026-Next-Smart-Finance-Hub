@@ -124,6 +124,8 @@
     "top_n_by_level": { "Novice": 5, "Intermediate": 10, "Expert": 20 },
     "max_per_sector": 2,
     "max_crypto": 1,
+    "max_etfs_per_index": 1,
+    "max_etfs_per_index_note": "proposed: several listed funds track the same index (four track the S&P 500); one per index keeps the list from repeating the same holdings",
     "seed_tickers": "kept if they pass the filters",
     "tie_break": ["higher total score", "lower volatility", "ticker A-Z"],
     "slow_moving": {

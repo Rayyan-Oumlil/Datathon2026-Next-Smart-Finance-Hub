@@ -1,0 +1,34 @@
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
+import { DEMO_USER } from '@/lib/demo-user';
+import { respond } from '@/lib/services/http';
+import { listDecisions } from '@/lib/store';
+
+export const dynamic = 'force-dynamic';
+
+const KINDS = ['watchlist_run', 'pick', 'user_action', 'simulated_trade', 'profile_conflict', 'profile_change'] as const;
+const schema = z.object({
+    kind: z.enum(KINDS).optional(),
+    symbol: z.string().trim().min(1).max(20).optional(),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+    full: z.string().optional(),
+});
+
+// A watchlist run holds the whole snapshot (hundreds of kB). Unless full=1, the bulky parts are left out and named.
+const BULKY = ['snapshot', 'candidates', 'signals'];
+
+export const GET = (req: NextRequest) => respond(async () => {
+    const { kind, symbol, limit, full } = schema.parse(Object.fromEntries(req.nextUrl.searchParams));
+    const decisions = await listDecisions(DEMO_USER.id, { kind, symbol: symbol?.toUpperCase(), limit, newestFirst: true });
+    if (full === '1') return { decisions };
+    return {
+        decisions: decisions.map((decision) => {
+            const payload = decision.payload;
+            if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return decision;
+            const omitted = BULKY.filter((key) => key in payload);
+            if (omitted.length === 0) return decision;
+            const kept = Object.fromEntries(Object.entries(payload).filter(([key]) => !omitted.includes(key)));
+            return { ...decision, payload: kept, payloadOmitted: omitted };
+        }),
+    };
+});

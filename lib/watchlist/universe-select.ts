@@ -7,6 +7,8 @@ import { normalize, type ProfileView } from '@/lib/watchlist/format';
  *    (a seed outside the picked markets is then rejected by the market filter, with the reason shown);
  *  - stocks and ETFs in the picked markets whose sector, sub-industry or one theme was picked;
  *    with no sector, niche or theme picked at all ("no preference"), every stock and ETF in those markets;
+ *  - every blue-chip (broad-index) ETF in the picked markets, whatever was picked: a broad fund belongs to no
+ *    single sector, and it is the only kind of fund a Novice or a Low-risk profile may see;
  *  - every crypto, gold and bond-yield entry (the filters decide who may see them).
  * The result is sorted by symbol so the input order of the universe never matters.
  */
@@ -28,7 +30,8 @@ export function selectCandidates(universe: UniverseEntry[], profile: ProfileView
         const interest = noPreference
             || (entry.sector !== undefined && sectors.has(normalize(entry.sector)))
             || (entry.subIndustry !== undefined && niches.has(normalize(entry.subIndustry)))
-            || entry.themes.some((theme) => themes.has(normalize(theme)));
+            || entry.themes.some((theme) => themes.has(normalize(theme)))
+            || entry.blueChipEtf === true;
 
         if (isSeed || !listed || (inMarket && interest)) bySymbol.set(entry.symbol, entry);
         if (isSeed) seeds.push(entry.symbol);

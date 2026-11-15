@@ -10,7 +10,8 @@ coverage
 npm-debug.log*
 *.tsbuildinfo
 agent
-.data
+.data/app-state.json
+.data/*.mjs
 docs
 __tests__
 *.png
