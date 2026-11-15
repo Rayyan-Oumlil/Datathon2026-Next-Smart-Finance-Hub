@@ -2,7 +2,7 @@
 // restarts and the demo never waits on a provider. Entries are stored whole: a Sourced value keeps the fetchedAt
 // it was fetched with, so a cached or stale value never looks fresher than it is.
 
-import { mkdir, readFile, rename, writeFile } from 'fs/promises';
+import { mkdir, readFile, rename, rm, writeFile } from 'fs/promises';
 import path from 'path';
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
@@ -32,7 +32,21 @@ export async function writeJsonFile(file: string, data: unknown): Promise<void> 
     await mkdir(path.dirname(file), { recursive: true });
     const temporary = `${file}.${process.pid}.${++writes}.tmp`;
     await writeFile(temporary, JSON.stringify(data));
-    await rename(temporary, file);
+    // On Windows, renaming onto a file another write is replacing at that moment fails with EPERM / EBUSY / EACCES:
+    // trying again a moment later succeeds, and the last write wins as it does elsewhere
+    for (let attempt = 0; ; attempt++) {
+        try {
+            await rename(temporary, file);
+            return;
+        } catch (error) {
+            const code = (error as NodeJS.ErrnoException).code;
+            if (attempt >= 5 || !(code === 'EPERM' || code === 'EBUSY' || code === 'EACCES')) {
+                await rm(temporary, { force: true }).catch(() => undefined);
+                throw error;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 10 * (attempt + 1)));
+        }
+    }
 }
 
 async function readEntry<T>(key: string): Promise<Entry<T> | null> {

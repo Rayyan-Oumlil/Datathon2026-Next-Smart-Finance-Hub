@@ -43,3 +43,30 @@ def test_dates_and_times_in_the_reply_do_not_match_values():
     reply = "ENB price: 41.75 USD, as of 2026-11-14 15:29 UTC (Finnhub, fetched 16:19 UTC), 1-year view."
     kept = sources.relevant(sources.collect(RESULTS), reply)
     assert [item["label"] for item in kept] == ["ENB price"]   # not P/E 19.4, volatility 0.162 or beta
+
+
+def _xray_result():
+    figure = lambda v, note: {"value": v, "unit": "%", "source": "derived (xray-v1) from daily closes: TMX Money (delayed 15 min or more)",
+                              "fetchedAt": "2026-11-15T09:00:00.000Z", "asOf": "2026-11-13", "note": note}
+    return {"figures": {
+        "topShare": figure(25, "share"),
+        "volatility_last1y": figure(10.37, "vol"),
+        "holdings_last1y": [{"symbol": "NVDA", "weight_last1y": figure(15, "w"), "riskShare_last1y": figure(36.97, "r")}],
+    }}
+
+
+def test_xray_figures_are_collected_with_their_window_in_the_label():
+    found = sources.collect([{"endpoint": "/api/internal/tools/portfolio-xray", "result": _xray_result()}])
+    labels = {item["label"] for item in found}
+    assert "volatility (1 year)" in labels
+    assert "NVDA share of the risk (1 year)" in labels
+    fr = {item["label"] for item in sources.collect([{"endpoint": "x", "result": _xray_result()}], "fr")}
+    assert "volatilité (1 an)" in fr and "NVDA part du risque (1 an)" in fr
+
+
+def test_a_reply_that_states_an_xray_figure_cites_its_source():
+    found = sources.collect([{"endpoint": "x", "result": _xray_result()}])
+    kept = sources.relevant(found, "NVDA carries 36.97% of the risk with a 15% weight. Volatility is 10.37%.")
+    assert {k["label"] for k in kept} == {"volatility (1 year)", "NVDA share of the risk (1 year)", "NVDA weight (1 year)"}
+    assert all(k["source"].startswith("derived (xray-v1)") and k["fetchedAt"] and k["asOf"] == "2026-11-13" for k in kept)
+    assert sources.relevant(found, "Nothing about the portfolio figures here.") == []

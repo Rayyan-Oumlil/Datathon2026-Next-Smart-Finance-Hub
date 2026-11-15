@@ -89,6 +89,9 @@ describe('POST /api/internal/tools/portfolio-xray', () => {
         expect(full).not.toHaveProperty('curve');
         expect(full.volatilityPct).toEqual(expect.any(Number));
         expect(body.method).toContain('xray-v1');
+        // every headline figure is also given as a sourced value, so a reply that states it can cite where it comes from
+        expect(body.figures.volatility_full).toMatchObject({ unit: '%', fetchedAt: expect.any(String), source: expect.stringContaining('derived (xray-v1)') });
+        expect(body.figures.holdings_full[0]).toMatchObject({ symbol: 'RY.TO' });
     });
     it('answers a what-if with before and after, curve-free, and refuses a bad change as { error }', async () => {
         const body = await (await tool({ change: { symbol: 'RY.TO', amountCad: 500, direction: 'reduce' } })).json();
