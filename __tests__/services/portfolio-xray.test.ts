@@ -56,7 +56,7 @@ describe('getPortfolioXray', () => {
         expect(xray.cashSharePct).toBe(51.6);
         const full = xray.windows.full;
         if (!full.available) throw new Error('expected the full window');
-        expect(full.coverage).toEqual({ sharePct: 100, included: expect.arrayContaining(['AAPL', 'RY.TO']), excluded: [] });
+        expect(full.coverage).toEqual({ sharePct: 100, included: expect.arrayContaining(['AAPL', 'RY.TO']), excluded: [], gaps: [] });
         expect(full.risk.reduce((sum, r) => sum + (r.riskSharePct ?? 0), 0)).toBeCloseTo(100, 1);
         expect(full.volatilityPct).toBeGreaterThan(0);
         expect(xray.asOf).toBe(dates[dates.length - 1]);
@@ -116,6 +116,38 @@ describe('getXrayWhatIf', () => {
         const result = await getXrayWhatIf({ symbol: 'MSFT', amountCad: 500, direction: 'add' });
         expect(result.after.holdings.map((h) => h.symbol).sort()).toEqual(['AAPL', 'MSFT', 'RY.TO']);
         expect(result.after.holdings.find((h) => h.symbol === 'MSFT')?.sharePct).toBe(5);
+    });
+
+    it('compares before and after over the same window when the added asset has a shorter history', async () => {
+        await holdTwo();
+        market.prices.MSFT = { value: 200, currency: 'USD' };
+        const full = series('B', 'USD');
+        // the last 90 weekdays only: the before side alone would run over 130
+        market.closes.MSFT = { ...full, value: full.value.slice(-90) };
+        const result = await getXrayWhatIf({ symbol: 'MSFT', amountCad: 500, direction: 'add' }, 'en');
+        const before = result.before.windows.full;
+        const after = result.after.windows.full;
+        if (!before.available || !after.available) throw new Error('expected both windows');
+        expect(before.from).toBe(dates[40]);
+        expect(after.from).toBe(before.from);
+        expect(after.to).toBe(before.to);
+        expect(after.coverage.included.sort()).toEqual(['AAPL', 'MSFT', 'RY.TO']);
+        expect(after.coverage.sharePct).toBe(100);
+        expect(before.coverage.included.sort()).toEqual(['AAPL', 'RY.TO']);
+        // the plain X-ray keeps its own, longer window
+        const plain = (await getPortfolioXray('en')).windows.full;
+        expect(plain.available && plain.from).toBe(dates[0]);
+        // the before side cites only the series it read
+        expect(result.before.sources.map((s) => s.value.split(':')[0])).not.toContain('MSFT');
+        expect(result.after.sources.map((s) => s.value.split(':')[0])).toContain('MSFT');
+    });
+
+    it('marks the after side unavailable, with the reason, when the added asset has no price history', async () => {
+        await holdTwo();
+        market.prices.MSFT = { value: 200, currency: 'USD' };
+        const result = await getXrayWhatIf({ symbol: 'MSFT', amountCad: 500, direction: 'add' }, 'en');
+        expect(result.before.windows.full.available).toBe(true);
+        expect(result.after.windows.full).toEqual({ id: 'full', available: false, reason: 'changed_asset_no_history', gap: { symbol: 'MSFT', reason: 'no_history', firstDate: null, lastDate: null } });
     });
 
     it('names the profile conflicts of an addition with their actual values', async () => {

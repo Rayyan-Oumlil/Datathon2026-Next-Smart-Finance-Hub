@@ -66,8 +66,15 @@ describe('the engine against an independent computation', () => {
     const Sw = S.map((row) => row.reduce((s, v, j) => s + v * weights[j], 0));
     const variance = weights.reduce((s, wi, i) => s + wi * Sw[i], 0);
 
-    it('annualised volatility equals sqrt(w S w) x sqrt(252)', () => {
-        expect(w.volatilityPct).toBeCloseTo(Math.sqrt(variance) * Math.sqrt(252) * 100, 1);
+    it('annualised volatility equals sqrt(w S w) x sqrt(observations a year of the calendar used)', () => {
+        // 400 weekdays, no holidays: (returns) / (calendar days spanned / 365.25), about 261 a year
+        const spanDays = (Date.parse(dates[dates.length - 1]) - Date.parse(dates[0])) / DAY;
+        const perYear = (dates.length - 1) / (spanDays / 365.25);
+        expect(perYear).toBeGreaterThan(255);
+        expect(perYear).toBeLessThan(265);
+        expect(w.calendar).toBe('exchange');
+        expect(w.periodsPerYear).toBeCloseTo(perYear, 1);
+        expect(w.volatilityPct).toBeCloseTo(Math.sqrt(variance) * Math.sqrt(perYear) * 100, 1);
     });
 
     it('each risk share equals w_i (S w)_i / (w S w), and they add up to 100 %', () => {

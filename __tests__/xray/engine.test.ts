@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeEngine } from '@/lib/xray/engine';
+import { computeComparison, computeEngine } from '@/lib/xray/engine';
 import type { EngineHolding } from '@/lib/xray/types';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -73,7 +73,7 @@ describe('the replay', () => {
         if (!w.available) return;
         expect(w.risk.map((r) => r.riskSharePct)).toEqual([50, 50]);
         expect(w.observations).toBe(120);
-        expect(w.coverage).toEqual({ sharePct: 100, included: ['A', 'B'], excluded: [] });
+        expect(w.coverage).toEqual({ sharePct: 100, included: ['A', 'B'], excluded: [], gaps: [] });
         expect(w.diversificationRatio!).toBeGreaterThan(1);
         expect(w.from).toBe(dates[0]);
         expect(w.to).toBe(dates[120]);
@@ -132,6 +132,17 @@ describe('coverage across windows', () => {
         expect(full.coverage.excluded).toEqual(['BTC']);
         expect(full.coverage.sharePct).toBe(60);
         expect(full.risk[0].weightPct).toBe(100);   // renormalised over what is covered
+        // ...and says why, with the date its history starts
+        expect(full.coverage.gaps).toEqual([{ symbol: 'BTC', reason: 'starts_later', firstDate: cryptoDates[0], lastDate: cryptoDates[379] }]);
+        expect(full.from).toBe(stockDates[0]);
+        expect(full.calendar).toBe('exchange');
+    });
+    it('names a holding with no closes at all as left out, with no date', () => {
+        const ghost = holding({ symbol: 'G', valueCad: 1000, closes: null });
+        const w = computeEngine({ holdings: [stock, ghost], cashCad: 0, fx: FX }).windows.full;
+        if (!w.available) throw new Error('expected the full window');
+        expect(w.coverage.excluded).toEqual(['G']);
+        expect(w.coverage.gaps).toEqual([{ symbol: 'G', reason: 'no_history', firstDate: null, lastDate: null }]);
     });
     it('includes it in the last year, where its history is long enough', () => {
         const last = out.windows.last1y;
@@ -166,5 +177,90 @@ describe('the three-year window', () => {
         expect(three.to).toBe(full.to);
         expect(three.observations).toBeLessThan(full.observations);
         expect(three.observations).toBeGreaterThan(740);
+    });
+});
+
+describe('a crypto-only portfolio', () => {
+    it('is on an every-day calendar and annualised with about 365 observations a year, not 252', () => {
+        const days = everyDay(366);   // 365 returns over 365 days
+        const btc = holding({ symbol: 'BTC', assetClass: 'crypto', isCrypto: true, valueCad: 1000, closes: closesFrom(days, pattern(365, 'A')) });
+        const w = computeEngine({ holdings: [btc], cashCad: 0, fx: FX }).windows.full;
+        if (!w.available) throw new Error('expected the full window');
+        expect(w.calendar).toBe('every_day');
+        expect(w.periodsPerYear).toBe(365.3);   // 365.25, rounded to one decimal
+        // alternating +-1 % over 365 returns: sample stdev x sqrt(365.25)
+        const r = pattern(365, 'A');
+        const m = r.reduce((a, b) => a + b, 0) / r.length;
+        const sd = Math.sqrt(r.reduce((a, b) => a + (b - m) ** 2, 0) / (r.length - 1));
+        expect(w.volatilityPct).toBeCloseTo(sd * Math.sqrt(365.25) * 100, 2);
+        expect(w.volatilityPct).toBeGreaterThan(sd * Math.sqrt(252) * 100 * 1.19);
+    });
+});
+
+describe('what-if comparison: before and after over the same window and holdings', () => {
+    // Stock: about 1.8 years of weekdays. Crypto: 380 calendar days.
+    const stockDates = weekdays(460);
+    const cryptoDates = everyDay(380);
+    const stock = (valueCad: number) => holding({ symbol: 'S', valueCad, closes: closesFrom(stockDates, pattern(459, 'A')) });
+    const btc = (valueCad: number) => holding({ symbol: 'BTC', assetClass: 'crypto', group: 'Crypto', isCrypto: true, valueCad, closes: closesFrom(cryptoDates, pattern(379, 'B')) });
+
+    it('adding a short-history asset shortens BOTH sides to its history, instead of leaving it out of the after side', () => {
+        const before = { holdings: [stock(6000)], cashCad: 4000, fx: FX };
+        const after = { holdings: [stock(6000), btc(2000)], cashCad: 2000, fx: FX };
+        const { before: b, after: a } = computeComparison(before, after, 'BTC');
+        const wb = b.windows.full;
+        const wa = a.windows.full;
+        if (!wb.available || !wa.available) throw new Error('expected both windows');
+        expect(wb.from).toBe(wa.from);
+        expect(wb.to).toBe(wa.to);
+        expect(wa.from >= cryptoDates[0]).toBe(true);
+        expect(wb.observations).toBe(wa.observations);
+        expect(wa.coverage.included.sort()).toEqual(['BTC', 'S']);
+        expect(wa.coverage).toMatchObject({ sharePct: 100, excluded: [], gaps: [] });
+        expect(wb.coverage).toMatchObject({ sharePct: 100, included: ['S'], excluded: [] });
+        // the plain X-ray of the after portfolio would have left BTC out of the full window
+        const plain = computeEngine(after).windows.full;
+        expect(plain.available && plain.coverage.excluded).toEqual(['BTC']);
+    });
+
+    it('a crypto-only portfolio plus a stock: both sides over the crypto history, on the same days', () => {
+        const before = { holdings: [btc(5000)], cashCad: 5000, fx: FX };
+        const after = { holdings: [btc(5000), stock(3000)], cashCad: 2000, fx: FX };
+        const { before: b, after: a } = computeComparison(before, after, 'S');
+        for (const id of ['full', 'last3y', 'last1y'] as const) {
+            const wb = b.windows[id];
+            const wa = a.windows[id];
+            if (!wb.available || !wa.available) throw new Error(`expected both ${id} windows`);
+            expect([wb.from, wb.to, wb.observations, wb.periodsPerYear]).toEqual([wa.from, wa.to, wa.observations, wa.periodsPerYear]);
+            expect(wb.from >= cryptoDates[0]).toBe(true);
+        }
+    });
+
+    it('marks the after side unavailable, with the reason, when the added asset has no usable history', () => {
+        const ghost = holding({ symbol: 'G', valueCad: 1000, closes: null });
+        const { before: b, after: a } = computeComparison({ holdings: [stock(6000)], cashCad: 4000, fx: FX }, { holdings: [stock(6000), ghost], cashCad: 3000, fx: FX }, 'G');
+        expect(b.windows.full.available).toBe(true);
+        expect(a.windows.full).toEqual({ id: 'full', available: false, reason: 'changed_asset_no_history', gap: { symbol: 'G', reason: 'no_history', firstDate: null, lastDate: null } });
+    });
+
+    it('also when its history is too short to compare, naming the date it starts', () => {
+        const shortDates = everyDay(30);
+        const fresh = holding({ symbol: 'NEW', isCrypto: true, valueCad: 1000, closes: closesFrom(shortDates, pattern(29, 'A')) });
+        const { before: b, after: a } = computeComparison({ holdings: [stock(6000)], cashCad: 4000, fx: FX }, { holdings: [stock(6000), fresh], cashCad: 3000, fx: FX }, 'NEW');
+        const wb = b.windows.full;
+        if (!wb.available) throw new Error('expected the before window');
+        expect(wb.from).toBe(stockDates[0]);   // the short series is left out of both, so it does not shrink the window
+        expect(a.windows.full).toMatchObject({ available: false, reason: 'changed_asset_no_history', gap: { symbol: 'NEW', reason: 'not_enough_history', firstDate: shortDates[0] } });
+    });
+
+    it('a reduction to nothing keeps the same window and set, the after side simply not holding it', () => {
+        const { before: b, after: a } = computeComparison(
+            { holdings: [stock(6000), btc(2000)], cashCad: 2000, fx: FX }, { holdings: [stock(6000)], cashCad: 4000, fx: FX }, 'BTC');
+        const wb = b.windows.full;
+        const wa = a.windows.full;
+        if (!wb.available || !wa.available) throw new Error('expected both windows');
+        expect(wb.from).toBe(wa.from);
+        expect(wb.coverage.included.sort()).toEqual(['BTC', 'S']);
+        expect(wa.coverage.included).toEqual(['S']);
     });
 });

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { bandStatus, bandTrack, clampPct, direction, dropFact, isAvailable, leadRow, metricRows, pickWindow, riskRows, segmentsOf, type AvailableWindow } from '@/components/portfolio/xray/logic';
+import { bandStatus, bandTrack, clampPct, comparisonOf, direction, sourceSummary, dropFact, isAvailable, leadRow, metricRows, pickWindow, riskRows, segmentsOf, type AvailableWindow } from '@/components/portfolio/xray/logic';
 import type { XrayView } from '@/lib/services/portfolio-xray';
 import type { WindowResult } from '@/lib/xray/types';
 
 const window = (over: Partial<AvailableWindow> = {}): AvailableWindow => ({
     id: 'full', available: true, from: '2021-11-12', to: '2026-11-13', observations: 1000,
-    coverage: { sharePct: 100, included: ['A', 'B', 'C', 'D'], excluded: [] },
+    coverage: { sharePct: 100, included: ['A', 'B', 'C', 'D'], excluded: [], gaps: [] }, calendar: 'exchange', periodsPerYear: 252,
     volatilityPct: 20, maxDrawdown: { pct: -25, peakDate: '2022-01-03', troughDate: '2022-10-12', recoveredDate: null },
     worstDay: { pct: -4, date: '2022-06-13' }, worstSpan20: null, diversificationRatio: 1.2, pairs: [], curve: [],
     risk: [
@@ -78,7 +78,17 @@ describe('what-if rows', () => {
         expect(rows.find((r) => r.key === 'largest')).toMatchObject({ before: 40, after: 45 });
         expect(rows.find((r) => r.key === 'volatility')).toMatchObject({ before: 20, after: 24 });
         expect(rows.find((r) => r.key === 'cash')).toMatchObject({ before: 10, after: 5 });
+        expect(rows.find((r) => r.key === 'coverage')).toMatchObject({ kind: 'share', before: 100, after: 100 });
         expect(metricRows(view({}), after, 'last3y').find((r) => r.key === 'volatility')).toMatchObject({ before: null, after: null });
+    });
+    it('gives the period shared by both sides, what is left out, and why the after side is missing', () => {
+        const gap = { symbol: 'NEW', reason: 'no_history' as const, firstDate: null, lastDate: null };
+        const missing = view({ windows: { full: { id: 'full', available: false, reason: 'changed_asset_no_history', gap }, last3y: none('last3y'), last1y: none('last1y') } });
+        expect(comparisonOf(view({}), missing, 'full')).toEqual({ period: { from: '2021-11-12', to: '2026-11-13' }, afterGap: gap, gaps: [], coveragePct: 100 });
+        const partial = window({ coverage: { sharePct: 80, included: ['A'], excluded: ['G'], gaps: [{ symbol: 'G', reason: 'starts_later', firstDate: '2024-11-15', lastDate: '2026-11-13' }] } });
+        const both = view({ windows: { full: partial, last3y: none('last3y'), last1y: none('last1y') } });
+        expect(comparisonOf(both, both, 'full')).toMatchObject({ afterGap: null, coveragePct: 80, gaps: [{ symbol: 'G', firstDate: '2024-11-15' }] });
+        expect(comparisonOf(view({}), view({}), 'last1y')).toEqual({ period: null, afterGap: null, gaps: [], coveragePct: null });
     });
     it('reads the direction of a change', () => {
         expect(direction(10, 12)).toBe('up');
@@ -95,5 +105,20 @@ describe('exposure segments', () => {
         const folded = segmentsOf(rows);
         expect(folded).toHaveLength(5);
         expect(folded[4]).toEqual({ name: '', sharePct: 30, rest: 3 });
+    });
+});
+
+describe('source summary', () => {
+    const sources = [
+        { value: 'A: 100 daily values', source: 'TMX Money', fetchedAt: 'x' },
+        { value: 'B: 100 daily values', source: 'Kraken', fetchedAt: 'x' },
+        { value: 'C: 100 daily values', source: 'TMX Money', fetchedAt: 'x' },
+        { value: 'USD/CAD: 100 daily values', source: 'Bank of Canada', fetchedAt: 'x' },
+    ];
+    const holdings = [{ symbol: 'A', currency: 'CAD' }, { symbol: 'B', currency: 'USD' }, { symbol: 'C', currency: 'CAD' }] as XrayView['holdings'];
+    it('names each provider of the series the window used once, with the rate when a USD series is in it', () => {
+        expect(sourceSummary({ sources, holdings }, window({ coverage: { sharePct: 100, included: ['A', 'B', 'C'], excluded: [], gaps: [] } }))).toEqual(['TMX Money', 'Kraken', 'Bank of Canada']);
+        expect(sourceSummary({ sources, holdings }, window({ coverage: { sharePct: 60, included: ['A', 'C'], excluded: ['B'], gaps: [] } }))).toEqual(['TMX Money']);
+        expect(sourceSummary({ sources, holdings }, null)).toEqual(['TMX Money', 'Kraken', 'Bank of Canada']);
     });
 });

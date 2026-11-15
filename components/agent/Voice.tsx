@@ -4,14 +4,17 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useVoiceEnabled } from '@/lib/voice/enabled';
 import type { SpeechState } from '@/hooks/useSpeech';
 import type { VoiceError, VoiceState, VoiceSupport } from '@/hooks/useVoiceInput';
 
 type VoiceButtonProps = { state: VoiceState; support: VoiceSupport; onStart: () => void; onStop: () => void };
 
 // The microphone next to Send: tap to start, tap again to send. Alt+V does the same while held.
+// Not shown at all while the server's answer is pending or when the server does not offer voice (VOICE_ENABLED).
 export const VoiceButton = ({ state, support, onStart, onStop }: VoiceButtonProps) => {
     const t = useTranslations('AgentPanel.voice');
+    if (support === 'off' || support === 'checking') return null;
     const unavailable = support === 'no-browser' || support === 'insecure';
     const listening = state === 'starting' || state === 'listening';
     const label = unavailable ? t(support === 'insecure' ? 'insecure' : 'unsupported') : listening ? t('stop') : t('start');
@@ -23,7 +26,7 @@ export const VoiceButton = ({ state, support, onStart, onStop }: VoiceButtonProp
             aria-label={label}
             aria-keyshortcuts="Alt+V"
             title={unavailable ? label : `${label} · ${t('hint')}`}
-            disabled={unavailable || support === 'checking'}
+            disabled={unavailable}
             aria-disabled={state === 'processing' || undefined}
             onClick={state === 'processing' ? undefined : listening ? onStop : onStart}
         >
@@ -36,8 +39,11 @@ export const VoiceButton = ({ state, support, onStart, onStop }: VoiceButtonProp
 type SpeakerButtonProps = { state: SpeechState; muted: boolean; onToggleMuted: () => void; onStop: () => void };
 
 // In the panel header: turns spoken replies on or off, and cuts a reply short while it is being read.
+// Not shown at all unless the server offers voice (VOICE_ENABLED).
 export const SpeakerButton = ({ state, muted, onToggleMuted, onStop }: SpeakerButtonProps) => {
     const t = useTranslations('AgentPanel.voice.speak');
+    const enabled = useVoiceEnabled();
+    if (enabled !== true) return null;
     const speaking = state !== 'idle';
     const label = speaking ? t('stop') : muted ? t('off') : t('on');
     return (

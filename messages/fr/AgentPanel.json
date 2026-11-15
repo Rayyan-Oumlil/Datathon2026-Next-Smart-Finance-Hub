@@ -152,6 +152,12 @@
       "off": "Activer la lecture des réponses",
       "stop": "Arrêter la lecture",
       "hint": "Les réponses à vos questions dictées sont lues à voix haute"
+    },
+    "server": {
+      "off": "La voix est désactivée sur ce serveur.",
+      "crossOrigin": "Les requêtes provenant d'un autre site sont refusées.",
+      "dailyCap": "La saisie vocale a atteint la limite d'aujourd'hui sur ce serveur. Écrivez plutôt votre message.",
+      "wording": "Ce texte ne peut pas être lu à voix haute."
     }
   }
 }

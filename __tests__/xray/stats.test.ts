@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     annualVolPct, correlationOf, curveOf, diversificationRatio, maxDrawdownOf, returnsOf, riskShares, sampleCov, thin, topPairs, worstDayOf, worstSpanOf,
 } from '@/lib/xray/stats';
+import { calendarKindOf, periodsPerYearOf } from '@/lib/xray/align';
 
 // Two patterns that are orthogonal (zero covariance) and have the same spread, in blocks of four days
 const A = Array.from({ length: 8 }, (_, i) => (i % 2 === 0 ? 0.01 : -0.01));
@@ -102,5 +103,35 @@ describe('helpers', () => {
         expect(thinned.some((p) => p.date === 'd0555')).toBe(true);
         expect(thinned.length).toBeLessThanOrEqual(102);
         expect(thin(points.slice(0, 50), 100, [])).toHaveLength(50);
+    });
+});
+
+describe('annualisation by the calendar actually used', () => {
+    // +-1 % over four days: sample stdev = sqrt(4 x 0.0001 / 3) = 0.0115470
+    const swings = [0.01, -0.01, 0.01, -0.01];
+    const dayList = (first: string, last: string, count: number) => [first, ...Array.from({ length: count - 2 }, () => first), last];
+
+    it('counts about 365 observations a year for an every-day calendar (crypto alone): 365 returns over 365 days', () => {
+        const everyDay2024 = Array.from({ length: 366 }, (_, i) => new Date(Date.UTC(2024, 0, 1 + i)).toISOString().slice(0, 10));
+        expect(everyDay2024[365]).toBe('2024-12-31');
+        // 365 returns / (365 days / 365.25) = 365.25
+        expect(periodsPerYearOf(everyDay2024)).toBeCloseTo(365.25, 6);
+        expect(calendarKindOf(periodsPerYearOf(everyDay2024))).toBe('every_day');
+        // 0.0115470 x sqrt(365.25) = 22.07 %, where sqrt(252) gave 18.33 %: about 17 % lower
+        expect(annualVolPct(swings, periodsPerYearOf(everyDay2024))).toBeCloseTo(22.07, 2);
+    });
+
+    it('counts about 252 for an exchange calendar: 252 returns over 365 days', () => {
+        const exchange = dayList('2025-01-02', '2026-01-02', 253);
+        // 252 returns / (365 / 365.25) = 252.1726
+        expect(periodsPerYearOf(exchange)).toBeCloseTo(252.1726, 4);
+        expect(calendarKindOf(periodsPerYearOf(exchange))).toBe('exchange');
+        // 0.0115470 x sqrt(252.1726) = 18.34 %
+        expect(annualVolPct(swings, periodsPerYearOf(exchange))).toBeCloseTo(18.34, 2);
+    });
+
+    it('has no rate for fewer than two dates or a zero span', () => {
+        expect(periodsPerYearOf(['2026-01-02'])).toBeNaN();
+        expect(periodsPerYearOf(['2026-01-02', '2026-01-02'])).toBeNaN();
     });
 });

@@ -5,13 +5,15 @@ import { ArrowUpRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Panel from '@/components/Panel';
 import { useFmt } from '../useFmt';
-import { isAvailable, leadRow, pickWindow } from './logic';
+import { isAvailable, leadRow, pickWindow, sourceSummary } from './logic';
+import { CoverageLine } from './parts';
 import { useXray } from './useXray';
 
 const W = 240;
 const H = 56;
 
-// The Portfolio tab's X-ray module: three figures, the one finding that matters, and a way into the full page.
+// The Portfolio tab's X-ray module: three figures with their period, coverage, time and sources, the one finding that
+// matters, and a way into the full page.
 // The whole analysis lives on its own page (/portfolio/xray), so this tab stays light.
 export default function XrayCard({ refreshKey }: { refreshKey: number }) {
     const t = useTranslations('Xray');
@@ -45,6 +47,7 @@ export default function XrayCard({ refreshKey }: { refreshKey: number }) {
     const window = view.windows[pickWindow(view.windows, 'full')];
     const lead = isAvailable(window) ? leadRow(window) : null;
     const top = view.concentration.topHolding;
+    const sources = sourceSummary(view, isAvailable(window) ? window : null);
     const points = isAvailable(window) ? window.curve : [];
     const min = Math.min(...points.map((p) => p.value));
     const max = Math.max(...points.map((p) => p.value));
@@ -79,6 +82,14 @@ export default function XrayCard({ refreshKey }: { refreshKey: number }) {
                         <polyline points={line} fill="none" stroke="var(--brand)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
                     </svg>
                 )}
+            </div>
+            {/* Every level sees what the figures cover, when they were computed and where the closes come from */}
+            <div className="mt-3 flex flex-col gap-0.5">
+                {isAvailable(window) && <CoverageLine window={window} />}
+                <p className="text-[12px] leading-relaxed text-faint">
+                    {t('coverage.computed', { when: fmt.when(view.computedAt) })}
+                    {sources.length > 0 && <> · {t('coverage.sources', { list: sources.join(', ') })}</>}
+                </p>
             </div>
             <p className="mt-4 rounded-[10px] bg-brand-soft px-3 py-2 text-[13.5px] text-foreground">
                 {lead && lead.riskSharePct !== null

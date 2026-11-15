@@ -8,10 +8,11 @@ import type { WindowId } from '@/lib/xray/types';
 import { api } from '../logic';
 import { useFmt } from '../useFmt';
 import AssetSearch, { type Asset } from './AssetSearch';
-import { metricRows, type MetricRow } from './logic';
-import { Tag } from './parts';
+import { comparisonOf, metricRows, type MetricRow } from './logic';
+import { Tag, useGapText } from './parts';
 
-export type Preset = { symbol: string; direction: 'add' | 'reduce'; amountCad: number; nonce: number };
+// Opens the lab on a symbol; the direction and the amount are left to the user
+export type Preset = { symbol: string; nonce: number };
 type Props = { view: XrayView; windowId: WindowId; preset?: Preset | null };
 
 const RUN_DELAY_MS = 650;
@@ -27,6 +28,7 @@ export default function WhatIf({ view, windowId, preset }: Props) {
     const [running, setRunning] = useState(false);
     const [problem, setProblem] = useState<string | null>(null);
     const [result, setResult] = useState<XrayWhatIf | null>(null);
+    const gapText = useGapText();
     const latest = useRef(0);
     const root = useRef<HTMLElement>(null);
 
@@ -36,21 +38,20 @@ export default function WhatIf({ view, windowId, preset }: Props) {
     const max = Math.floor(mode === 'add' ? view.cashCad : heldValue);
     const step = Math.max(1, Math.round(max / 200));
 
-    // A reading's test loads the lab: the asset, the direction and the amount are set, and the run follows by itself
+    // A reading's link opens the lab on its holding, with no amount: nothing runs until the user drags one
     useEffect(() => {
         if (!preset) return;
         const name = view.holdings.find((h) => h.symbol === preset.symbol)?.name ?? preset.symbol;
         setAsset({ symbol: preset.symbol, name });
-        setMode(preset.direction);
-        setAmount(preset.amountCad);
+        setAmount(0);
         root.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         // only a new press (nonce) loads the lab again
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [preset?.nonce]);
 
-    // A new asset or direction starts from a fresh amount inside the new range
+    // A new asset or direction keeps the amount inside the new range; the app never picks an amount itself
     useEffect(() => {
-        setAmount((current) => (max > 0 ? Math.min(current || Math.round(max / 4), max) : 0));
+        setAmount((current) => (max > 0 ? Math.min(current, max) : 0));
     }, [asset?.symbol, mode, max]);
 
     useEffect(() => {
@@ -75,6 +76,8 @@ export default function WhatIf({ view, windowId, preset }: Props) {
         // fmt and t change identity with the language only
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [asset?.symbol, amount, mode]);
+
+    const comparison = result ? comparisonOf(result.before, result.after, windowId) : { period: null, afterGap: null, gaps: [], coveragePct: null };
 
     const show = (value: number | null, kind: MetricRow['kind']) => {
         if (value === null) return t('tiles.notAvailable');
@@ -133,10 +136,16 @@ export default function WhatIf({ view, windowId, preset }: Props) {
                 </div>
             )}
 
+            {asset && max > 0 && !(amount > 0) && <p className="text-[12.5px] text-faint">{t('whatIf.pickAmount')}</p>}
+
             {problem && <p role="alert" className="text-[13px] text-down">{problem}</p>}
 
             {result && (
                 <div aria-live="polite" aria-busy={running} className={`flex flex-col gap-3 transition-opacity ${running ? 'opacity-60' : ''}`}>
+                    {/* Before and after are computed over the same dates and the same covered holdings */}
+                    {comparison.period && <p className="text-[12px] text-faint">{t('whatIf.period', { from: fmt.when(comparison.period.from), to: fmt.when(comparison.period.to) })}</p>}
+                    {comparison.afterGap && <p className="text-[12.5px] text-down">{t('whatIf.afterUnavailable', { reason: gapText(comparison.afterGap) })}</p>}
+                    {comparison.gaps.length > 0 && <p className="text-[12px] text-down">{t('coverage.partial', { share: fmt.share(comparison.coveragePct ?? 0), gaps: comparison.gaps.map(gapText).join('; ') })}</p>}
                     <div className="overflow-x-auto rounded-[10px] border border-line">
                         <table className="data-table w-full text-[12.5px] [&_td]:px-2.5 [&_th]:px-2.5">
                             <thead>

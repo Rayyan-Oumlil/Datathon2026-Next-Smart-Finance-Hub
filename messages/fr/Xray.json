@@ -17,6 +17,23 @@
     "last3y": "3 ans",
     "last1y": "1 an"
   },
+  "coverage": {
+    "period": "du {from} au {to}",
+    "full": "Couvre {share} de la valeur du portefeuille.",
+    "partial": "Couvre {share} de la valeur du portefeuille ; {gaps}.",
+    "gap": {
+      "starts_later": "{symbol} est exclu : son historique de cours commence le {date}",
+      "ends_earlier": "{symbol} est exclu : son historique de cours s’arrête le {date}",
+      "no_history": "{symbol} est exclu : aucun historique de cours",
+      "not_enough_history": "{symbol} est exclu : son historique de cours commence le {date}, trop court pour comparer"
+    },
+    "computed": "Calculé {when}",
+    "sources": "Source : {list}",
+    "calendar": {
+      "exchange": "Calendrier : les jours d’ouverture des bourses, environ {count} par année ; la volatilité est annualisée sur cette base.",
+      "every_day": "Calendrier : tous les jours civils, environ {count} par année (la cryptomonnaie se négocie tous les jours) ; la volatilité est annualisée sur cette base."
+    }
+  },
   "scope": {
     "measured": "Mesuré ici",
     "notMeasured": "Non mesuré ici",
@@ -82,7 +99,8 @@
       "buy_more": "Ajouter à ma position"
     },
     "worstDay": "Pire journée",
-    "worstSpan": "Pires 20 jours de bourse"
+    "worstSpan": "Pires 20 jours de bourse",
+    "worstSpanEveryDay": "Pires 20 jours civils"
   },
   "together": {
     "title": "Évoluent ensemble",
@@ -126,9 +144,13 @@
       "effective": "Positions effectives",
       "volatility": "Volatilité",
       "worstFall": "Pire baisse",
+      "coverage": "Couverture (part de la valeur)",
       "cash": "Liquidités"
     },
-    "noCash": "Il ne reste aucune liquidité simulée à ajouter."
+    "noCash": "Il ne reste aucune liquidité simulée à ajouter.",
+    "period": "Avant et après sur la même période : du {from} au {to}.",
+    "afterUnavailable": "Après : non calculé. {reason}.",
+    "pickAmount": "Faites glisser le montant pour lancer le test."
   },
   "limits": {
     "title": "Limites",
@@ -182,6 +204,6 @@
     "cash_heavy": "{share} du portefeuille est en liquidités, qui n’apportent ni croissance ni risque dans ce rejeu.",
     "little_cushion": "Les positions se compensent peu (ratio de diversification {ratio}).",
     "left_out": "{list} n’a pas pu être inclus sur cette période faute d’historique ; {share} de la valeur est couverte.",
-    "try": "Tester une réduction de {amount} de {symbol}"
+    "open": "Ouvrir le labo de simulation pour {symbol}"
   }
 }

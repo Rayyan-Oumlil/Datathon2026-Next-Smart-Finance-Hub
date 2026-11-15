@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Locale } from '@/i18n/config';
+import { fetchVoiceEnabled } from '@/lib/voice/enabled';
 
 export type SpeechState = 'idle' | 'loading' | 'playing';
 
@@ -36,7 +37,15 @@ export function useSpeech() {
     const element = useRef<HTMLAudioElement | null>(null);
     const objectUrl = useRef<string | null>(null);
     const mutedRef = useRef(false);
+    // Off until the server says it offers voice (VOICE_ENABLED): nothing is primed, asked for or read before then
+    const enabledRef = useRef(false);
     const failTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+    useEffect(() => {
+        let live = true;
+        void fetchVoiceEnabled().then((on) => { if (live) enabledRef.current = on; });
+        return () => { live = false; };
+    }, []);
 
     useEffect(() => {
         const stored = readMuted();
@@ -77,7 +86,7 @@ export function useSpeech() {
 
     /** Call inside a click or key press: it unlocks the audio element so the reply can play when it arrives. */
     const prime = useCallback(() => {
-        if (mutedRef.current) return;
+        if (mutedRef.current || !enabledRef.current) return;
         element.current ??= new Audio();
         const audio = element.current;
         if (audio.getAttribute('src')) return; // already in use
@@ -93,7 +102,7 @@ export function useSpeech() {
 
     /** `language` is the reply's own; the voice follows it, whatever the app is set to. */
     const speak = useCallback(async (text: string, withTicket?: number, language?: Locale) => {
-        if (withTicket !== undefined && withTicket !== run.current) return;
+        if (!enabledRef.current || (withTicket !== undefined && withTicket !== run.current)) return;
         stop();
         setFailed(false);
         const mine = ++run.current;

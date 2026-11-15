@@ -4,7 +4,7 @@ import type { XrayView } from '@/lib/services/portfolio-xray';
 import { formatNumber } from '@/i18n/format';
 import { useFmt } from '../useFmt';
 import type { AvailableWindow } from './logic';
-import { Tag } from './parts';
+import { CoverageLine, Tag } from './parts';
 
 type StatProps = { label: string; value: string; sub?: string; tag: 'fact' | 'scenario' };
 
@@ -30,6 +30,7 @@ export default function Tiles({ view, window, level }: Props) {
     const dd = window.maxDrawdown;
 
     return (
+        <>
         <dl className="grid grid-cols-2 gap-x-8 gap-y-5">
             <Stat
                 tag="fact"
@@ -58,5 +59,8 @@ export default function Tiles({ view, window, level }: Props) {
                 sub={dd.pct === 0 ? undefined : t('tiles.worstFallSub', { peak: fmt.when(dd.peakDate), trough: fmt.when(dd.troughDate) })}
             />
         </dl>
+        {/* The replay figures above hold for this period and this share of the value only */}
+        <CoverageLine window={window} className="mt-4" />
+        </>
     );
 }

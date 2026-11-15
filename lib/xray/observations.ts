@@ -1,6 +1,6 @@
 // "What stands out": plain readings of the X-ray's own numbers, chosen by fixed rules. They describe the portfolio;
-// they never tell the user what to do. A reading may carry a test to try in the what-if lab (the app's way of
-// letting the user see the effect of a change), never an instruction. Pure: no I/O, no wording (the components
+// they never tell the user what to do. A reading about one holding may carry a link that opens the what-if lab on
+// it, with no amount and no direction chosen by the app, so it never reads as a suggested change. Pure: no I/O, no wording (the components
 // write each sentence in the language from its id and values).
 
 import type { WindowResult } from './types';
@@ -16,7 +16,6 @@ export const OBSERVATION_RULES = {
     usdSharePct: 50,            // share of the portfolio in USD
     cashSharePct: 50,           // share of the portfolio in cash
     lowDiversificationRatio: 1.15,
-    testShare: 0.25,            // the test offered reduces a position by this share of its value
     max: 4,
 } as const;
 
@@ -31,8 +30,8 @@ export type Observation =
     | { id: 'little_cushion'; ratio: number }
     | { id: 'left_out'; symbols: string[]; sharePct: number };
 
-/** A change to try in the lab: reduce `symbol` by `amountCad`. */
-export type Test = { symbol: string; direction: 'reduce'; amountCad: number };
+/** Opens the what-if lab on `symbol`; the user picks the direction and the amount. */
+export type Test = { symbol: string };
 
 type Input = {
     holdings: Array<{ symbol: string; valueCad: number; currency: string }>;
@@ -44,11 +43,9 @@ type Input = {
 };
 
 const R = OBSERVATION_RULES;
-const testFor = (input: Input, symbol: string): Test | null => {
-    const value = input.holdings.find((h) => h.symbol === symbol)?.valueCad ?? 0;
-    const amountCad = Math.round(value * R.testShare);
-    return amountCad > 0 ? { symbol, direction: 'reduce', amountCad } : null;
-};
+// Only a holding with some value can be looked at in the lab
+const testFor = (input: Input, symbol: string): Test | null =>
+    (input.holdings.find((h) => h.symbol === symbol)?.valueCad ?? 0) > 0 ? { symbol } : null;
 
 /** The readings that apply, in order of how much they say, at most `OBSERVATION_RULES.max`. */
 export function observationsOf(input: Input): Observation[] {

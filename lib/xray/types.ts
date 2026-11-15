@@ -37,19 +37,39 @@ export type Drawdown = { pct: number; peakDate: string; troughDate: string; reco
 
 export type WindowRisk = { symbol: string; weightPct: number; volatilityPct: number; riskSharePct: number | null };
 
+/**
+ * Why a held symbol is not in a replay: it has no usable daily closes at all, its history starts after the window's
+ * start or ends before its end, or (what-if) it is too short to be compared over a common window.
+ */
+export type GapReason = 'no_history' | 'starts_later' | 'ends_earlier' | 'not_enough_history';
+export type CoverageGap = { symbol: string; reason: GapReason; firstDate: string | null; lastDate: string | null };
+
+/** What a replay covers: share of the portfolio's value (cash included), the symbols in it, and those left out and why. */
+export type Coverage = { sharePct: number; included: string[]; excluded: string[]; gaps: CoverageGap[] };
+
+export type Calendar = 'exchange' | 'every_day';
+
 export type WindowResult =
-    | { id: WindowId; available: false; reason: 'no_holdings' | 'not_enough_history' }
+    | {
+        id: WindowId;
+        available: false;
+        // changed_asset_no_history: a what-if whose changed asset has no usable history in the common window
+        reason: 'no_holdings' | 'not_enough_history' | 'changed_asset_no_history';
+        gap?: CoverageGap;
+    }
     | {
         id: WindowId;
         available: true;
         from: string;
         to: string;
         observations: number;                    // daily returns used
-        coverage: { sharePct: number; included: string[]; excluded: string[] };
+        calendar: Calendar;                      // every calendar day (crypto alone) or the days exchanges are open
+        periodsPerYear: number;                  // observations a year of that calendar, used to annualise
+        coverage: Coverage;
         volatilityPct: number;
         maxDrawdown: Drawdown;
         worstDay: { pct: number; date: string };
-        worstSpan20: { pct: number; from: string; to: string } | null;
+        worstSpan20: { pct: number; from: string; to: string } | null;   // 20 observations of `calendar`
         diversificationRatio: number | null;
         risk: WindowRisk[];
         pairs: Array<{ a: string; b: string; correlation: number }>;

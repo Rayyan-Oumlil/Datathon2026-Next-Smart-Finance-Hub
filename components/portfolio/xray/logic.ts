@@ -52,9 +52,12 @@ export function dropFact(view: Pick<XrayView, 'dropAnswer'>, window: AvailableWi
     return view.dropAnswer && window.maxDrawdown.pct <= -20 ? { answer: view.dropAnswer, fallPct: window.maxDrawdown.pct } : null;
 }
 
-export type MetricRow = { key: 'largest' | 'effective' | 'volatility' | 'worstFall' | 'cash'; kind: 'share' | 'number' | 'signed'; before: number | null; after: number | null };
+export type MetricRow = { key: 'largest' | 'effective' | 'volatility' | 'worstFall' | 'coverage' | 'cash'; kind: 'share' | 'number' | 'signed'; before: number | null; after: number | null };
 
-/** The rows of the what-if table. Volatility and the worst fall are those of the window on screen. */
+/**
+ * The rows of the what-if table. Volatility, the worst fall and the coverage are those of the window on screen; the
+ * service computes before and after over the same dates and the same covered holdings (lib/xray/engine.ts).
+ */
 export function metricRows(before: XrayView, after: XrayView, windowId: WindowId): MetricRow[] {
     const win = (view: XrayView) => {
         const w = view.windows[windowId];
@@ -65,6 +68,7 @@ export function metricRows(before: XrayView, after: XrayView, windowId: WindowId
         { key: 'effective', kind: 'number', before: before.concentration.effectiveHoldings, after: after.concentration.effectiveHoldings },
         { key: 'volatility', kind: 'share', before: win(before)?.volatilityPct ?? null, after: win(after)?.volatilityPct ?? null },
         { key: 'worstFall', kind: 'signed', before: win(before)?.maxDrawdown.pct ?? null, after: win(after)?.maxDrawdown.pct ?? null },
+        { key: 'coverage', kind: 'share', before: win(before)?.coverage.sharePct ?? null, after: win(after)?.coverage.sharePct ?? null },
         { key: 'cash', kind: 'share', before: before.cashSharePct, after: after.cashSharePct },
     ];
 }
@@ -82,4 +86,32 @@ export function segmentsOf(rows: Array<{ name: string; sharePct: number }>): Arr
     if (rows.length <= SEGMENTS) return rows;
     const rest = rows.slice(SEGMENTS - 1);
     return [...rows.slice(0, SEGMENTS - 1), { name: '', sharePct: rest.reduce((sum, row) => sum + row.sharePct, 0), rest: rest.length }];
+}
+
+/**
+ * The period of a what-if on screen: from and to of the window (the same for both sides, the service makes them so),
+ * and the reason the after side could not be computed, if it could not.
+ */
+export function comparisonOf(before: XrayView, after: XrayView, windowId: WindowId) {
+    const b = before.windows[windowId];
+    const a = after.windows[windowId];
+    const shown = isAvailable(a) ? a : isAvailable(b) ? b : null;
+    return {
+        period: shown ? { from: shown.from, to: shown.to } : null,
+        afterGap: !isAvailable(a) && a?.reason === 'changed_asset_no_history' ? a.gap ?? null : null,
+        // what the shown side leaves out (the same holdings on both sides), and the share of the value it covers
+        gaps: shown ? shown.coverage.gaps : [],
+        coveragePct: shown ? shown.coverage.sharePct : null,
+    };
+}
+
+/**
+ * The providers of the series a window used, once each, for a one-line source summary: the series of its included
+ * holdings, and the USD/CAD rate when one of them is in US dollars.
+ */
+export function sourceSummary(view: Pick<XrayView, 'sources' | 'holdings'>, window: AvailableWindow | null): string[] {
+    const symbols = new Set(window ? window.coverage.included : view.holdings.map((h) => h.symbol));
+    const usd = view.holdings.some((h) => symbols.has(h.symbol) && h.currency === 'USD');
+    if (usd) symbols.add('USD/CAD');
+    return [...new Set(view.sources.filter((s) => symbols.has(s.value.split(':')[0])).map((s) => s.source))];
 }

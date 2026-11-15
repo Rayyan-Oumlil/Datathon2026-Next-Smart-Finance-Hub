@@ -10,7 +10,7 @@ import type { AvailableWindow } from './logic';
 import { Section } from './parts';
 
 // Plain readings of the numbers on the page, chosen by fixed rules (lib/xray/observations.ts). They describe; they
-// never instruct. A reading about one holding offers a test, which the what-if lab runs when the button is pressed.
+// never instruct. A reading about one holding offers to open the what-if lab on it, with no amount chosen by the app.
 export default function Observations({ view, window, onTest }: { view: XrayView; window: AvailableWindow; onTest: (test: Test) => void }) {
     const t = useTranslations('Xray');
     const fmt = useFmt();
@@ -49,7 +49,7 @@ export default function Observations({ view, window, onTest }: { view: XrayView;
                         <p className="min-w-0 flex-1 basis-64 text-[13.5px] leading-relaxed text-foreground">{sentence(o)}</p>
                         {'test' in o && (
                             <button type="button" className="btn btn-ghost h-8 flex-none px-3 text-[12.5px]" onClick={() => onTest(o.test)}>
-                                <FlaskConical /> {t('obs.try', { symbol: o.test.symbol, amount: fmt.cad(o.test.amountCad) })}
+                                <FlaskConical /> {t('obs.open', { symbol: o.test.symbol })}
                             </button>
                         )}
                     </li>

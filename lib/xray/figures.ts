@@ -34,7 +34,10 @@ export function agentFigures(out: EngineOutput, stamp: Stamp, only?: WindowId): 
         if (only && id !== only) continue;
         const w = out.windows[id];
         if (!w.available) continue;
-        figures[`volatility_${id}`] = figure(w.volatilityPct, '%', stamp, w.to, `annualised volatility of the ${id} replay, ${w.from} to ${w.to}`);
+        const left = w.coverage.gaps.map((g) => `${g.symbol} (${g.reason}${g.firstDate ? `, history starts ${g.firstDate}` : ''})`).join(', ');
+        const covered = `covers ${w.coverage.sharePct}% of the portfolio's value${left ? `; left out: ${left}` : ''}`;
+        figures[`volatility_${id}`] = figure(w.volatilityPct, '%', stamp, w.to,
+            `annualised volatility of the ${id} replay, ${w.from} to ${w.to}, ${w.calendar === 'every_day' ? 'every calendar day' : 'exchange days'} (${w.periodsPerYear} a year); ${covered}`);
         figures[`maxDrawdown_${id}`] = figure(w.maxDrawdown.pct, '%', stamp, w.to, `maximum drawdown of the ${id} replay, ${w.maxDrawdown.peakDate} to ${w.maxDrawdown.troughDate}`);
         figures[`worstDay_${id}`] = figure(w.worstDay.pct, '%', stamp, w.to, `worst day of the ${id} replay, ${w.worstDay.date}`);
         figures[`holdings_${id}`] = w.risk.map((r) => ({

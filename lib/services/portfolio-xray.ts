@@ -11,7 +11,7 @@ import { getProfile } from '@/lib/store';
 import { getEntry } from '@/lib/universe';
 import { checkProfileConflict } from '@/lib/watchlist/conflict';
 import type { Locale } from '@/lib/watchlist/text';
-import { computeEngine } from '@/lib/xray/engine';
+import { computeComparison, computeEngine } from '@/lib/xray/engine';
 import { XRAY_VERSION, type EngineHolding, type EngineInput, type EngineOutput } from '@/lib/xray/types';
 import { ServiceError, round2 } from './errors';
 import { getPortfolio } from './portfolio';
@@ -37,7 +37,10 @@ export type XrayWhatIf = { change: XrayChange; before: XrayView; after: XrayView
 
 const METHOD = `${XRAY_VERSION}: constant-weights replay: today's proportions applied to every past day, over daily closes in CAD `
     + '(a USD close is multiplied by the Bank of Canada USD/CAD rate of the day); calendar = the days every held stock and fund has a close; '
-    + 'volatility = sample standard deviation of daily returns x sqrt(252); maximum drawdown = lowest value of (curve / running peak - 1); '
+    + 'volatility = sample standard deviation of daily returns x sqrt(observations a year of the calendar used: about 252 for exchange days, about 365 when only crypto sets it, every day); '
+    + 'a holding whose history does not reach over a period is left out of it, named, and the coverage is stated as a share of the value; '
+    + 'what-if: before and after over the same dates and the same covered holdings, the window starting at the latest first close of the holdings of both; '
+    + 'maximum drawdown = lowest value of (curve / running peak - 1); '
     + "risk share of a holding = weight x covariance(holding, portfolio) / variance(portfolio); effective holdings = 1 / sum of squared shares of the invested part; "
     + 'price changes only, dividends not included.';
 const ASSUMPTIONS = [
@@ -107,8 +110,7 @@ async function gather(locale: Locale): Promise<Gathered> {
     };
 }
 
-function assemble(input: EngineInput, gathered: Gathered): XrayView {
-    const out = computeEngine(input);
+function assemble(out: EngineOutput, gathered: Gathered, sources: Array<Sourced<string>> = gathered.sources): XrayView {
     const { profile } = gathered;
     const full = out.windows.full;
     return {
@@ -122,14 +124,14 @@ function assemble(input: EngineInput, gathered: Gathered): XrayView {
         unpriced: gathered.unpriced,
         method: METHOD,
         assumptions: ASSUMPTIONS,
-        sources: gathered.sources,
+        sources,
     };
 }
 
 /** The X-ray of the simulated portfolio as it stands, valued now. Text it carries (group names) is in `locale`. */
 export async function getPortfolioXray(locale?: Locale): Promise<XrayView> {
     const gathered = await gather(locale ?? await getAppLocale());
-    return assemble(gathered.input, gathered);
+    return assemble(computeEngine(gathered.input), gathered);
 }
 
 const EPSILON = 0.005;
@@ -151,6 +153,8 @@ export async function getXrayWhatIf(change: XrayChange, locale?: Locale): Promis
 
     const gathered = await gather(lang);
     const { input } = gathered;
+    // The series the before side reads; an asset not held yet adds its own to the after side only
+    const beforeSources = [...gathered.sources];
     const held = input.holdings.find((h) => h.symbol === entry.symbol);
     let holdings: EngineHolding[];
     let cashCad: number;
@@ -191,10 +195,12 @@ export async function getXrayWhatIf(change: XrayChange, locale?: Locale): Promis
         cashCad = round2(input.cashCad + amount);
     }
 
+    // Before and after over the same dates and the same covered holdings (lib/xray/engine.ts computeComparison)
+    const compared = computeComparison(input, { ...input, holdings, cashCad }, entry.symbol);
     return {
         change: { symbol: entry.symbol, amountCad: amount, direction: change.direction },
-        before: assemble(input, gathered),
-        after: assemble({ ...input, holdings, cashCad }, gathered),
+        before: assemble(compared.before, gathered, beforeSources),
+        after: assemble(compared.after, gathered),
         conflicts,
         simulated: true,
     };

@@ -17,6 +17,23 @@
     "last3y": "3 years",
     "last1y": "1 year"
   },
+  "coverage": {
+    "period": "{from} – {to}",
+    "full": "Covers {share} of the portfolio's value.",
+    "partial": "Covers {share} of the portfolio's value; {gaps}.",
+    "gap": {
+      "starts_later": "{symbol} is left out: its price history starts on {date}",
+      "ends_earlier": "{symbol} is left out: its price history ends on {date}",
+      "no_history": "{symbol} is left out: it has no price history",
+      "not_enough_history": "{symbol} is left out: its price history starts on {date}, too short to compare"
+    },
+    "computed": "Computed {when}",
+    "sources": "Source: {list}",
+    "calendar": {
+      "exchange": "Calendar: the days the exchanges are open, about {count} a year; volatility is annualised on that basis.",
+      "every_day": "Calendar: every calendar day, about {count} a year (crypto trades daily); volatility is annualised on that basis."
+    }
+  },
   "scope": {
     "measured": "Measured here",
     "notMeasured": "Not measured here",
@@ -82,7 +99,8 @@
       "buy_more": "Add to my position"
     },
     "worstDay": "Worst day",
-    "worstSpan": "Worst 20 trading days"
+    "worstSpan": "Worst 20 trading days",
+    "worstSpanEveryDay": "Worst 20 calendar days"
   },
   "together": {
     "title": "Moves together",
@@ -126,9 +144,13 @@
       "effective": "Effective holdings",
       "volatility": "Volatility",
       "worstFall": "Worst fall",
+      "coverage": "Coverage (share of value)",
       "cash": "Cash"
     },
-    "noCash": "No simulated cash left to add."
+    "noCash": "No simulated cash left to add.",
+    "period": "Before and after over the same period: {from} to {to}.",
+    "afterUnavailable": "After: not computed. {reason}.",
+    "pickAmount": "Drag the amount to run the test."
   },
   "limits": {
     "title": "Limits",
@@ -182,6 +204,6 @@
     "cash_heavy": "{share} of the portfolio is cash, which adds no growth and no risk in this replay.",
     "little_cushion": "The holdings offset each other little (diversification ratio {ratio}).",
     "left_out": "{list} could not be included in this period for lack of history; {share} of the value is covered.",
-    "try": "Test reducing {symbol} by {amount}"
+    "open": "Open the what-if lab for {symbol}"
   }
 }

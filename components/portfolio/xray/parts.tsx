@@ -1,5 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import type { CoverageGap } from '@/lib/xray/types';
+import { useFmt } from '../useFmt';
+import type { AvailableWindow } from './logic';
 
 /** A percentage that grows from zero the first time it is drawn (0 -> value), so a bar shows how it fills. */
 export function useGrown(value: number): number {
@@ -39,5 +42,39 @@ export function Section({ title, sub, tag, children }: { title: string; sub?: st
             {sub && <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">{sub}</p>}
             <div className="mt-3">{children}</div>
         </section>
+    );
+}
+
+/** "X is left out: its price history starts on DATE", in the active language. */
+export function useGapText() {
+    const t = useTranslations('Xray');
+    const fmt = useFmt();
+    return (gap: CoverageGap) => t(`coverage.gap.${gap.reason}`, {
+        symbol: gap.symbol,
+        date: gap.reason === 'ends_earlier' ? (gap.lastDate ? fmt.when(gap.lastDate) : '') : (gap.firstDate ? fmt.when(gap.firstDate) : ''),
+    });
+}
+
+/**
+ * The period of a window and what it covers, in words, next to its figures: "1 Nov 2024 – 13 Nov 2026 · Covers 80 % of
+ * the portfolio's value; BTC is left out: its price history starts on ...". Shown at every level.
+ */
+export function CoverageLine({ window, className = '' }: { window: AvailableWindow; className?: string }) {
+    const t = useTranslations('Xray');
+    const fmt = useFmt();
+    const gapText = useGapText();
+    const { coverage } = window;
+    const share = fmt.share(coverage.sharePct);
+    const partial = coverage.sharePct < 100 || coverage.gaps.length > 0;
+    return (
+        <p className={`text-[12px] leading-relaxed text-faint ${className}`}>
+            <span className="font-semibold text-muted-foreground">{t('coverage.period', { from: fmt.when(window.from), to: fmt.when(window.to) })}</span>
+            {' · '}
+            <span className={partial ? 'text-down' : undefined}>
+                {partial && coverage.gaps.length > 0
+                    ? t('coverage.partial', { share, gaps: coverage.gaps.map(gapText).join('; ') })
+                    : t('coverage.full', { share })}
+            </span>
+        </p>
     );
 }

@@ -52,3 +52,21 @@ export function commonCalendar(series: Array<{ isCrypto: boolean; closes: DailyC
 export function levelsOn(closes: DailyClose[], dates: string[]): Array<number | null> {
     return dates.map((date) => asOf(closes, date)?.close ?? null);
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Days in an average year (leap years included), the unit `periodsPerYearOf` counts in. */
+export const DAYS_PER_YEAR = 365.25;
+
+/**
+ * How many observations a year the calendar actually used has: the number of returns divided by the years the dates
+ * span. About 252 for an exchange calendar (weekdays less holidays), about 365 for an every-day calendar (crypto
+ * alone). Volatility is annualised with it, so a crypto-only replay is not scaled as if it traded 252 days a year.
+ */
+export function periodsPerYearOf(dates: string[]): number {
+    if (dates.length < 2) return NaN;
+    const days = (Date.parse(`${dates[dates.length - 1]}T00:00:00Z`) - Date.parse(`${dates[0]}T00:00:00Z`)) / DAY_MS;
+    return days > 0 ? (dates.length - 1) / (days / DAYS_PER_YEAR) : NaN;
+}
+
+/** Which kind of calendar the dates are: every calendar day (crypto alone), or the days exchanges are open. */
+export const calendarKindOf = (periodsPerYear: number): 'every_day' | 'exchange' => (periodsPerYear > 320 ? 'every_day' : 'exchange');

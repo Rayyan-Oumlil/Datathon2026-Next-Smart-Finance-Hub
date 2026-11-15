@@ -152,6 +152,12 @@
       "off": "Turn on spoken replies",
       "stop": "Stop reading",
       "hint": "Replies to questions you ask by voice are read aloud"
+    },
+    "server": {
+      "off": "Voice is turned off on this server.",
+      "crossOrigin": "Requests from another site are refused.",
+      "dailyCap": "Voice input has reached today's limit on this server. Type your message instead.",
+      "wording": "This text cannot be read aloud."
     }
   }
 }

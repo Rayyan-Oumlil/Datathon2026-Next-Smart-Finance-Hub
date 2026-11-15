@@ -103,7 +103,7 @@ export default function MoveChart({ view, window, level }: { view: XrayView; win
                 <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1 text-[12.5px] sm:grid-cols-2">
                     <div className="flex justify-between gap-3"><dt className="text-faint">{t('move.worstDay')}</dt><dd className="num font-semibold text-foreground">{fmt.signedPct(window.worstDay.pct)} · {fmt.when(window.worstDay.date)}</dd></div>
                     {window.worstSpan20 && (
-                        <div className="flex justify-between gap-3"><dt className="text-faint">{t('move.worstSpan')}</dt><dd className="num font-semibold text-foreground">{fmt.signedPct(window.worstSpan20.pct)} · {fmt.when(window.worstSpan20.from)}</dd></div>
+                        <div className="flex justify-between gap-3"><dt className="text-faint">{t(window.calendar === 'every_day' ? 'move.worstSpanEveryDay' : 'move.worstSpan')}</dt><dd className="num font-semibold text-foreground">{fmt.signedPct(window.worstSpan20.pct)} · {fmt.when(window.worstSpan20.from)}</dd></div>
                     )}
                 </dl>
             )}

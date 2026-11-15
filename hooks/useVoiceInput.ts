@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { pcmBytes, toPcm16, TARGET_RATE } from '@/lib/voice/pcm';
+import { fetchVoiceEnabled } from '@/lib/voice/enabled';
 import { startSession, type Session } from '@/lib/voice/session';
 
 export type VoiceState = 'idle' | 'starting' | 'listening' | 'processing';
 export type VoiceError = 'denied' | 'no-speech' | 'unavailable' | 'failed';
-export type VoiceSupport = 'checking' | 'yes' | 'no-browser' | 'insecure';
+// 'off': this server does not offer voice (VOICE_ENABLED), so no microphone is shown at all
+export type VoiceSupport = 'checking' | 'yes' | 'no-browser' | 'insecure' | 'off';
 
 type Options = {
     /** The hold-to-talk key works only while this is true (the panel is open). */
@@ -129,7 +131,11 @@ export function useVoiceInput({ enabled, onText, onFinal, onStart }: Options) {
         errorTimer.current = setTimeout(() => setError(null), ERROR_VISIBLE_MS);
     }, [move, teardown]);
 
-    useEffect(() => { setSupport(detect()); }, []);
+    useEffect(() => {
+        let live = true;
+        void fetchVoiceEnabled().then((on) => { if (live) setSupport(on ? detect() : 'off'); });
+        return () => { live = false; };
+    }, []);
 
     const stop = useCallback(() => {
         if (stateRef.current === 'starting') { stopWanted.current = true; return; }

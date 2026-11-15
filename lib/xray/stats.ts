@@ -1,8 +1,9 @@
 // Fixed calculators on aligned daily returns. Pure: no I/O, no clock. Every formula is the one written in the
-// design (sample statistics, 252 trading days a year).
+// design (sample statistics, annualised with the periods per year of the calendar used: see periodsPerYearOf).
 
 import type { Drawdown } from './types';
 
+/** The usual count of exchange days a year: the default when no calendar is given. */
 export const TRADING_DAYS = 252;
 export const round = (value: number, decimals: number) => Math.round((value + Number.EPSILON) * 10 ** decimals) / 10 ** decimals;
 
@@ -32,8 +33,9 @@ export function correlationOf(x: number[], y: number[]): number | null {
 /** Simple returns between consecutive levels. */
 export const returnsOf = (levels: number[]): number[] => levels.slice(1).map((level, i) => level / levels[i] - 1);
 
-/** Annualised volatility in percent. */
-export const annualVolPct = (dailyReturns: number[]): number => sampleStdev(dailyReturns) * Math.sqrt(TRADING_DAYS) * 100;
+/** Annualised volatility in percent: sample stdev x sqrt(periods per year of the calendar the returns are on). */
+export const annualVolPct = (dailyReturns: number[], periodsPerYear: number = TRADING_DAYS): number =>
+    sampleStdev(dailyReturns) * Math.sqrt(periodsPerYear) * 100;
 
 /** Level of 100 at dates[0], then compounded by the daily returns (dates has one more entry than returns). */
 export function curveOf(dates: string[], dailyReturns: number[]): Array<{ date: string; value: number }> {

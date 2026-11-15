@@ -4,7 +4,7 @@ import type { EngineOutput, WindowResult } from '@/lib/xray/types';
 
 const win = (id: 'full' | 'last3y' | 'last1y'): WindowResult => ({
     id, available: true, from: '2025-11-13', to: '2026-11-13', observations: 246,
-    coverage: { sharePct: 100, included: ['A'], excluded: [] }, volatilityPct: 10.37,
+    coverage: { sharePct: 100, included: ['A'], excluded: [], gaps: [] }, calendar: 'exchange', periodsPerYear: 252, volatilityPct: 10.37,
     maxDrawdown: { pct: -5.46, peakDate: '2026-02-25', troughDate: '2026-03-20', recoveredDate: null },
     worstDay: { pct: -2.1, date: '2026-03-02' }, worstSpan20: null, diversificationRatio: 1.5, pairs: [], curve: [],
     risk: [{ symbol: 'A', weightPct: 60, volatilityPct: 20, riskSharePct: 70 }, { symbol: 'B', weightPct: 40, volatilityPct: 10, riskSharePct: null }],
@@ -27,6 +27,10 @@ describe('agentFigures', () => {
             source: 'derived (xray-v1) from daily closes: TMX Money (delayed 15 min or more), Bank of Canada',
         });
         expect(note('maxDrawdown_full')).toContain('2026-02-25 to 2026-03-20');
+        // the period, the calendar and the coverage travel with the figure
+        expect(note('volatility_last1y')).toContain('2025-11-13 to 2026-11-13');
+        expect(note('volatility_last1y')).toContain('exchange days (252 a year)');
+        expect(note('volatility_last1y')).toContain("covers 100% of the portfolio's value");
         expect(figures.topShare).toMatchObject({ value: 25 });
         expect(figures.cashShare).toMatchObject({ value: 30 });
     });
