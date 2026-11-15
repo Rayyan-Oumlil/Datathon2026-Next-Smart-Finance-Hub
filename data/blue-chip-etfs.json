@@ -1,0 +1,120 @@
+{
+  "note": "Hand-kept list. blueChipEtf true = the fund tracks a broad index (S&P 500, total US market, S&P/TSX 60, S&P/TSX Capped Composite, FTSE Canada All Cap). The other funds are here only so the themes have fund candidates; they are not blue-chip. The index named for each fund is the one the issuer's own product page names; scripts/build-universe.mjs re-reads every page and drops any fund whose page does not answer or does not name that index.",
+  "handChecked": "2026-11-14",
+  "notListed": [
+    {
+      "symbol": "ZSP.TO",
+      "reason": "BMO's product page (www.bmogam.com) did not answer from this machine on 2026-11-14 (connection reset on every attempt), so the fund and its index could not be verified."
+    }
+  ],
+  "etfs": [
+    {
+      "symbol": "VFV.TO",
+      "name": "Vanguard S&P 500 Index ETF",
+      "market": "Canada",
+      "issuer": "Vanguard Investments Canada",
+      "index": "S&P 500 Index",
+      "issuerUrl": "https://www.vanguard.ca/en/product/etf/equity/9563/vanguard-sp-500-index-etf",
+      "blueChipEtf": true
+    },
+    {
+      "symbol": "XIU.TO",
+      "name": "iShares S&P/TSX 60 Index ETF",
+      "market": "Canada",
+      "issuer": "BlackRock Canada (iShares)",
+      "index": "S&P/TSX 60 Index",
+      "issuerUrl": "https://www.blackrock.com/ca/investors/en/products/239832/ishares-sptsx-60-index-etf",
+      "blueChipEtf": true
+    },
+    {
+      "symbol": "XIC.TO",
+      "name": "iShares Core S&P/TSX Capped Composite Index ETF",
+      "market": "Canada",
+      "issuer": "BlackRock Canada (iShares)",
+      "index": "S&P/TSX Capped Composite Index",
+      "issuerUrl": "https://www.blackrock.com/ca/investors/en/products/239837/ishares-sptsx-capped-composite-index-etf",
+      "blueChipEtf": true
+    },
+    {
+      "symbol": "VCN.TO",
+      "name": "Vanguard FTSE Canada All Cap Index ETF",
+      "market": "Canada",
+      "issuer": "Vanguard Investments Canada",
+      "index": "FTSE Canada All Cap Index",
+      "issuerUrl": "https://www.vanguard.ca/en/product/etf/equity/9561/vanguard-ftse-canada-all-cap-index-etf",
+      "blueChipEtf": true
+    },
+    {
+      "symbol": "SPY",
+      "name": "State Street SPDR S&P 500 ETF Trust",
+      "market": "US",
+      "issuer": "State Street Investment Management",
+      "index": "S&P 500 Index",
+      "issuerUrl": "https://www.ssga.com/us/en/intermediary/etfs/state-street-spdr-sp-500-etf-trust-spy",
+      "blueChipEtf": true
+    },
+    {
+      "symbol": "IVV",
+      "name": "iShares Core S&P 500 ETF",
+      "market": "US",
+      "issuer": "BlackRock (iShares)",
+      "index": "S&P 500 Index",
+      "issuerUrl": "https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf",
+      "blueChipEtf": true
+    },
+    {
+      "symbol": "VOO",
+      "name": "Vanguard S&P 500 ETF",
+      "market": "US",
+      "issuer": "Vanguard",
+      "index": "S&P 500 Index",
+      "issuerUrl": "https://investor.vanguard.com/investment-products/etfs/profile/voo",
+      "blueChipEtf": true
+    },
+    {
+      "symbol": "VTI",
+      "name": "Vanguard Morningstar Total Stock Market ETF",
+      "market": "US",
+      "issuer": "Vanguard",
+      "index": "Morningstar US Total Market Index",
+      "issuerUrl": "https://investor.vanguard.com/investment-products/etfs/profile/vti",
+      "blueChipEtf": true
+    },
+    {
+      "symbol": "QQQ",
+      "name": "Invesco QQQ ETF",
+      "market": "US",
+      "issuer": "Invesco",
+      "index": "Nasdaq-100 Index",
+      "issuerUrl": "https://www.invesco.com/qqq-etf/en/home.html",
+      "blueChipEtf": false
+    },
+    {
+      "symbol": "ICLN",
+      "name": "iShares Global Clean Energy ETF",
+      "market": "US",
+      "issuer": "BlackRock (iShares)",
+      "index": "S&P Global Clean Energy Transition Index",
+      "issuerUrl": "https://www.ishares.com/us/products/239738/ishares-global-clean-energy-etf",
+      "blueChipEtf": false
+    },
+    {
+      "symbol": "VYM",
+      "name": "Vanguard High Dividend Yield ETF",
+      "market": "US",
+      "issuer": "Vanguard",
+      "index": "FTSE High Dividend Yield Index",
+      "issuerUrl": "https://investor.vanguard.com/investment-products/etfs/profile/vym",
+      "blueChipEtf": false
+    },
+    {
+      "symbol": "XEI.TO",
+      "name": "iShares S&P/TSX Composite High Dividend Index ETF",
+      "market": "Canada",
+      "issuer": "BlackRock Canada (iShares)",
+      "index": "S&P/TSX Composite High Dividend Index",
+      "issuerUrl": "https://www.blackrock.com/ca/investors/en/products/239846/ishares-canadian-select-dividend-index-etf",
+      "blueChipEtf": false
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+{
+ "terms": {
+  "url": "https://www.bankofcanada.ca/terms/"
+ },
+ "seriesDetail": {
+  "BD.CDN.10YR.DQ.YLD": {
+   "label": "Benchmark bond yield, 10-year",
+   "description": "The yield on the Government of Canada 10-year benchmark bond. This series represents the prevailing market interest rate for the 10-year Government of Canada bond and is used as a reference for financial market analysis and reporting.",
+   "dimension": {
+    "key": "d",
+    "name": "Date"
+   },
+   "dateFormat": "daily",
+   "metadata": {
+    "unit": "Percent",
+    "frequency": "Business daily"
+   }
+  },
+  "BD.CDN.2YR.DQ.YLD": {
+   "label": "Benchmark bond yield, 2-year",
+   "description": "The yield on the Government of Canada 2-year benchmark bond. This series reflects the prevailing interest rate for the 2-year term and is used to monitor short-term government borrowing costs.",
+   "dimension": {
+    "key": "d",
+    "name": "Date"
+   },
+   "dateFormat": "daily",
+   "metadata": {
+    "unit": "Percent",
+    "frequency": "Business daily"
+   }
+  },
+  "BD.CDN.5YR.DQ.YLD": {
+   "label": "Benchmark bond yield, 5-year",
+   "description": "The yield on the Government of Canada 5-year benchmark bond. This series reports the prevailing yield for the 5-year maturity point on the Canadian government bond yield curve.",
+   "dimension": {
+    "key": "d",
+    "name": "Date"
+   },
+   "dateFormat": "daily",
+   "metadata": {
+    "unit": "Percent",
+    "frequency": "Business daily"
+   }
+  },
+  "BD.CDN.LONG.DQ.YLD": {
+   "label": "Benchmark bond yield, long-term",
+   "description": "The yield on the Government of Canada long-term benchmark bond. This series represents the prevailing interest rate for the designated long-term benchmark bond and is used in the Bank of Canada\u2019s reporting of financial market conditions.",
+   "dimension": {
+    "key": "d",
+    "name": "Date"
+   },
+   "dateFormat": "daily",
+   "metadata": {
+    "unit": "Percent",
+    "frequency": "Business daily"
+   }
+  }
+ },
+ "observations": [
+  {
+   "d": "2026-11-12",
+   "BD.CDN.LONG.DQ.YLD": {
+    "v": "4.09"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.78"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.33"
+   },
+   "BD.CDN.5YR.DQ.YLD": {
+    "v": "3.53"
+   }
+  },
+  {
+   "d": "2026-11-10",
+   "BD.CDN.LONG.DQ.YLD": {
+    "v": "4.04"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.72"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.25"
+   },
+   "BD.CDN.5YR.DQ.YLD": {
+    "v": "3.46"
+   }
+  },
+  {
+   "d": "2026-11-09",
+   "BD.CDN.LONG.DQ.YLD": {
+    "v": "3.98"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.63"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.13"
+   },
+   "BD.CDN.5YR.DQ.YLD": {
+    "v": "3.35"
+   }
+  },
+  {
+   "d": "2026-11-06",
+   "BD.CDN.LONG.DQ.YLD": {
+    "v": "3.99"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.65"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.12"
+   },
+   "BD.CDN.5YR.DQ.YLD": {
+    "v": "3.36"
+   }
+  },
+  {
+   "d": "2026-11-05",
+   "BD.CDN.LONG.DQ.YLD": {
+    "v": "4.02"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.67"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.17"
+   },
+   "BD.CDN.5YR.DQ.YLD": {
+    "v": "3.39"
+   }
+  }
+ ]
+}

@@ -1,0 +1,16 @@
+{
+ "ticker": "RY.TO",
+ "name": "Royal Bank of Canada",
+ "country": "CA",
+ "currency": "CAD",
+ "estimateCurrency": "CAD",
+ "exchange": "TORONTO STOCK EXCHANGE",
+ "ipo": "1905-06-17",
+ "marketCapitalization": 401268.045943,
+ "logo": "https://static2.finnhub.io/file/publicdatany/finnhubimage/stock_logo/RY.TO.png",
+ "shareOutstanding": 1386.6,
+ "finnhubIndustry": "Banking",
+ "phone": "12124379267",
+ "weburl": "https://www.rbcroyalbank.com/",
+ "floatingShare": 1386.18
+}

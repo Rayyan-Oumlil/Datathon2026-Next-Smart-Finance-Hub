@@ -1,0 +1,456 @@
+{
+  "generated": "2026-11-15T03:19:12.604Z",
+  "description": "Companies listed in Wikipedia's S&P/TSX 60 article at revision 1363917062. This is the article's table as a volunteer wrote it, not the index provider's constituent list.",
+  "note": "Changed from the source: symbols rewritten to the app form (RY -> RY.TO, CTC.A -> CTC-A.TO, BIP.UN -> BIP-UN.TO) and Wikipedia's sector label mapped by hand to a GICS sector name (sectorMapping). No sub-industry: the table has none. Regenerate with scripts/build-universe.mjs.",
+  "source": {
+    "name": "Wikipedia, \"S&P/TSX 60\"",
+    "url": "https://en.wikipedia.org/wiki/S%26P/TSX_60",
+    "permanentUrl": "https://en.wikipedia.org/w/index.php?title=S%26P/TSX_60&oldid=1363917062",
+    "api": "https://en.wikipedia.org/w/api.php?action=parse&page=S%26P%2FTSX%2060&prop=wikitext%7Crevid&format=json",
+    "revisionId": 1363917062,
+    "revisionDate": "2026-07-13T07:54:44Z",
+    "tableAsOf": "2026-01-31",
+    "fetchedAt": "2026-11-15T03:19:12.604Z",
+    "licence": "CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). This derived list carries the same licence.",
+    "attribution": "Wikipedia contributors, \"S&P/TSX 60\", revision 1363917062"
+  },
+  "sectorMapping": {
+    "note": "Hand mapping of Wikipedia's sector labels to GICS sector names. It maps the label, not the company.",
+    "map": {
+      "Basic Materials": "Materials",
+      "Communication Services": "Communication Services",
+      "Consumer Cyclical": "Consumer Discretionary",
+      "Consumer Staples": "Consumer Staples",
+      "Energy": "Energy",
+      "Financial Services": "Financials",
+      "Healthcare": "Health Care",
+      "Industrials": "Industrials",
+      "Information Technology": "Information Technology",
+      "Real Estate": "Real Estate",
+      "Technology": "Information Technology",
+      "Utilities": "Utilities"
+    }
+  },
+  "tickers": [
+    {
+      "symbol": "ABX.TO",
+      "tsxSymbol": "ABX",
+      "name": "Barrick Mining Corporation",
+      "wikipediaSector": "Basic Materials",
+      "sector": "Materials"
+    },
+    {
+      "symbol": "AEM.TO",
+      "tsxSymbol": "AEM",
+      "name": "Agnico Eagle Mines Limited",
+      "wikipediaSector": "Basic Materials",
+      "sector": "Materials"
+    },
+    {
+      "symbol": "ATD.TO",
+      "tsxSymbol": "ATD",
+      "name": "Alimentation Couche-Tard Inc.",
+      "wikipediaSector": "Consumer Cyclical",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "symbol": "BAM.TO",
+      "tsxSymbol": "BAM",
+      "name": "Brookfield Asset Management Ltd.",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "BCE.TO",
+      "tsxSymbol": "BCE",
+      "name": "BCE Inc.",
+      "wikipediaSector": "Communication Services",
+      "sector": "Communication Services"
+    },
+    {
+      "symbol": "BIP-UN.TO",
+      "tsxSymbol": "BIP.UN",
+      "name": "Brookfield Infrastructure Partners L.P.",
+      "wikipediaSector": "Utilities",
+      "sector": "Utilities"
+    },
+    {
+      "symbol": "BMO.TO",
+      "tsxSymbol": "BMO",
+      "name": "Bank of Montreal",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "BN.TO",
+      "tsxSymbol": "BN",
+      "name": "Brookfield Corporation",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "BNS.TO",
+      "tsxSymbol": "BNS",
+      "name": "Bank of Nova Scotia",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "CAE.TO",
+      "tsxSymbol": "CAE",
+      "name": "CAE Inc.",
+      "wikipediaSector": "Industrials",
+      "sector": "Industrials"
+    },
+    {
+      "symbol": "CCL-B.TO",
+      "tsxSymbol": "CCL.B",
+      "name": "CCL Industries Inc.",
+      "wikipediaSector": "Consumer Cyclical",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "symbol": "CCO.TO",
+      "tsxSymbol": "CCO",
+      "name": "Cameco Corporation",
+      "wikipediaSector": "Energy",
+      "sector": "Energy"
+    },
+    {
+      "symbol": "CLS.TO",
+      "tsxSymbol": "CLS",
+      "name": "Celestica Inc.",
+      "wikipediaSector": "Information Technology",
+      "sector": "Information Technology"
+    },
+    {
+      "symbol": "CM.TO",
+      "tsxSymbol": "CM",
+      "name": "Canadian Imperial Bank of Commerce",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "CNQ.TO",
+      "tsxSymbol": "CNQ",
+      "name": "Canadian Natural Resources Limited",
+      "wikipediaSector": "Energy",
+      "sector": "Energy"
+    },
+    {
+      "symbol": "CNR.TO",
+      "tsxSymbol": "CNR",
+      "name": "Canadian National Railway Company",
+      "wikipediaSector": "Industrials",
+      "sector": "Industrials"
+    },
+    {
+      "symbol": "CP.TO",
+      "tsxSymbol": "CP",
+      "name": "Canadian Pacific Kansas City Limited",
+      "wikipediaSector": "Industrials",
+      "sector": "Industrials"
+    },
+    {
+      "symbol": "CSU.TO",
+      "tsxSymbol": "CSU",
+      "name": "Constellation Software Inc.",
+      "wikipediaSector": "Information Technology",
+      "sector": "Information Technology"
+    },
+    {
+      "symbol": "CTC-A.TO",
+      "tsxSymbol": "CTC.A",
+      "name": "Canadian Tire Corporation Limited",
+      "wikipediaSector": "Consumer Cyclical",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "symbol": "CVE.TO",
+      "tsxSymbol": "CVE",
+      "name": "Cenovus Energy Inc.",
+      "wikipediaSector": "Energy",
+      "sector": "Energy"
+    },
+    {
+      "symbol": "DOL.TO",
+      "tsxSymbol": "DOL",
+      "name": "Dollarama Inc.",
+      "wikipediaSector": "Consumer Staples",
+      "sector": "Consumer Staples"
+    },
+    {
+      "symbol": "EMA.TO",
+      "tsxSymbol": "EMA",
+      "name": "Emera Incorporated",
+      "wikipediaSector": "Utilities",
+      "sector": "Utilities"
+    },
+    {
+      "symbol": "ENB.TO",
+      "tsxSymbol": "ENB",
+      "name": "Enbridge Inc.",
+      "wikipediaSector": "Energy",
+      "sector": "Energy"
+    },
+    {
+      "symbol": "FFH.TO",
+      "tsxSymbol": "FFH",
+      "name": "Fairfax Financial Holdings Limited",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "FM.TO",
+      "tsxSymbol": "FM",
+      "name": "First Quantum Minerals Ltd.",
+      "wikipediaSector": "Basic Materials",
+      "sector": "Materials"
+    },
+    {
+      "symbol": "FNV.TO",
+      "tsxSymbol": "FNV",
+      "name": "Franco-Nevada Corporation",
+      "wikipediaSector": "Basic Materials",
+      "sector": "Materials"
+    },
+    {
+      "symbol": "FSV.TO",
+      "tsxSymbol": "FSV",
+      "name": "FirstService Corporation",
+      "wikipediaSector": "Real Estate",
+      "sector": "Real Estate"
+    },
+    {
+      "symbol": "FTS.TO",
+      "tsxSymbol": "FTS",
+      "name": "Fortis Inc.",
+      "wikipediaSector": "Utilities",
+      "sector": "Utilities"
+    },
+    {
+      "symbol": "GIB-A.TO",
+      "tsxSymbol": "GIB.A",
+      "name": "CGI Inc.",
+      "wikipediaSector": "Information Technology",
+      "sector": "Information Technology"
+    },
+    {
+      "symbol": "GIL.TO",
+      "tsxSymbol": "GIL",
+      "name": "Gildan Activewear Inc.",
+      "wikipediaSector": "Consumer Cyclical",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "symbol": "H.TO",
+      "tsxSymbol": "H",
+      "name": "Hydro One Limited",
+      "wikipediaSector": "Utilities",
+      "sector": "Utilities"
+    },
+    {
+      "symbol": "IFC.TO",
+      "tsxSymbol": "IFC",
+      "name": "Intact Financial Corporation",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "IMO.TO",
+      "tsxSymbol": "IMO",
+      "name": "Imperial Oil Limited",
+      "wikipediaSector": "Energy",
+      "sector": "Energy"
+    },
+    {
+      "symbol": "K.TO",
+      "tsxSymbol": "K",
+      "name": "Kinross Gold Corporation",
+      "wikipediaSector": "Basic Materials",
+      "sector": "Materials"
+    },
+    {
+      "symbol": "L.TO",
+      "tsxSymbol": "L",
+      "name": "Loblaw Companies Limited",
+      "wikipediaSector": "Consumer Staples",
+      "sector": "Consumer Staples"
+    },
+    {
+      "symbol": "MFC.TO",
+      "tsxSymbol": "MFC",
+      "name": "Manulife Financial Corporation",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "MG.TO",
+      "tsxSymbol": "MG",
+      "name": "Magna International Inc.",
+      "wikipediaSector": "Consumer Cyclical",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "symbol": "MRU.TO",
+      "tsxSymbol": "MRU",
+      "name": "Metro Inc.",
+      "wikipediaSector": "Consumer Staples",
+      "sector": "Consumer Staples"
+    },
+    {
+      "symbol": "NA.TO",
+      "tsxSymbol": "NA",
+      "name": "National Bank of Canada",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "NTR.TO",
+      "tsxSymbol": "NTR",
+      "name": "Nutrien Ltd.",
+      "wikipediaSector": "Basic Materials",
+      "sector": "Materials"
+    },
+    {
+      "symbol": "OTEX.TO",
+      "tsxSymbol": "OTEX",
+      "name": "Open Text Corporation",
+      "wikipediaSector": "Information Technology",
+      "sector": "Information Technology"
+    },
+    {
+      "symbol": "POW.TO",
+      "tsxSymbol": "POW",
+      "name": "Power Corporation of Canada",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "PPL.TO",
+      "tsxSymbol": "PPL",
+      "name": "Pembina Pipeline Corporation",
+      "wikipediaSector": "Energy",
+      "sector": "Energy"
+    },
+    {
+      "symbol": "QSR.TO",
+      "tsxSymbol": "QSR",
+      "name": "Restaurant Brands International Inc.",
+      "wikipediaSector": "Consumer Cyclical",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "symbol": "RCI-B.TO",
+      "tsxSymbol": "RCI.B",
+      "name": "Rogers Communications Inc.",
+      "wikipediaSector": "Communication Services",
+      "sector": "Communication Services"
+    },
+    {
+      "symbol": "RY.TO",
+      "tsxSymbol": "RY",
+      "name": "Royal Bank of Canada",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "SAP.TO",
+      "tsxSymbol": "SAP",
+      "name": "Saputo Inc.",
+      "wikipediaSector": "Consumer Staples",
+      "sector": "Consumer Staples"
+    },
+    {
+      "symbol": "SHOP.TO",
+      "tsxSymbol": "SHOP",
+      "name": "Shopify Inc.",
+      "wikipediaSector": "Information Technology",
+      "sector": "Information Technology"
+    },
+    {
+      "symbol": "SLF.TO",
+      "tsxSymbol": "SLF",
+      "name": "Sun Life Financial Inc.",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "SU.TO",
+      "tsxSymbol": "SU",
+      "name": "Suncor Energy Inc.",
+      "wikipediaSector": "Energy",
+      "sector": "Energy"
+    },
+    {
+      "symbol": "T.TO",
+      "tsxSymbol": "T",
+      "name": "Telus Corporation",
+      "wikipediaSector": "Communication Services",
+      "sector": "Communication Services"
+    },
+    {
+      "symbol": "TD.TO",
+      "tsxSymbol": "TD",
+      "name": "Toronto-Dominion Bank",
+      "wikipediaSector": "Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "symbol": "TECK-B.TO",
+      "tsxSymbol": "TECK.B",
+      "name": "Teck Resources Limited",
+      "wikipediaSector": "Basic Materials",
+      "sector": "Materials"
+    },
+    {
+      "symbol": "TOU.TO",
+      "tsxSymbol": "TOU",
+      "name": "Tourmaline Oil Corp.",
+      "wikipediaSector": "Energy",
+      "sector": "Energy"
+    },
+    {
+      "symbol": "TRI.TO",
+      "tsxSymbol": "TRI",
+      "name": "Thomson Reuters Corporation",
+      "wikipediaSector": "Industrials",
+      "sector": "Industrials"
+    },
+    {
+      "symbol": "TRP.TO",
+      "tsxSymbol": "TRP",
+      "name": "TC Energy Corporation",
+      "wikipediaSector": "Energy",
+      "sector": "Energy"
+    },
+    {
+      "symbol": "WCN.TO",
+      "tsxSymbol": "WCN",
+      "name": "Waste Connections Inc.",
+      "wikipediaSector": "Industrials",
+      "sector": "Industrials"
+    },
+    {
+      "symbol": "WN.TO",
+      "tsxSymbol": "WN",
+      "name": "George Weston Limited",
+      "wikipediaSector": "Consumer Staples",
+      "sector": "Consumer Staples"
+    },
+    {
+      "symbol": "WPM.TO",
+      "tsxSymbol": "WPM",
+      "name": "Wheaton Precious Metals Corp.",
+      "wikipediaSector": "Basic Materials",
+      "sector": "Materials"
+    },
+    {
+      "symbol": "WSP.TO",
+      "tsxSymbol": "WSP",
+      "name": "WSP Global Inc.",
+      "wikipediaSector": "Industrials",
+      "sector": "Industrials"
+    }
+  ]
+}

@@ -9,4 +9,18 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    environment:
+      # Use the local database below instead of AWS
+      DYNAMODB_ENDPOINT: http://dynamodb:8000
+    depends_on:
+      - dynamodb
+    restart: unless-stopped
+
+  # Local DynamoDB, held in memory: its tables are gone after a restart. Create them with
+  #   DYNAMODB_ENDPOINT=http://localhost:8000 node scripts/create-tables.mjs
+  dynamodb:
+    image: amazon/dynamodb-local
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
+    ports:
+      - "8000:8000"
     restart: unless-stopped

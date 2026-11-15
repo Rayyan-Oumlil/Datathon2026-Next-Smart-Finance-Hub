@@ -1,0 +1,2586 @@
+{
+  "generated": "2026-11-15T03:19:12.604Z",
+  "description": "Candidate universe for the demo: which names can be considered at all, before any market data. No prices and no market caps are stored here. Regenerate with scripts/build-universe.mjs.",
+  "usRank": {
+    "rankDate": "2026-11-15",
+    "method": "From data/us-tickers.json, the 12 largest names of each GICS sector by Finnhub /stock/profile2 marketCapitalization (USD millions). The figures are used once to cut the list and are not stored: market cap is fetched again as a live signal.",
+    "profilesFetchedBetween": [
+      "2026-11-15T03:06:25.819Z",
+      "2026-11-15T03:18:56.887Z"
+    ],
+    "tickersAsked": 518,
+    "notRanked": [
+      {
+        "symbol": "ASML",
+        "reason": "Finnhub reports the market cap in EUR; no exchange rate is applied at build time, so it cannot be ranked against USD figures"
+      },
+      {
+        "symbol": "CCEP",
+        "reason": "Finnhub reports the market cap in EUR; no exchange rate is applied at build time, so it cannot be ranked against USD figures"
+      },
+      {
+        "symbol": "FER",
+        "reason": "Finnhub reports the market cap in EUR; no exchange rate is applied at build time, so it cannot be ranked against USD figures"
+      },
+      {
+        "symbol": "FOX",
+        "reason": "second share class of a company already ranked by its Class A line"
+      },
+      {
+        "symbol": "GOOG",
+        "reason": "second share class of a company already ranked by its Class A line"
+      },
+      {
+        "symbol": "NWS",
+        "reason": "second share class of a company already ranked by its Class A line"
+      },
+      {
+        "symbol": "PDD",
+        "reason": "Finnhub reports the market cap in CNY; no exchange rate is applied at build time, so it cannot be ranked against USD figures"
+      },
+      {
+        "symbol": "VYLR",
+        "reason": "Finnhub reports the market cap in an unnamed currency; no exchange rate is applied at build time, so it cannot be ranked against USD figures"
+      }
+    ]
+  },
+  "sources": [
+    {
+      "id": "us-tickers",
+      "name": "data/us-tickers.json (S&P 500 and Nasdaq-100 names, GICS sector, sub-industry, SEC CIK)",
+      "url": "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/master/data/constituents.csv",
+      "alsoFrom": [
+        "https://en.wikipedia.org/wiki/List_of_NASDAQ-100_companies",
+        "https://www.sec.gov/files/company_tickers_exchange.json"
+      ],
+      "date": "2026-10-19",
+      "revision": "not recorded by scripts/build-us-tickers.mjs: only the build date is known",
+      "licence": "S&P 500 file: ODC-PDDL-1.0, taken from Wikipedia \"List of S&P 500 companies\" (CC BY-SA 4.0). Nasdaq-100 table: Wikipedia, CC BY-SA 4.0. SEC file: public, cite the SEC.",
+      "usedFor": "US stocks: symbol, name, sector, sub-industry"
+    },
+    {
+      "id": "finnhub-profile2",
+      "name": "Finnhub /stock/profile2",
+      "url": "https://finnhub.io/api/v1/stock/profile2",
+      "date": "2026-11-15",
+      "licence": "Finnhub free plan: personal use, no redistribution of data or derived results. Only the resulting choice of names is kept here, no Finnhub figure.",
+      "usedFor": "ranking US stocks by market cap to keep 12 per sector"
+    },
+    {
+      "id": "wikipedia-tsx60",
+      "name": "Wikipedia, \"S&P/TSX 60\"",
+      "url": "https://en.wikipedia.org/w/index.php?title=S%26P/TSX_60&oldid=1363917062",
+      "revision": 1363917062,
+      "date": "2026-07-13T07:54:44Z",
+      "licence": "CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). This derived list carries the same licence.",
+      "attribution": "Wikipedia contributors, \"S&P/TSX 60\", revision 1363917062",
+      "usedFor": "Canadian stocks: companies listed in Wikipedia's S&P/TSX 60 article at revision 1363917062 (see data/canada-tickers.json)"
+    },
+    {
+      "id": "issuer-pages",
+      "name": "Fund issuers' product pages (data/blue-chip-etfs.json)",
+      "url": "data/blue-chip-etfs.json",
+      "date": "2026-11-15",
+      "licence": "Each issuer's site terms. Only the fund name, the index it names and the page link are kept.",
+      "usedFor": "funds: the index each fund tracks"
+    },
+    {
+      "id": "hand-set",
+      "name": "Hand-set for the demo: data/themes.json, data/esg-demo.json (mock), crypto, gold and bond-yield rows",
+      "url": "rules/v1.json",
+      "date": "2026-11-15",
+      "licence": "ours",
+      "usedFor": "theme tags, the mock ESG tag, and the non-stock reference rows"
+    }
+  ],
+  "fundChecks": [
+    {
+      "symbol": "VFV.TO",
+      "url": "https://www.vanguard.ca/en/product/etf/equity/9563/vanguard-sp-500-index-etf",
+      "index": "S&P 500 Index",
+      "checkedAt": "2026-11-15T03:19:13.023Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "XIU.TO",
+      "url": "https://www.blackrock.com/ca/investors/en/products/239832/ishares-sptsx-60-index-etf",
+      "index": "S&P/TSX 60 Index",
+      "checkedAt": "2026-11-15T03:19:17.071Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "XIC.TO",
+      "url": "https://www.blackrock.com/ca/investors/en/products/239837/ishares-sptsx-capped-composite-index-etf",
+      "index": "S&P/TSX Capped Composite Index",
+      "checkedAt": "2026-11-15T03:19:21.810Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "VCN.TO",
+      "url": "https://www.vanguard.ca/en/product/etf/equity/9561/vanguard-ftse-canada-all-cap-index-etf",
+      "index": "FTSE Canada All Cap Index",
+      "checkedAt": "2026-11-15T03:19:26.521Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "SPY",
+      "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-spdr-sp-500-etf-trust-spy",
+      "index": "S&P 500 Index",
+      "checkedAt": "2026-11-15T03:19:30.718Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "IVV",
+      "url": "https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf",
+      "index": "S&P 500 Index",
+      "checkedAt": "2026-11-15T03:19:33.971Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "VOO",
+      "url": "https://investor.vanguard.com/investment-products/etfs/profile/voo",
+      "index": "S&P 500 Index",
+      "checkedAt": "2026-11-15T03:19:37.466Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "VTI",
+      "url": "https://investor.vanguard.com/investment-products/etfs/profile/vti",
+      "index": "Morningstar US Total Market Index",
+      "checkedAt": "2026-11-15T03:19:40.752Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "QQQ",
+      "url": "https://www.invesco.com/qqq-etf/en/home.html",
+      "index": "Nasdaq-100 Index",
+      "checkedAt": "2026-11-15T03:19:44.004Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "ICLN",
+      "url": "https://www.ishares.com/us/products/239738/ishares-global-clean-energy-etf",
+      "index": "S&P Global Clean Energy Transition Index",
+      "checkedAt": "2026-11-15T03:19:47.130Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "VYM",
+      "url": "https://investor.vanguard.com/investment-products/etfs/profile/vym",
+      "index": "FTSE High Dividend Yield Index",
+      "checkedAt": "2026-11-15T03:19:50.668Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    },
+    {
+      "symbol": "XEI.TO",
+      "url": "https://www.blackrock.com/ca/investors/en/products/239846/ishares-canadian-select-dividend-index-etf",
+      "index": "S&P/TSX Composite High Dividend Index",
+      "checkedAt": "2026-11-15T03:19:54.038Z",
+      "httpStatus": 200,
+      "namesIndex": true,
+      "namesTicker": true,
+      "ok": true
+    }
+  ],
+  "entries": [
+    {
+      "symbol": "BCE.TO",
+      "name": "BCE Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Communication Services",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Communication Services\" mapped by hand to \"Communication Services\""
+    },
+    {
+      "symbol": "RCI-B.TO",
+      "name": "Rogers Communications Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Communication Services",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Communication Services\" mapped by hand to \"Communication Services\""
+    },
+    {
+      "symbol": "T.TO",
+      "name": "Telus Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Communication Services",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Communication Services\" mapped by hand to \"Communication Services\""
+    },
+    {
+      "symbol": "ATD.TO",
+      "name": "Alimentation Couche-Tard Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Consumer Discretionary",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Consumer Cyclical\" mapped by hand to \"Consumer Discretionary\""
+    },
+    {
+      "symbol": "CCL-B.TO",
+      "name": "CCL Industries Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Consumer Discretionary",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Consumer Cyclical\" mapped by hand to \"Consumer Discretionary\""
+    },
+    {
+      "symbol": "CTC-A.TO",
+      "name": "Canadian Tire Corporation Limited",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Consumer Discretionary",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Consumer Cyclical\" mapped by hand to \"Consumer Discretionary\""
+    },
+    {
+      "symbol": "GIL.TO",
+      "name": "Gildan Activewear Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Consumer Discretionary",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Consumer Cyclical\" mapped by hand to \"Consumer Discretionary\""
+    },
+    {
+      "symbol": "MG.TO",
+      "name": "Magna International Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Consumer Discretionary",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Consumer Cyclical\" mapped by hand to \"Consumer Discretionary\""
+    },
+    {
+      "symbol": "QSR.TO",
+      "name": "Restaurant Brands International Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Consumer Discretionary",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Consumer Cyclical\" mapped by hand to \"Consumer Discretionary\""
+    },
+    {
+      "symbol": "DOL.TO",
+      "name": "Dollarama Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Consumer Staples",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Consumer Staples\" mapped by hand to \"Consumer Staples\""
+    },
+    {
+      "symbol": "L.TO",
+      "name": "Loblaw Companies Limited",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Consumer Staples",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Consumer Staples\" mapped by hand to \"Consumer Staples\""
+    },
+    {
+      "symbol": "MRU.TO",
+      "name": "Metro Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Consumer Staples",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Consumer Staples\" mapped by hand to \"Consumer Staples\""
+    },
+    {
+      "symbol": "SAP.TO",
+      "name": "Saputo Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Consumer Staples",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Consumer Staples\" mapped by hand to \"Consumer Staples\""
+    },
+    {
+      "symbol": "WN.TO",
+      "name": "George Weston Limited",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Consumer Staples",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Consumer Staples\" mapped by hand to \"Consumer Staples\""
+    },
+    {
+      "symbol": "CCO.TO",
+      "name": "Cameco Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Energy",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Energy\" mapped by hand to \"Energy\""
+    },
+    {
+      "symbol": "CNQ.TO",
+      "name": "Canadian Natural Resources Limited",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Energy",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Energy\" mapped by hand to \"Energy\""
+    },
+    {
+      "symbol": "CVE.TO",
+      "name": "Cenovus Energy Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Energy",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Energy\" mapped by hand to \"Energy\""
+    },
+    {
+      "symbol": "ENB.TO",
+      "name": "Enbridge Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Energy",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "not screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Energy\" mapped by hand to \"Energy\""
+    },
+    {
+      "symbol": "IMO.TO",
+      "name": "Imperial Oil Limited",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Energy",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Energy\" mapped by hand to \"Energy\""
+    },
+    {
+      "symbol": "PPL.TO",
+      "name": "Pembina Pipeline Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Energy",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Energy\" mapped by hand to \"Energy\""
+    },
+    {
+      "symbol": "SU.TO",
+      "name": "Suncor Energy Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Energy",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Energy\" mapped by hand to \"Energy\""
+    },
+    {
+      "symbol": "TOU.TO",
+      "name": "Tourmaline Oil Corp.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Energy",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Energy\" mapped by hand to \"Energy\""
+    },
+    {
+      "symbol": "TRP.TO",
+      "name": "TC Energy Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Energy",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Energy\" mapped by hand to \"Energy\""
+    },
+    {
+      "symbol": "BAM.TO",
+      "name": "Brookfield Asset Management Ltd.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "BMO.TO",
+      "name": "Bank of Montreal",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "BN.TO",
+      "name": "Brookfield Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "BNS.TO",
+      "name": "Bank of Nova Scotia",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "CM.TO",
+      "name": "Canadian Imperial Bank of Commerce",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "FFH.TO",
+      "name": "Fairfax Financial Holdings Limited",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "IFC.TO",
+      "name": "Intact Financial Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "MFC.TO",
+      "name": "Manulife Financial Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "NA.TO",
+      "name": "National Bank of Canada",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "POW.TO",
+      "name": "Power Corporation of Canada",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "RY.TO",
+      "name": "Royal Bank of Canada",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "SLF.TO",
+      "name": "Sun Life Financial Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "TD.TO",
+      "name": "Toronto-Dominion Bank",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Financials",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Financial Services\" mapped by hand to \"Financials\""
+    },
+    {
+      "symbol": "CAE.TO",
+      "name": "CAE Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Industrials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Industrials\" mapped by hand to \"Industrials\""
+    },
+    {
+      "symbol": "CNR.TO",
+      "name": "Canadian National Railway Company",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Industrials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Industrials\" mapped by hand to \"Industrials\""
+    },
+    {
+      "symbol": "CP.TO",
+      "name": "Canadian Pacific Kansas City Limited",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Industrials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Industrials\" mapped by hand to \"Industrials\""
+    },
+    {
+      "symbol": "TRI.TO",
+      "name": "Thomson Reuters Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Industrials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Industrials\" mapped by hand to \"Industrials\""
+    },
+    {
+      "symbol": "WCN.TO",
+      "name": "Waste Connections Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Industrials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Industrials\" mapped by hand to \"Industrials\""
+    },
+    {
+      "symbol": "WSP.TO",
+      "name": "WSP Global Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Industrials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Industrials\" mapped by hand to \"Industrials\""
+    },
+    {
+      "symbol": "CLS.TO",
+      "name": "Celestica Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Information Technology",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Information Technology\" mapped by hand to \"Information Technology\""
+    },
+    {
+      "symbol": "CSU.TO",
+      "name": "Constellation Software Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Information Technology",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Information Technology\" mapped by hand to \"Information Technology\""
+    },
+    {
+      "symbol": "GIB-A.TO",
+      "name": "CGI Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Information Technology",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Information Technology\" mapped by hand to \"Information Technology\""
+    },
+    {
+      "symbol": "OTEX.TO",
+      "name": "Open Text Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Information Technology",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Information Technology\" mapped by hand to \"Information Technology\""
+    },
+    {
+      "symbol": "SHOP.TO",
+      "name": "Shopify Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Information Technology",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Information Technology\" mapped by hand to \"Information Technology\""
+    },
+    {
+      "symbol": "ABX.TO",
+      "name": "Barrick Mining Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Materials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Basic Materials\" mapped by hand to \"Materials\""
+    },
+    {
+      "symbol": "AEM.TO",
+      "name": "Agnico Eagle Mines Limited",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Materials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Basic Materials\" mapped by hand to \"Materials\""
+    },
+    {
+      "symbol": "FM.TO",
+      "name": "First Quantum Minerals Ltd.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Materials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Basic Materials\" mapped by hand to \"Materials\""
+    },
+    {
+      "symbol": "FNV.TO",
+      "name": "Franco-Nevada Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Materials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Basic Materials\" mapped by hand to \"Materials\""
+    },
+    {
+      "symbol": "K.TO",
+      "name": "Kinross Gold Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Materials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Basic Materials\" mapped by hand to \"Materials\""
+    },
+    {
+      "symbol": "NTR.TO",
+      "name": "Nutrien Ltd.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Materials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Basic Materials\" mapped by hand to \"Materials\""
+    },
+    {
+      "symbol": "TECK-B.TO",
+      "name": "Teck Resources Limited",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Materials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Basic Materials\" mapped by hand to \"Materials\""
+    },
+    {
+      "symbol": "WPM.TO",
+      "name": "Wheaton Precious Metals Corp.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Materials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Basic Materials\" mapped by hand to \"Materials\""
+    },
+    {
+      "symbol": "FSV.TO",
+      "name": "FirstService Corporation",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Real Estate",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Real Estate\" mapped by hand to \"Real Estate\""
+    },
+    {
+      "symbol": "BIP-UN.TO",
+      "name": "Brookfield Infrastructure Partners L.P.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Utilities",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Utilities\" mapped by hand to \"Utilities\""
+    },
+    {
+      "symbol": "EMA.TO",
+      "name": "Emera Incorporated",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Utilities\" mapped by hand to \"Utilities\""
+    },
+    {
+      "symbol": "FTS.TO",
+      "name": "Fortis Inc.",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Utilities\" mapped by hand to \"Utilities\""
+    },
+    {
+      "symbol": "H.TO",
+      "name": "Hydro One Limited",
+      "assetClass": "stock",
+      "market": "Canada",
+      "sector": "Utilities",
+      "themes": [
+        "clean energy"
+      ],
+      "esg": "screened",
+      "listSource": "Wikipedia: S&P/TSX 60 article, rev 1363917062, 2026-07-13 (CC BY-SA 4.0); sector \"Utilities\" mapped by hand to \"Utilities\""
+    },
+    {
+      "symbol": "APP",
+      "name": "AppLovin",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Advertising",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "CMCSA",
+      "name": "Comcast",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Cable & Satellite",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "DIS",
+      "name": "Walt Disney Company (The)",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Movies & Entertainment",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "GOOGL",
+      "name": "Alphabet Inc. (Class A)",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Interactive Media & Services",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "LYV",
+      "name": "Live Nation Entertainment",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Movies & Entertainment",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "META",
+      "name": "Meta Platforms",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Interactive Media & Services",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "NFLX",
+      "name": "Netflix",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Movies & Entertainment",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "SPCX",
+      "name": "SpaceX",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Telecommunications Services",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Wikipedia \"List of NASDAQ-100 companies\" (CC BY-SA 4.0; ICB industry mapped by hand to a GICS sector, sub-industry is Wikipedia's own label), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "T",
+      "name": "AT&T",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Integrated Telecommunication Services",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "TMUS",
+      "name": "T-Mobile US",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Wireless Telecommunication Services",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "TTWO",
+      "name": "Take-Two Interactive",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Interactive Home Entertainment",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "VZ",
+      "name": "Verizon",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Communication Services",
+      "subIndustry": "Integrated Telecommunication Services",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "ABNB",
+      "name": "Airbnb",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Hotels, Resorts & Cruise Lines",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "AMZN",
+      "name": "Amazon",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Broadline Retail",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "BKNG",
+      "name": "Booking Holdings",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Hotels, Resorts & Cruise Lines",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "HD",
+      "name": "Home Depot (The)",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Home Improvement Retail",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "HLT",
+      "name": "Hilton Worldwide",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Hotels, Resorts & Cruise Lines",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "LOW",
+      "name": "Lowe's",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Home Improvement Retail",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MAR",
+      "name": "Marriott International",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Hotels, Resorts & Cruise Lines",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MCD",
+      "name": "McDonald's",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Restaurants",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "RCL",
+      "name": "Royal Caribbean Group",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Hotels, Resorts & Cruise Lines",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "SBUX",
+      "name": "Starbucks",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Restaurants",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "TJX",
+      "name": "TJX Companies",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Apparel Retail",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "TSLA",
+      "name": "Tesla, Inc.",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Discretionary",
+      "subIndustry": "Automobile Manufacturers",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "CL",
+      "name": "Colgate-Palmolive",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Household Products",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "COST",
+      "name": "Costco",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Consumer Staples Merchandise Retail",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "KMB",
+      "name": "Kimberly-Clark",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Household Products",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "KO",
+      "name": "Coca-Cola Company (The)",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Soft Drinks & Non-alcoholic Beverages",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MDLZ",
+      "name": "Mondelez International",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Packaged Foods & Meats",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MNST",
+      "name": "Monster Beverage",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Soft Drinks & Non-alcoholic Beverages",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MO",
+      "name": "Altria",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Tobacco",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "PEP",
+      "name": "PepsiCo",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Soft Drinks & Non-alcoholic Beverages",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "PG",
+      "name": "Procter & Gamble",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Personal Care Products",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "PM",
+      "name": "Philip Morris International",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Tobacco",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "TGT",
+      "name": "Target Corporation",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Consumer Staples Merchandise Retail",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "WMT",
+      "name": "Walmart",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Consumer Staples",
+      "subIndustry": "Consumer Staples Merchandise Retail",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "COP",
+      "name": "ConocoPhillips",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Oil & Gas Exploration & Production",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "CVX",
+      "name": "Chevron Corporation",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Integrated Oil & Gas",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "EOG",
+      "name": "EOG Resources",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Oil & Gas Exploration & Production",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "KMI",
+      "name": "Kinder Morgan",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Oil & Gas Storage & Transportation",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MPC",
+      "name": "Marathon Petroleum",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Oil & Gas Refining & Marketing",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "OXY",
+      "name": "Occidental Petroleum",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Oil & Gas Exploration & Production",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "PSX",
+      "name": "Phillips 66",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Oil & Gas Refining & Marketing",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "SLB",
+      "name": "Schlumberger",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Oil & Gas Equipment & Services",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "TRGP",
+      "name": "Targa Resources",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Oil & Gas Storage & Transportation",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "VLO",
+      "name": "Valero Energy",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Oil & Gas Refining & Marketing",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "WMB",
+      "name": "Williams Companies",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Oil & Gas Storage & Transportation",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "XOM",
+      "name": "ExxonMobil",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Energy",
+      "subIndustry": "Integrated Oil & Gas",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "AXP",
+      "name": "American Express",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Consumer Finance",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "BAC",
+      "name": "Bank of America",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Diversified Banks",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "BLK",
+      "name": "BlackRock",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Asset Management & Custody Banks",
+      "themes": [],
+      "esg": "controversy",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "BRK.B",
+      "name": "Berkshire Hathaway",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Multi-Sector Holdings",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "C",
+      "name": "Citigroup",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Diversified Banks",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "GS",
+      "name": "Goldman Sachs",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Investment Banking & Brokerage",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "JPM",
+      "name": "JPMorgan Chase",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Diversified Banks",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MA",
+      "name": "Mastercard",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Transaction & Payment Processing Services",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MS",
+      "name": "Morgan Stanley",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Investment Banking & Brokerage",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "SCHW",
+      "name": "Charles Schwab Corporation",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Investment Banking & Brokerage",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "V",
+      "name": "Visa Inc.",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Transaction & Payment Processing Services",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "WFC",
+      "name": "Wells Fargo",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Financials",
+      "subIndustry": "Diversified Banks",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "ABBV",
+      "name": "AbbVie",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Biotechnology",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "ABT",
+      "name": "Abbott Laboratories",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Health Care Equipment",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "AMGN",
+      "name": "Amgen",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Biotechnology",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "DHR",
+      "name": "Danaher Corporation",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Life Sciences Tools & Services",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "GILD",
+      "name": "Gilead Sciences",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Biotechnology",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "ISRG",
+      "name": "Intuitive Surgical",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Health Care Equipment",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "JNJ",
+      "name": "Johnson & Johnson",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Pharmaceuticals",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "LLY",
+      "name": "Lilly (Eli)",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Pharmaceuticals",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MRK",
+      "name": "Merck & Co.",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Pharmaceuticals",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "PFE",
+      "name": "Pfizer",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Pharmaceuticals",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "TMO",
+      "name": "Thermo Fisher Scientific",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Life Sciences Tools & Services",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "UNH",
+      "name": "UnitedHealth Group",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Health Care",
+      "subIndustry": "Managed Health Care",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "ADP",
+      "name": "Automatic Data Processing",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Human Resource & Employment Services",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "BA",
+      "name": "Boeing",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Aerospace & Defense",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "CAT",
+      "name": "Caterpillar Inc.",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Construction Machinery & Heavy Transportation Equipment",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "DE",
+      "name": "Deere & Company",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Agricultural & Farm Machinery",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "ETN",
+      "name": "Eaton Corporation",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Electrical Components & Equipment",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "GE",
+      "name": "GE Aerospace",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Aerospace & Defense",
+      "themes": [],
+      "esg": "controversy",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "GEV",
+      "name": "GE Vernova",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Heavy Electrical Equipment",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "LMT",
+      "name": "Lockheed Martin",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Aerospace & Defense",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "PH",
+      "name": "Parker Hannifin",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Industrial Machinery & Supplies & Components",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "RTX",
+      "name": "RTX Corporation",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Aerospace & Defense",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "UBER",
+      "name": "Uber",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Passenger Ground Transportation",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "UNP",
+      "name": "Union Pacific Corporation",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Industrials",
+      "subIndustry": "Rail Transportation",
+      "themes": [],
+      "esg": "controversy",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "AAPL",
+      "name": "Apple Inc.",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Technology Hardware, Storage & Peripherals",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "AMAT",
+      "name": "Applied Materials",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Semiconductor Materials & Equipment",
+      "themes": [
+        "AI"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "AMD",
+      "name": "Advanced Micro Devices",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Semiconductors",
+      "themes": [
+        "AI"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "AVGO",
+      "name": "Broadcom",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Semiconductors",
+      "themes": [
+        "AI"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "CSCO",
+      "name": "Cisco",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Communications Equipment",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "INTC",
+      "name": "Intel",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Semiconductors",
+      "themes": [
+        "AI"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MSFT",
+      "name": "Microsoft",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Systems Software",
+      "themes": [
+        "AI"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MU",
+      "name": "Micron Technology",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Semiconductors",
+      "themes": [
+        "AI"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "NVDA",
+      "name": "Nvidia",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Semiconductors",
+      "themes": [
+        "AI"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "ORCL",
+      "name": "Oracle Corporation",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Application Software",
+      "themes": [],
+      "esg": "controversy",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "PLTR",
+      "name": "Palantir Technologies",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Application Software",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "TXN",
+      "name": "Texas Instruments",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Information Technology",
+      "subIndustry": "Semiconductors",
+      "themes": [
+        "AI"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "APD",
+      "name": "Air Products",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Industrial Gases",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "CRH",
+      "name": "CRH plc",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Construction Materials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "ECL",
+      "name": "Ecolab",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Specialty Chemicals",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "FCX",
+      "name": "Freeport-McMoRan",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Copper",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "LIN",
+      "name": "Linde plc",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Industrial Gases",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "MLM",
+      "name": "Martin Marietta Materials",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Construction Materials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "NEM",
+      "name": "Newmont",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Gold",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "NUE",
+      "name": "Nucor",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Steel",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "PPG",
+      "name": "PPG Industries",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Specialty Chemicals",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "SHW",
+      "name": "Sherwin-Williams",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Specialty Chemicals",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "STLD",
+      "name": "Steel Dynamics",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Steel",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "VMC",
+      "name": "Vulcan Materials Company",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Materials",
+      "subIndustry": "Construction Materials",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "AMT",
+      "name": "American Tower",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Telecom Tower REITs",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "CBRE",
+      "name": "CBRE Group",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Real Estate Services",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "CCI",
+      "name": "Crown Castle",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Telecom Tower REITs",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "DLR",
+      "name": "Digital Realty",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Data Center REITs",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "EQIX",
+      "name": "Equinix",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Data Center REITs",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "O",
+      "name": "Realty Income",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Retail REITs",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "PLD",
+      "name": "Prologis",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Industrial REITs",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "PSA",
+      "name": "Public Storage",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Self-Storage REITs",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "SPG",
+      "name": "Simon Property Group",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Retail REITs",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "VMRK",
+      "name": "Vivmark Residential",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Multi-Family Residential REITs",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "VTR",
+      "name": "Ventas",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Health Care REITs",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "WELL",
+      "name": "Welltower",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Real Estate",
+      "subIndustry": "Health Care REITs",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "AEP",
+      "name": "American Electric Power",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Electric Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "CEG",
+      "name": "Constellation Energy",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Electric Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "D",
+      "name": "Dominion Energy",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Multi-Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "DUK",
+      "name": "Duke Energy",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Electric Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "ED",
+      "name": "Consolidated Edison",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Multi-Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "ETR",
+      "name": "Entergy",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Electric Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "EXC",
+      "name": "Exelon",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Electric Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "NEE",
+      "name": "NextEra Energy",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Multi-Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "SO",
+      "name": "Southern Company",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Electric Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "SRE",
+      "name": "Sempra",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Multi-Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "VST",
+      "name": "Vistra Corp.",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Electric Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "XEL",
+      "name": "Xcel Energy",
+      "assetClass": "stock",
+      "market": "US",
+      "sector": "Utilities",
+      "subIndustry": "Multi-Utilities",
+      "themes": [
+        "clean energy",
+        "dividends"
+      ],
+      "esg": "screened",
+      "listSource": "datasets/s-and-p-500-companies constituents.csv (ODC-PDDL-1.0; itself taken from Wikipedia \"List of S&P 500 companies\", CC BY-SA 4.0), via data/us-tickers.json generated 2026-10-19; kept as one of the 12 largest of its sector by Finnhub profile2 market cap on 2026-11-15"
+    },
+    {
+      "symbol": "VCN.TO",
+      "name": "Vanguard FTSE Canada All Cap Index ETF",
+      "assetClass": "etf",
+      "market": "Canada",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": true,
+      "etf": {
+        "index": "FTSE Canada All Cap Index",
+        "issuerUrl": "https://www.vanguard.ca/en/product/etf/equity/9561/vanguard-ftse-canada-all-cap-index-etf"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (Vanguard Investments Canada), read 2026-11-15"
+    },
+    {
+      "symbol": "VFV.TO",
+      "name": "Vanguard S&P 500 Index ETF",
+      "assetClass": "etf",
+      "market": "Canada",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": true,
+      "etf": {
+        "index": "S&P 500 Index",
+        "issuerUrl": "https://www.vanguard.ca/en/product/etf/equity/9563/vanguard-sp-500-index-etf"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (Vanguard Investments Canada), read 2026-11-15"
+    },
+    {
+      "symbol": "XEI.TO",
+      "name": "iShares S&P/TSX Composite High Dividend Index ETF",
+      "assetClass": "etf",
+      "market": "Canada",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "blueChipEtf": false,
+      "etf": {
+        "index": "S&P/TSX Composite High Dividend Index",
+        "issuerUrl": "https://www.blackrock.com/ca/investors/en/products/239846/ishares-canadian-select-dividend-index-etf"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (BlackRock Canada (iShares)), read 2026-11-15"
+    },
+    {
+      "symbol": "XIC.TO",
+      "name": "iShares Core S&P/TSX Capped Composite Index ETF",
+      "assetClass": "etf",
+      "market": "Canada",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": true,
+      "etf": {
+        "index": "S&P/TSX Capped Composite Index",
+        "issuerUrl": "https://www.blackrock.com/ca/investors/en/products/239837/ishares-sptsx-capped-composite-index-etf"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (BlackRock Canada (iShares)), read 2026-11-15"
+    },
+    {
+      "symbol": "XIU.TO",
+      "name": "iShares S&P/TSX 60 Index ETF",
+      "assetClass": "etf",
+      "market": "Canada",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": true,
+      "etf": {
+        "index": "S&P/TSX 60 Index",
+        "issuerUrl": "https://www.blackrock.com/ca/investors/en/products/239832/ishares-sptsx-60-index-etf"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (BlackRock Canada (iShares)), read 2026-11-15"
+    },
+    {
+      "symbol": "ICLN",
+      "name": "iShares Global Clean Energy ETF",
+      "assetClass": "etf",
+      "market": "US",
+      "themes": [
+        "clean energy"
+      ],
+      "esg": "screened",
+      "blueChipEtf": false,
+      "etf": {
+        "index": "S&P Global Clean Energy Transition Index",
+        "issuerUrl": "https://www.ishares.com/us/products/239738/ishares-global-clean-energy-etf"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (BlackRock (iShares)), read 2026-11-15"
+    },
+    {
+      "symbol": "IVV",
+      "name": "iShares Core S&P 500 ETF",
+      "assetClass": "etf",
+      "market": "US",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": true,
+      "etf": {
+        "index": "S&P 500 Index",
+        "issuerUrl": "https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (BlackRock (iShares)), read 2026-11-15"
+    },
+    {
+      "symbol": "QQQ",
+      "name": "Invesco QQQ ETF",
+      "assetClass": "etf",
+      "market": "US",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": false,
+      "etf": {
+        "index": "Nasdaq-100 Index",
+        "issuerUrl": "https://www.invesco.com/qqq-etf/en/home.html"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (Invesco), read 2026-11-15"
+    },
+    {
+      "symbol": "SPY",
+      "name": "State Street SPDR S&P 500 ETF Trust",
+      "assetClass": "etf",
+      "market": "US",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": true,
+      "etf": {
+        "index": "S&P 500 Index",
+        "issuerUrl": "https://www.ssga.com/us/en/intermediary/etfs/state-street-spdr-sp-500-etf-trust-spy"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (State Street Investment Management), read 2026-11-15"
+    },
+    {
+      "symbol": "VOO",
+      "name": "Vanguard S&P 500 ETF",
+      "assetClass": "etf",
+      "market": "US",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": true,
+      "etf": {
+        "index": "S&P 500 Index",
+        "issuerUrl": "https://investor.vanguard.com/investment-products/etfs/profile/voo"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (Vanguard), read 2026-11-15"
+    },
+    {
+      "symbol": "VTI",
+      "name": "Vanguard Morningstar Total Stock Market ETF",
+      "assetClass": "etf",
+      "market": "US",
+      "themes": [],
+      "esg": "screened",
+      "blueChipEtf": true,
+      "etf": {
+        "index": "Morningstar US Total Market Index",
+        "issuerUrl": "https://investor.vanguard.com/investment-products/etfs/profile/vti"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (Vanguard), read 2026-11-15"
+    },
+    {
+      "symbol": "VYM",
+      "name": "Vanguard High Dividend Yield ETF",
+      "assetClass": "etf",
+      "market": "US",
+      "themes": [
+        "dividends"
+      ],
+      "esg": "screened",
+      "blueChipEtf": false,
+      "etf": {
+        "index": "FTSE High Dividend Yield Index",
+        "issuerUrl": "https://investor.vanguard.com/investment-products/etfs/profile/vym"
+      },
+      "listSource": "Hand-kept list data/blue-chip-etfs.json; index as named on the issuer's page (Vanguard), read 2026-11-15"
+    },
+    {
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "assetClass": "crypto",
+      "market": "none",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "Hand-set: rules/v1.json filters.asset_class_rules.crypto.assets"
+    },
+    {
+      "symbol": "ETH",
+      "name": "Ether",
+      "assetClass": "crypto",
+      "market": "none",
+      "themes": [],
+      "esg": "not screened",
+      "listSource": "Hand-set: rules/v1.json filters.asset_class_rules.crypto.assets"
+    },
+    {
+      "symbol": "GOLD",
+      "name": "Gold",
+      "assetClass": "gold",
+      "market": "none",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Hand-set: rules/v1.json filters.asset_class_rules.gold (reference card)"
+    },
+    {
+      "symbol": "CA2Y",
+      "name": "Government of Canada 2-year benchmark bond yield",
+      "assetClass": "bond_yield",
+      "market": "none",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Hand-set: rules/v1.json filters.asset_class_rules.bond_yields (reference card); Bank of Canada Valet series BD.CDN.2YR.DQ.YLD"
+    },
+    {
+      "symbol": "CA5Y",
+      "name": "Government of Canada 5-year benchmark bond yield",
+      "assetClass": "bond_yield",
+      "market": "none",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Hand-set: rules/v1.json filters.asset_class_rules.bond_yields (reference card); Bank of Canada Valet series BD.CDN.5YR.DQ.YLD"
+    },
+    {
+      "symbol": "CA10Y",
+      "name": "Government of Canada 10-year benchmark bond yield",
+      "assetClass": "bond_yield",
+      "market": "none",
+      "themes": [],
+      "esg": "screened",
+      "listSource": "Hand-set: rules/v1.json filters.asset_class_rules.bond_yields (reference card); Bank of Canada Valet series BD.CDN.10YR.DQ.YLD"
+    }
+  ]
+}

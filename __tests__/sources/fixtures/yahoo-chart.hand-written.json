@@ -1,0 +1,13 @@
+{
+ "_note": "Written by hand in the shape of Yahoo's v8 chart answer: Yahoo returned HTTP 429 to every call while the fixtures were recorded (2026-11-14). The numbers are test values, not market data.",
+ "chart": {
+  "result": [
+   {
+    "meta": { "currency": "USD", "symbol": "TEST", "regularMarketPrice": 102.0, "regularMarketTime": 1794603600, "gmtoffset": -18000, "exchangeTimezoneName": "America/New_York" },
+    "timestamp": [1794321000, 1794407400, 1794493800, 1794580200],
+    "indicators": { "quote": [ { "close": [100.0, 101.0, null, 102.0] } ] }
+   }
+  ],
+  "error": null
+ }
+}

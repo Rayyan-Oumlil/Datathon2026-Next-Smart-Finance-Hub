@@ -1,0 +1,16 @@
+{
+ "metric": {
+  "peTTM": 39.1706,
+  "revenueGrowthTTMYoy": 15.06,
+  "beta": 1.0898671,
+  "10DayAverageTradingVolume": 52.28032,
+  "3MonthAverageTradingVolume": 45.44588,
+  "marketCapitalization": 5177380.5,
+  "52WeekHigh": 360.83,
+  "52WeekLow": 243.42,
+  "epsTTM": 8.974499999999999
+ },
+ "metricType": "all",
+ "symbol": "AAPL",
+ "series": {}
+}

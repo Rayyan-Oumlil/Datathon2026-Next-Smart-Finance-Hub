@@ -1,0 +1,51 @@
+{
+  "note": "Theme membership is hand-set for the demo. It is a label chosen by us, not provider data and not a judgement of any company. US stocks join a theme through their sub-industry in data/us-tickers.json; Canadian stocks and funds are listed one by one because the Canadian list has no sub-industry. The ESG theme is not here: it uses the mock tag in data/esg-demo.json.",
+  "themes": [
+    {
+      "id": "AI",
+      "subIndustries": [
+        { "name": "Semiconductors", "basis": "Sub-industry Semiconductors: designs or makes chips, the hardware AI systems run on. Hand-set link; the company's own AI revenue is not checked." },
+        { "name": "Semiconductor Materials & Equipment", "basis": "Sub-industry Semiconductor Materials & Equipment: supplies the tools used to make chips. Hand-set link; the company's own AI revenue is not checked." },
+        { "name": "Systems Software", "basis": "Sub-industry Systems Software: operating systems, cloud and infrastructure software. Hand-set link; the company's own AI revenue is not checked." }
+      ],
+      "symbols": []
+    },
+    {
+      "id": "clean energy",
+      "subIndustries": [
+        { "name": "Electric Utilities", "basis": "Sub-industry Electric Utilities: generates or delivers electricity. Hand-set stand-in for the theme; the company's generation mix is not checked." },
+        { "name": "Multi-Utilities", "basis": "Sub-industry Multi-Utilities: electricity together with gas or water. Hand-set stand-in for the theme; the company's generation mix is not checked." }
+      ],
+      "symbols": [
+        { "symbol": "ICLN", "basis": "Fund whose issuer page names the S&P Global Clean Energy Transition Index as its benchmark." },
+        { "symbol": "FTS.TO", "basis": "Listed under Utilities in the Wikipedia table; electricity and gas utility. Hand-set stand-in for the theme; the generation mix is not checked." },
+        { "symbol": "EMA.TO", "basis": "Listed under Utilities in the Wikipedia table; electricity and gas utility. Hand-set stand-in for the theme; the generation mix is not checked." },
+        { "symbol": "H.TO", "basis": "Listed under Utilities in the Wikipedia table; electricity transmission and distribution. Hand-set stand-in for the theme; the generation mix is not checked." }
+      ]
+    },
+    {
+      "id": "dividends",
+      "subIndustries": [
+        { "name": "Electric Utilities", "basis": "Sub-industry Electric Utilities, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "name": "Multi-Utilities", "basis": "Sub-industry Multi-Utilities, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "name": "Integrated Telecommunication Services", "basis": "Sub-industry Integrated Telecommunication Services, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "name": "Tobacco", "basis": "Sub-industry Tobacco, a group often held for income. Hand-set; the company's payout is not checked here." }
+      ],
+      "symbols": [
+        { "symbol": "VYM", "basis": "Fund whose issuer page names the FTSE High Dividend Yield Index as its benchmark." },
+        { "symbol": "XEI.TO", "basis": "Fund whose issuer page names the S&P/TSX Composite High Dividend Index as its benchmark." },
+        { "symbol": "RY.TO", "basis": "Canadian bank, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "symbol": "TD.TO", "basis": "Canadian bank, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "symbol": "BNS.TO", "basis": "Canadian bank, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "symbol": "BMO.TO", "basis": "Canadian bank, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "symbol": "CM.TO", "basis": "Canadian bank, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "symbol": "NA.TO", "basis": "Canadian bank, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "symbol": "ENB.TO", "basis": "Canadian pipeline company, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "symbol": "FTS.TO", "basis": "Canadian utility, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "symbol": "EMA.TO", "basis": "Canadian utility, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "symbol": "BCE.TO", "basis": "Canadian telecom company, a group often held for income. Hand-set; the company's payout is not checked here." },
+        { "symbol": "T.TO", "basis": "Canadian telecom company, a group often held for income. Hand-set; the company's payout is not checked here." }
+      ]
+    }
+  ]
+}

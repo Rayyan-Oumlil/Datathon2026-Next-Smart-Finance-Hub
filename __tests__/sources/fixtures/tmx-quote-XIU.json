@@ -1,0 +1,23 @@
+{
+ "data": {
+  "getQuoteBySymbol": {
+   "symbol": "XIU",
+   "name": "iShares S&P/TSX 60 Index ETF",
+   "price": 54.55,
+   "priceChange": 0,
+   "percentChange": 0,
+   "exchangeCode": "TSX",
+   "sector": "",
+   "industry": "",
+   "volume": 3368711,
+   "MarketCap": 23712885000,
+   "peRatio": 19.24,
+   "prevClose": 54.55,
+   "beta": 0.972674,
+   "issueType": "ET",
+   "datatype": "etf",
+   "averageVolume10D": 4308991,
+   "currency": "CAD"
+  }
+ }
+}
