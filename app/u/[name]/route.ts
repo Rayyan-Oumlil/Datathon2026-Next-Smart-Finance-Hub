@@ -23,9 +23,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ name
         sessionId = personaSessionId(target);
         to = '/portfolio';
     } else {
-        return NextResponse.redirect(new URL('/', req.url));
+        return new NextResponse(null, { status: 307, headers: { Location: '/' } });
     }
-    const res = NextResponse.redirect(new URL(to, req.url));
+    const res = new NextResponse(null, { status: 307, headers: { Location: to } });
     const cookie = await sessionCookieFor(sessionId, isHttps(req.headers, req.url));
     res.cookies.set(cookie.name, cookie.value, cookie.options);
     res.headers.set('cache-control', 'no-store');
