@@ -2,7 +2,8 @@
   "nav": {
     "portfolio": "Portefeuille",
     "overview": "Aperçu",
-    "profile": "Profil"
+    "profile": "Profil",
+    "xray": "Radiographie"
   },
   "logoLabel": "AlphaForge, portefeuille",
   "disclaimer": "Simulation seulement. Aucune transaction réelle et aucun conseil en placement. Chaque chiffre indique sa source et son heure.",

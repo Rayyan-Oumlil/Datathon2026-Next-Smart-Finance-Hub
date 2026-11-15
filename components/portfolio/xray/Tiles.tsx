@@ -10,7 +10,7 @@ type StatProps = { label: string; value: string; sub?: string; tag: 'fact' | 'sc
 
 const Stat = ({ label, value, sub, tag }: StatProps) => (
     <div className="min-w-0">
-        <dt className="kicker flex items-center gap-1.5">{label}<Tag kind={tag} /></dt>
+        <dt className="kicker flex flex-wrap items-center gap-x-1.5 gap-y-1">{label}<Tag kind={tag} /></dt>
         <dd className="num mt-1 text-[24px] font-bold leading-tight tracking-[-0.03em] text-foreground">{value}</dd>
         {sub && <dd className="mt-0.5 text-[12px] text-faint">{sub}</dd>}
     </div>
@@ -30,7 +30,7 @@ export default function Tiles({ view, window, level }: Props) {
     const dd = window.maxDrawdown;
 
     return (
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-x-8 gap-y-5">
             <Stat
                 tag="fact"
                 label={t(key('largest'))}

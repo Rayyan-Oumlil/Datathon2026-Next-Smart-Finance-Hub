@@ -2,7 +2,8 @@
   "nav": {
     "portfolio": "Portfolio",
     "overview": "Overview",
-    "profile": "Profile"
+    "profile": "Profile",
+    "xray": "X-ray"
   },
   "logoLabel": "AlphaForge portfolio",
   "disclaimer": "Simulation only. No real trades and no investment advice. Every number shows its source and time.",

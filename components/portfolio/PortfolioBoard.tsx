@@ -14,7 +14,7 @@ import Holdings from './Holdings';
 import PerformanceChart from './PerformanceChart';
 import SectorAllocation from './SectorAllocation';
 import TotalValue from './TotalValue';
-import Xray from './xray/Xray';
+import XrayCard from './xray/XrayCard';
 import { PORTFOLIO_MODULES, api, mergeLayout, modulesOf, moveModule, type ModuleId } from './logic';
 import { useFmt } from './useFmt';
 
@@ -123,7 +123,7 @@ export default function PortfolioBoard() {
         performance: () => <PerformanceChart history={view!.history} startingCashCad={view!.portfolio.startingCashCad} note={view!.historyNote} level={level} />,
         holdings: () => <Holdings positions={view!.positions} totalCad={view!.valueCad.value} level={level} onChanged={refresh} />,
         sector_allocation: () => <SectorAllocation bySector={view!.bySector} cashCad={view!.cashCad} totalCad={view!.valueCad.value} unpriced={view!.unpriced} level={level} />,
-        xray: () => <Xray level={level} refreshKey={view!.portfolio.trades.length} />,
+        xray: () => <XrayCard refreshKey={view!.portfolio.trades.length} />,
         investment_rules: () => (
             <RulesModule
                 rules={rules}

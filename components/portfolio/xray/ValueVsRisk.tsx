@@ -1,8 +1,8 @@
 import { useTranslations } from 'next-intl';
 import type { Level } from '@/lib/domain/types';
 import { useFmt } from '../useFmt';
-import { clampPct, leadRow, riskRows, type AvailableWindow } from './logic';
-import { Section } from './parts';
+import { leadRow, riskRows, type AvailableWindow } from './logic';
+import { GrowBar, Section } from './parts';
 
 // Each holding's share of the value next to its share of the risk. Two bars per holding, both with their numbers:
 // the gap between them is the finding.
@@ -48,7 +48,7 @@ function Bar({ label, value, tone, format }: { label: string; value: number | nu
         <div className="flex items-center gap-2">
             <span className="w-11 flex-none text-[11px] text-faint">{label}</span>
             <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-hover" aria-hidden>
-                <div className={`h-full rounded-full ${tone}`} style={{ width: `${clampPct(value ?? 0)}%` }} />
+                <GrowBar value={value ?? 0} className={tone} />
             </div>
             <span className="num w-12 flex-none text-end font-bold text-foreground">{value === null ? '–' : format(value)}</span>
         </div>

@@ -1,12 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { Level } from '@/lib/domain/types';
-import type { XrayView } from '@/lib/services/portfolio-xray';
 import type { WindowId } from '@/lib/xray/types';
-import Panel from '@/components/Panel';
-import { api } from '../logic';
 import { useFmt } from '../useFmt';
 import BandBar from './BandBar';
 import Exposure from './Exposure';
@@ -17,56 +15,65 @@ import Together from './Together';
 import ValueVsRisk from './ValueVsRisk';
 import WhatIf from './WhatIf';
 import { isAvailable, pickWindow } from './logic';
+import { Rise } from './parts';
+import { useLevel, useXray } from './useXray';
 
 const WINDOWS: WindowId[] = ['full', 'y2022', 'last12m'];
 
-// The Portfolio tab's X-ray: how the simulated holdings are spread and how this mix would have moved in past periods.
-// Loads on its own, so a slow history provider never holds up the rest of the tab.
-export default function Xray({ level, refreshKey }: { level: Level; refreshKey: number }) {
+const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+    <div className="hatch"><div className={`card p-5 ${className}`}>{children}</div></div>
+);
+
+// The full X-ray, opened from the Portfolio tab in its own tab. Sections rise in one after another; the period
+// buttons switch every figure and the chart at once; the what-if lab on the side re-runs as the amount is dragged.
+export default function XrayPage() {
     const t = useTranslations('Xray');
     const fmt = useFmt();
-    const [view, setView] = useState<XrayView | null>(null);
-    const [error, setError] = useState<{ failure: unknown } | null>(null);
+    const level = useLevel();
+    const { view, error, load } = useXray();
     const [wanted, setWanted] = useState<WindowId>('full');
 
-    const load = useCallback(async () => {
-        try {
-            setView(await api<XrayView>('/api/portfolio/xray'));
-            setError(null);
-        } catch (failure) {
-            setError({ failure });
-        }
-    }, []);
-
-    useEffect(() => { load(); }, [load, refreshKey]);
-
-    const header = (action?: React.ReactNode) => ({ title: t('title'), sub: t('sub'), action });
+    const head = (picker?: React.ReactNode) => (
+        <header className="page-head flex-wrap">
+            <div>
+                <Link href="/portfolio" className="mb-2 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />{t('page.back')}</Link>
+                <h1 className="page-title">{t('page.title')} <span className="pill is-brand ms-1 align-middle">{t('simulated')}</span></h1>
+                <p className="page-sub">{t('sub')}</p>
+            </div>
+            {picker}
+        </header>
+    );
 
     if (error && !view) {
         return (
-            <Panel {...header()} bodyClassName="p-4">
-                <div role="alert" className="flex flex-wrap items-center justify-between gap-3 text-[13.5px] text-down">
+            <>
+                {head()}
+                <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-line bg-card px-4 py-3 text-[13.5px] text-down">
                     <span>{t('states.error', { error: fmt.error(error.failure) })}</span>
                     <button type="button" className="btn btn-ghost h-8 px-3 text-[13px]" onClick={load}>{t('states.retry')}</button>
                 </div>
-            </Panel>
+            </>
         );
     }
     if (!view) {
-        return <Panel {...header()} bodyClassName="p-5"><p className="text-[13.5px] text-faint" aria-busy="true">{t('states.loading')}</p></Panel>;
+        return (
+            <>
+                {head()}
+                <div className="flex flex-col gap-4" aria-busy="true" aria-label={t('page.loading')}>
+                    <p className="text-[13.5px] text-faint">{t('page.loading')}</p>
+                    {[84, 132, 192].map((h) => <div key={h} className="xray-shimmer rounded-[14px]" style={{ height: h }} />)}
+                </div>
+            </>
+        );
     }
     if (view.holdings.length === 0 && view.unpriced.length === 0) {
-        return (
-            <Panel {...header()} bodyClassName="p-4">
-                <div className="empty-state"><h3>{t('states.emptyTitle')}</h3><p className="max-w-md text-[13px]">{t('states.empty')}</p></div>
-            </Panel>
-        );
+        return <>{head()}<Card><div className="empty-state"><h3>{t('states.emptyTitle')}</h3><p className="max-w-md text-[13px]">{t('states.empty')}</p></div></Card></>;
     }
 
     const id = pickWindow(view.windows, wanted);
     const current = view.windows[id];
     const picker = (
-        <div role="radiogroup" aria-label={t('window.label')} className="flex flex-none flex-wrap gap-1">
+        <div role="radiogroup" aria-label={t('window.label')} className="flex flex-none flex-wrap gap-1 self-end">
             {WINDOWS.map((option) => (
                 <button
                     key={option}
@@ -74,7 +81,7 @@ export default function Xray({ level, refreshKey }: { level: Level; refreshKey: 
                     role="radio"
                     aria-checked={id === option}
                     onClick={() => setWanted(option)}
-                    className={`h-7 rounded-full px-2.5 text-[12px] font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${id === option ? 'bg-brand-soft text-brand-ink' : 'text-muted-foreground hover:bg-hover hover:text-foreground'}`}
+                    className={`h-8 rounded-full px-3 text-[12.5px] font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${id === option ? 'bg-brand-soft text-brand-ink' : 'text-muted-foreground hover:bg-hover hover:text-foreground'}`}
                 >
                     {t(`window.${option}`)}
                 </button>
@@ -83,34 +90,38 @@ export default function Xray({ level, refreshKey }: { level: Level; refreshKey: 
     );
 
     return (
-        <Panel className="[&>.section-head]:flex-wrap" {...header(picker)} bodyClassName="p-5">
-            <div className="flex flex-col gap-5">
-                <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-faint">
-                    <span className="pill is-brand">{t('simulated')}</span>
-                    {isAvailable(current) && <span>{t('window.range', { from: fmt.when(current.from), to: fmt.when(current.to) })}</span>}
-                    <span><span className="font-semibold text-muted-foreground">{t('scope.measured')}:</span> {t('scope.market')} · {t('scope.concentration')} · {t('scope.currency')}</span>
-                    <span><span className="font-semibold text-muted-foreground">{t('scope.notMeasured')}:</span> {t('scope.credit')} · {t('scope.liquidity')} · {t('scope.rates')}</span>
-                </p>
+        <>
+            {head(picker)}
+            <Rise index={0} className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-faint">
+                {isAvailable(current) && <span>{t('window.range', { from: fmt.when(current.from), to: fmt.when(current.to) })}</span>}
+                <span><span className="font-semibold text-muted-foreground">{t('scope.measured')}:</span> {t('scope.market')} · {t('scope.concentration')} · {t('scope.currency')}</span>
+                <span><span className="font-semibold text-muted-foreground">{t('scope.notMeasured')}:</span> {t('scope.credit')} · {t('scope.liquidity')} · {t('scope.rates')}</span>
+            </Rise>
 
-                {isAvailable(current) ? (
-                    <>
-                        <Tiles view={view} window={current} level={level} />
-                        {view.band && <BandBar band={view.band} window={current} />}
-                        <ValueVsRisk window={current} level={level} />
-                        <MoveChart view={view} window={current} level={level} />
-                        {level !== 'Novice' && <Together window={current} />}
-                        {level !== 'Novice' && <Exposure view={view} />}
-                        <WhatIf view={view} windowId={id} />
-                        <Limits view={view} window={current} level={level} />
-                    </>
-                ) : (
-                    <>
-                        <p className="text-[13.5px] text-muted-foreground">{t(current.reason === 'no_holdings' ? 'window.noHoldings' : 'window.unavailable')}</p>
-                        <Exposure view={view} />
-                        <Limits view={view} window={null} level={level} />
-                    </>
-                )}
-            </div>
-        </Panel>
+            {isAvailable(current) ? (
+                <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
+                    {/* key: switching the period replays the motion with the new figures; the lab beside it keeps its state */}
+                    <div key={id} className="flex min-w-0 flex-col gap-5">
+                        <Rise index={1}><Card><Tiles view={view} window={current} level={level} /></Card></Rise>
+                        <Rise index={2}><Card className="flex flex-col gap-5">
+                            {view.band && <BandBar band={view.band} window={current} />}
+                            <ValueVsRisk window={current} level={level} />
+                        </Card></Rise>
+                        <Rise index={3}><Card><MoveChart view={view} window={current} level={level} /></Card></Rise>
+                        {level !== 'Novice' && <Rise index={4}><Card className="grid gap-6 md:grid-cols-2 [&>section]:border-t-0 [&>section]:pt-0"><Together window={current} /><Exposure view={view} /></Card></Rise>}
+                    </div>
+                    <Rise index={2} className="lg:sticky lg:top-4">
+                        <Card><WhatIf view={view} windowId={id} /></Card>
+                    </Rise>
+                    <Rise index={5} className="lg:col-span-2"><Card><Limits view={view} window={current} level={level} /></Card></Rise>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-5">
+                    <Card><p className="text-[13.5px] text-muted-foreground">{t(current.reason === 'no_holdings' ? 'window.noHoldings' : 'window.unavailable')}</p></Card>
+                    <Card><Exposure view={view} /></Card>
+                    <Card><Limits view={view} window={null} level={level} /></Card>
+                </div>
+            )}
+        </>
     );
 }

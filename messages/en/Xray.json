@@ -2,7 +2,11 @@
   "title": "Portfolio X-ray",
   "sub": "How the simulated holdings are spread, and how this mix would have moved in past periods.",
   "simulated": "simulated",
-  "labels": { "fact": "Fact", "scenario": "Scenario", "assumption": "Assumption" },
+  "labels": {
+    "fact": "Fact",
+    "scenario": "Scenario",
+    "assumption": "Assumption"
+  },
   "window": {
     "label": "Period",
     "full": "Whole history",
@@ -44,7 +48,11 @@
     "within": "Within the limit",
     "above": "Above the limit",
     "note": "The limit is the one the watchlist applies to single assets for your risk profile. It is the app's own band, not a regulatory threshold.",
-    "risk": { "Low": "Low", "Medium": "Medium", "High": "High" }
+    "risk": {
+      "Low": "Low",
+      "Medium": "Medium",
+      "High": "High"
+    }
   },
   "valueRisk": {
     "title": "Where the value sits, and where the risk sits",
@@ -67,7 +75,11 @@
     "legendStart": "Start (100)",
     "legendFall": "Worst fall",
     "yourAnswer": "You answered \"{answer}\" to the 20% drop question. In this replay the mix fell {pct} from its peak.",
-    "answers": { "sell": "Reduce my position", "wait": "Wait", "buy_more": "Add to my position" },
+    "answers": {
+      "sell": "Reduce my position",
+      "wait": "Wait",
+      "buy_more": "Add to my position"
+    },
     "worstDay": "Worst day",
     "worstSpan": "Worst 20 trading days"
   },
@@ -114,7 +126,8 @@
       "volatility": "Volatility",
       "worstFall": "Worst fall",
       "cash": "Cash"
-    }
+    },
+    "noCash": "No simulated cash left to add."
   },
   "limits": {
     "title": "Limits",
@@ -139,5 +152,18 @@
   },
   "novice": {
     "summary": "{symbol} is the biggest position, at {share} of the portfolio."
+  },
+  "card": {
+    "open": "Open the full X-ray",
+    "finding": "{symbol} is {value} of the value and {risk} of the risk.",
+    "spread": "The risk is spread about as the value is.",
+    "moves": "Replay, {from} to {to}",
+    "hint": "Opens in its own tab"
+  },
+  "page": {
+    "back": "Back to the portfolio",
+    "title": "Portfolio X-ray",
+    "lab": "What-if lab",
+    "loading": "Reading the holdings and replaying them over their price history…"
   }
 }

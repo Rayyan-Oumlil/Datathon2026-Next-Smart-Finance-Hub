@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Level } from '@/lib/domain/types';
 import type { XrayView } from '@/lib/services/portfolio-xray';
@@ -19,6 +22,15 @@ export default function MoveChart({ view, window, level }: { view: XrayView; win
     const trough = box.dots.find((dot) => dot.point.t === dd.troughDate);
     const last = window.curve[window.curve.length - 1];
     const answer = dropFact(view, window);
+    const [hover, setHover] = useState<number | null>(null);
+    const shown = hover === null ? null : box.dots[hover];
+    const onMove = (event: React.PointerEvent<HTMLDivElement>) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width;
+        let nearest = 0;
+        box.dots.forEach((dot, index) => { if (Math.abs(dot.x - x) < Math.abs(box.dots[nearest].x - x)) nearest = index; });
+        setHover(nearest);
+    };
 
     return (
         <Section title={t('move.title')} sub={t('move.sub')} tag="scenario">
@@ -27,11 +39,11 @@ export default function MoveChart({ view, window, level }: { view: XrayView; win
                     <span>{fmt.money(box.high)}</span>
                     <span>{fmt.money(box.low)}</span>
                 </div>
-                <div className="relative min-w-0 flex-1" style={{ height: H }}>
+                <div className="relative min-w-0 flex-1 touch-none" style={{ height: H }} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
                     <svg
                         viewBox={`0 0 ${W} ${H}`}
                         preserveAspectRatio="none"
-                        className="size-full overflow-visible"
+                        className="xray-wipe size-full overflow-visible"
                         role="img"
                         aria-label={t('move.chartLabel', {
                             from: fmt.when(window.from), to: fmt.when(window.to), last: fmt.money(last.value),
@@ -47,6 +59,12 @@ export default function MoveChart({ view, window, level }: { view: XrayView; win
                             fill="none" stroke="var(--brand)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"
                         />
                     </svg>
+                    {shown && (
+                        <>
+                            <span className="pointer-events-none absolute inset-y-0 w-px bg-line-strong" style={{ left: `${shown.x * 100}%` }} />
+                            <span className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand ring-2 ring-card" style={{ left: `${shown.x * 100}%`, top: `${shown.y * 100}%` }} />
+                        </>
+                    )}
                     {dd.pct < 0 && [peak, trough].map((dot, index) => dot && (
                         <span
                             key={index}
@@ -56,6 +74,9 @@ export default function MoveChart({ view, window, level }: { view: XrayView; win
                     ))}
                 </div>
             </div>
+            <p className="num mt-2 min-h-5 text-[13px] text-muted-foreground" aria-live="polite">
+                {shown ? <><span className="font-bold text-foreground">{fmt.money(shown.point.valueCad)}</span> · {fmt.when(shown.point.t)}</> : ''}
+            </p>
             <div className="mt-1 flex justify-between ps-12 text-[11px] text-faint">
                 <span>{fmt.when(window.from)}</span>
                 <span>{fmt.when(window.to)}</span>

@@ -2,7 +2,11 @@
   "title": "Radiographie du portefeuille",
   "sub": "Comment les positions simulées sont réparties, et comment ce mélange aurait évolué dans le passé.",
   "simulated": "simulé",
-  "labels": { "fact": "Fait", "scenario": "Scénario", "assumption": "Hypothèse" },
+  "labels": {
+    "fact": "Fait",
+    "scenario": "Scénario",
+    "assumption": "Hypothèse"
+  },
   "window": {
     "label": "Période",
     "full": "Tout l’historique",
@@ -44,7 +48,11 @@
     "within": "Sous la limite",
     "above": "Au-dessus de la limite",
     "note": "La limite est celle que la liste de surveillance applique à un actif seul pour votre profil de risque. C’est la fourchette propre à l’application, pas un seuil réglementaire.",
-    "risk": { "Low": "faible", "Medium": "moyen", "High": "élevé" }
+    "risk": {
+      "Low": "faible",
+      "Medium": "moyen",
+      "High": "élevé"
+    }
   },
   "valueRisk": {
     "title": "Où se trouve la valeur, et où se trouve le risque",
@@ -67,7 +75,11 @@
     "legendStart": "Départ (100)",
     "legendFall": "Pire baisse",
     "yourAnswer": "Vous avez répondu « {answer} » à la question sur une baisse de 20 %. Dans ce rejeu, le mélange a reculé de {pct} depuis son sommet.",
-    "answers": { "sell": "Réduire ma position", "wait": "Attendre", "buy_more": "Ajouter à ma position" },
+    "answers": {
+      "sell": "Réduire ma position",
+      "wait": "Attendre",
+      "buy_more": "Ajouter à ma position"
+    },
     "worstDay": "Pire journée",
     "worstSpan": "Pires 20 jours de bourse"
   },
@@ -114,7 +126,8 @@
       "volatility": "Volatilité",
       "worstFall": "Pire baisse",
       "cash": "Liquidités"
-    }
+    },
+    "noCash": "Il ne reste aucune liquidité simulée à ajouter."
   },
   "limits": {
     "title": "Limites",
@@ -139,5 +152,18 @@
   },
   "novice": {
     "summary": "{symbol} est la position la plus importante, à {share} du portefeuille."
+  },
+  "card": {
+    "open": "Ouvrir la radiographie complète",
+    "finding": "{symbol} représente {value} de la valeur et {risk} du risque.",
+    "spread": "Le risque est réparti à peu près comme la valeur.",
+    "moves": "Rejeu, du {from} au {to}",
+    "hint": "S’ouvre dans son propre onglet"
+  },
+  "page": {
+    "back": "Retour au portefeuille",
+    "title": "Radiographie du portefeuille",
+    "lab": "Laboratoire de simulations",
+    "loading": "Lecture des positions et rejeu sur leur historique de cours…"
   }
 }
