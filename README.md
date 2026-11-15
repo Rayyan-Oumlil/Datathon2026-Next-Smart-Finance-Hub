@@ -135,6 +135,7 @@ Open `.env` and set at least:
 | `ADANOS_API_KEY` | optional | Sentiment card on stock pages (display only). |
 | `DYNAMODB_ENDPOINT` | optional | `http://localhost:8000` to use DynamoDB Local instead of AWS. |
 | `DEMO_USER_ID` | optional | Change it to start a fresh demo user with an empty portfolio and history. |
+| `VOICE_ENABLED` | optional | `true` offers voice input and spoken replies; any other value turns them off. Unset: on in development, off in production. Browsers allow the microphone only over HTTPS or on `localhost`. Transcribe is billed per streamed minute. |
 
 `.env` is ignored by Git: never commit it. Check it with:
 
@@ -208,20 +209,23 @@ This starts the web app with DynamoDB Local. That database is held in memory, so
 
 ## Deploy to AWS
 
-Everything runs in `us-east-1`. The web app runs on **ECS Fargate** behind an Application Load Balancer; the agent service runs on **Amazon Bedrock AgentCore Runtime**. Run the scripts in [infra/](infra/) in this order, from the repository root, with a filled-in `.env`:
+Everything runs in `us-east-1`. The web app runs on **ECS Fargate** behind an Application Load Balancer, with a **CloudFront** distribution in front for HTTPS; the agent service runs on **Amazon Bedrock AgentCore Runtime**. Run these steps in order, from the repository root, with a filled-in `.env`:
 
-| Order | Script | What it does |
+| Order | Step | What it does |
 |---|---|---|
 | 1 | `infra/audit.sh` | CloudTrail trail for Bedrock calls, Bedrock invocation logging to S3, and the Guardrail in `infra/guardrail.json`. It prints the Guardrail id: put it in `.env` as `GUARDRAIL_ID`, with `GUARDRAIL_VERSION=1` on a first run. |
 | 2 | `node scripts/create-tables.mjs` | The three DynamoDB tables in AWS. |
-| 3 | `infra/ecs-base.sh` | Run once. Copies `FINNHUB_API_KEY`, `ADANOS_API_KEY` and `INTERNAL_API_TOKEN` from `.env` into the AWS Secrets Manager secret `datathon/web`, and creates the IAM roles, security groups and load balancer. Writes the resource ids to `infra/outputs.env`, which Git ignores. |
-| 4 | *by hand, once* | Create the AgentCore runtime and its role `datathon-agent-runtime-role` in the console. Put its ARN in `.env` as `AGENT_RUNTIME_ARN`. |
-| 5 | `infra/deploy-agent.sh` | Builds the agent image (arm64), pushes it to ECR and updates the AgentCore runtime. |
-| 6 | `infra/deploy-web.sh` | Builds the web image, pushes it to ECR and deploys the ECS service. Prints the site URL. |
+| 3 | *by hand, once* | Create the AgentCore runtime named `datathon_agent` and its role `datathon-agent-runtime-role` in the console. |
+| 4 | `infra/ecs-base.sh` | Copies `FINNHUB_API_KEY`, `ADANOS_API_KEY` and `INTERNAL_API_TOKEN` from `.env` into the AWS Secrets Manager secret `datathon/web`, and creates the IAM roles, security groups and load balancer. Finds the AgentCore runtime and the CloudFront distribution by name. Writes every id and the public address to `infra/outputs.env`, which Git ignores. Safe to re-run. |
+| 5 | HTTPS, once | In [infra/cloudfront.json](infra/cloudfront.json), set `DomainName` to your load balancer's address (printed by step 4), then run `aws cloudfront create-distribution --distribution-config file://infra/cloudfront.json`. When the distribution is deployed (a few minutes), run `infra/ecs-base.sh` again so that the public address becomes the `https://…cloudfront.net` one. |
+| 6 | `infra/deploy-agent.sh` | Builds the agent image (arm64), pushes it to ECR and updates the AgentCore runtime. |
+| 7 | `infra/deploy-web.sh` | Builds the web image, pushes it to ECR and deploys the ECS service. Turns voice on only when the public address is HTTPS. Prints the site URL. |
+
+Without step 5 the site still works over plain HTTP on the load balancer's address, but voice stays off, because browsers allow the microphone only over HTTPS.
 
 Where secrets live once deployed: API keys are in Secrets Manager (`datathon/web`) and injected into the container at start; AWS access comes from the ECS task role, so no AWS key is stored anywhere.
 
-To redeploy after a code change, run steps 5 and/or 6 again.
+To redeploy after a code change, run steps 6 and/or 7 again.
 
 ---
 
@@ -273,7 +277,7 @@ Details, endpoints and terms of use are in [docs/data-sources.md](docs/data-sour
 - Canadian stocks have no revenue-growth figure and no news count; the universe has no Canadian health-care names.
 - Some state lives in a file inside the web container and is lost when the task restarts or is redeployed: the saved layout, investment rules, pins and dismissals, pending agent previews with their undo data, and the slow-moving state of the watchlist (which symbols were listed and since when). After a restart the next watchlist run starts without incumbents. The profile, both logs and therefore the portfolio are in DynamoDB and persist.
 - Privacy consent and legal disclaimers have not had a legal review.
-- The site has no sign-in, runs over plain HTTP, and every visitor shares the one demo user. The agent route is limited to 10 requests a minute. Do not share the link widely; set a new `DEMO_USER_ID` before a presentation to start from a clean history.
+- The site has no sign-in, and every visitor shares the one demo user. HTTPS comes from CloudFront in front of the load balancer; the load balancer's own address is still reachable over plain HTTP. The agent route is limited to 10 requests a minute; the voice routes have per-visitor limits and a daily cap. Do not share the link widely; set a new `DEMO_USER_ID` before a presentation to start from a clean history.
 - The X-ray replay counts price changes only (no dividends). Crypto history is about two years (Kraken's 720 daily bars), so a window it does not cover leaves it out and says so.
 - Price alerts and the earnings calendar are not built. The Overview tab has a fixed layout; only the Portfolio tab's modules can be rearranged.
 
