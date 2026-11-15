@@ -434,6 +434,140 @@
     }
   },
 
+  "strategy_suggestions": {
+    "version": "strategy-suggestions-v1",
+    "origin": "owner; asked on 2026-11-15 (suggested strategies and per-rule thresholds by risk level)",
+    "note": "Teaching examples, not advice. For each risk level: three suggested strategies and one suggested rule per rule kind, with thresholds adapted to the level. Every rule is a StrategyInput rule (lib/strategy/types.ts) once two placeholders are filled by lib/services/strategy-suggestions.ts, deterministically and without any model: \"targets\": \"from_portfolio\" becomes the current weights of the simulated portfolio (or of the chosen suggested portfolio when nothing is held; fallback_targets when there are no weights at all), capped by a weight cap of the same strategy; \"symbol\": \"largest_holding\" becomes the largest line of that portfolio.",
+    "label_fr": "Exemple pédagogique, pas un conseil",
+    "label_en": "Teaching example, not advice",
+    "fallback_targets": [{ "symbol": "XIU.TO", "weightPct": 60 }, { "symbol": "XBB.TO", "weightPct": 40 }],
+    "levels": {
+      "Low": {
+        "strategies": [
+          {
+            "id": "low-preserve",
+            "family": "preserve",
+            "name": { "fr": "Préserver", "en": "Preserve" },
+            "description": { "fr": "Un garde-fou qui se déclenche tôt vers un fonds à court terme, et aucune ligne au-dessus de 15 %.", "en": "A guard that acts early toward a short-term fund, and no line above 15%." },
+            "rules": [
+              { "kind": "drawdown_guard", "triggerDrawdownPct": 8, "movePct": 50, "defensiveSymbol": "ZST.TO", "recoverDrawdownPct": 3 },
+              { "kind": "weight_cap", "maxWeightPct": 15, "proceedsSymbol": "ZST.TO" }
+            ]
+          },
+          {
+            "id": "low-on-target",
+            "family": "on_target",
+            "name": { "fr": "Rester sur la cible", "en": "Stay on target" },
+            "description": { "fr": "Chaque trimestre, le portefeuille revient à ses poids d’aujourd’hui.", "en": "Every quarter, the portfolio goes back to today’s weights." },
+            "rules": [
+              { "kind": "allocation_target", "targets": "from_portfolio", "rebalance": { "mode": "quarterly" } }
+            ]
+          },
+          {
+            "id": "low-saving",
+            "family": "regular_saving",
+            "name": { "fr": "Épargne régulière", "en": "Regular saving" },
+            "description": { "fr": "Un petit apport chaque mois, et un rééquilibrage dès que l’écart dépasse 4 points.", "en": "A small contribution every month, and rebalancing once a line drifts more than 4 points." },
+            "rules": [
+              { "kind": "allocation_target", "targets": "from_portfolio", "rebalance": { "mode": "drift", "driftPts": 4 } },
+              { "kind": "periodic_purchase", "amountCad": 200, "every": { "unit": "month" } }
+            ]
+          }
+        ],
+        "rules": {
+          "drawdown_guard": { "kind": "drawdown_guard", "triggerDrawdownPct": 8, "movePct": 50, "defensiveSymbol": "ZST.TO", "recoverDrawdownPct": 3 },
+          "weight_cap": { "kind": "weight_cap", "maxWeightPct": 15, "proceedsSymbol": "ZST.TO" },
+          "allocation_target": { "kind": "allocation_target", "targets": "from_portfolio", "rebalance": { "mode": "drift", "driftPts": 4 } },
+          "periodic_purchase": { "kind": "periodic_purchase", "amountCad": 200, "every": { "unit": "month" } },
+          "price_threshold": { "kind": "price_threshold", "symbol": "largest_holding", "trigger": { "type": "change_pct_below", "value": -4 }, "action": { "side": "buy", "amountCad": 250 }, "once": true }
+        }
+      },
+      "Medium": {
+        "strategies": [
+          {
+            "id": "medium-preserve",
+            "family": "preserve",
+            "name": { "fr": "Préserver", "en": "Preserve" },
+            "description": { "fr": "Un garde-fou à 15 % de repli vers les obligations, et aucune ligne au-dessus de 25 %.", "en": "A guard at a 15% fall toward bonds, and no line above 25%." },
+            "rules": [
+              { "kind": "drawdown_guard", "triggerDrawdownPct": 15, "movePct": 40, "defensiveSymbol": "XBB.TO", "recoverDrawdownPct": 5 },
+              { "kind": "weight_cap", "maxWeightPct": 25, "proceedsSymbol": "XBB.TO" }
+            ]
+          },
+          {
+            "id": "medium-on-target",
+            "family": "on_target",
+            "name": { "fr": "Rester sur la cible", "en": "Stay on target" },
+            "description": { "fr": "Le portefeuille revient à ses poids d’aujourd’hui quand une ligne s’en écarte de plus de 5 points.", "en": "The portfolio goes back to today’s weights when a line drifts more than 5 points." },
+            "rules": [
+              { "kind": "allocation_target", "targets": "from_portfolio", "rebalance": { "mode": "drift", "driftPts": 5 } }
+            ]
+          },
+          {
+            "id": "medium-saving",
+            "family": "regular_saving",
+            "name": { "fr": "Épargne régulière", "en": "Regular saving" },
+            "description": { "fr": "Un apport chaque mois et un rééquilibrage chaque trimestre.", "en": "A contribution every month and rebalancing every quarter." },
+            "rules": [
+              { "kind": "allocation_target", "targets": "from_portfolio", "rebalance": { "mode": "quarterly" } },
+              { "kind": "periodic_purchase", "amountCad": 400, "every": { "unit": "month" } }
+            ]
+          }
+        ],
+        "rules": {
+          "drawdown_guard": { "kind": "drawdown_guard", "triggerDrawdownPct": 15, "movePct": 40, "defensiveSymbol": "XBB.TO", "recoverDrawdownPct": 5 },
+          "weight_cap": { "kind": "weight_cap", "maxWeightPct": 25, "proceedsSymbol": "XBB.TO" },
+          "allocation_target": { "kind": "allocation_target", "targets": "from_portfolio", "rebalance": { "mode": "drift", "driftPts": 5 } },
+          "periodic_purchase": { "kind": "periodic_purchase", "amountCad": 400, "every": { "unit": "month" } },
+          "price_threshold": { "kind": "price_threshold", "symbol": "largest_holding", "trigger": { "type": "change_pct_below", "value": -6 }, "action": { "side": "buy", "amountCad": 400 }, "once": true }
+        }
+      },
+      "High": {
+        "strategies": [
+          {
+            "id": "high-preserve",
+            "family": "preserve",
+            "name": { "fr": "Préserver", "en": "Preserve" },
+            "description": { "fr": "Un garde-fou qui n’agit qu’après un repli de 25 %, et aucune ligne au-dessus de 35 %.", "en": "A guard that only acts after a 25% fall, and no line above 35%." },
+            "rules": [
+              { "kind": "drawdown_guard", "triggerDrawdownPct": 25, "movePct": 30, "defensiveSymbol": "XBB.TO", "recoverDrawdownPct": 10 },
+              { "kind": "weight_cap", "maxWeightPct": 35 }
+            ]
+          },
+          {
+            "id": "high-saving",
+            "family": "regular_saving",
+            "name": { "fr": "Épargne régulière", "en": "Regular saving" },
+            "description": { "fr": "Un apport chaque mois, et un rééquilibrage seulement quand l’écart dépasse 8 points.", "en": "A contribution every month, and rebalancing only once a line drifts more than 8 points." },
+            "rules": [
+              { "kind": "allocation_target", "targets": "from_portfolio", "rebalance": { "mode": "drift", "driftPts": 8 } },
+              { "kind": "periodic_purchase", "amountCad": 600, "every": { "unit": "month" } }
+            ]
+          },
+          {
+            "id": "high-growth",
+            "family": "growth",
+            "name": { "fr": "Croissance encadrée", "en": "Framed growth" },
+            "description": { "fr": "Des apports fréquents qui suivent les poids actuels, un plafond de 35 % dont l’excédent va au grand fonds américain, et un garde-fou large.", "en": "Frequent contributions that follow today’s weights, a 35% cap whose excess goes to the broad US fund, and a wide guard." },
+            "rules": [
+              { "kind": "drawdown_guard", "triggerDrawdownPct": 30, "movePct": 25, "defensiveSymbol": "XBB.TO", "recoverDrawdownPct": 12 },
+              { "kind": "weight_cap", "maxWeightPct": 35, "proceedsSymbol": "SPY" },
+              { "kind": "allocation_target", "targets": "from_portfolio", "rebalance": { "mode": "drift", "driftPts": 10 } },
+              { "kind": "periodic_purchase", "amountCad": 300, "every": { "unit": "trading_days", "n": 10 } }
+            ]
+          }
+        ],
+        "rules": {
+          "drawdown_guard": { "kind": "drawdown_guard", "triggerDrawdownPct": 25, "movePct": 30, "defensiveSymbol": "XBB.TO", "recoverDrawdownPct": 10 },
+          "weight_cap": { "kind": "weight_cap", "maxWeightPct": 35 },
+          "allocation_target": { "kind": "allocation_target", "targets": "from_portfolio", "rebalance": { "mode": "drift", "driftPts": 8 } },
+          "periodic_purchase": { "kind": "periodic_purchase", "amountCad": 600, "every": { "unit": "month" } },
+          "price_threshold": { "kind": "price_threshold", "symbol": "largest_holding", "trigger": { "type": "change_pct_below", "value": -8 }, "action": { "side": "buy", "amountCad": 600 }, "once": true }
+        }
+      }
+    }
+  },
+
   "unspecified": [
     "Data sources for Canadian quotes, history and sector: see docs/spec.md section 5 for the options and their terms. Awaiting the owner's choice.",
     "Sector list, niches per sector and theme membership: depend on the universe source chosen.",

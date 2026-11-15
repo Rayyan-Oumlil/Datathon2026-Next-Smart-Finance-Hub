@@ -55,11 +55,31 @@
         "nameRequired": "Give the strategy a name."
     },
     "kinds": {
-        "allocation_target": { "name": "Rebalancing", "desc": "Brings the portfolio back to target weights, every quarter or when the gap grows too wide." },
-        "weight_cap": { "name": "Weight cap", "desc": "Keeps any single holding from going over a set share of the portfolio." },
-        "drawdown_guard": { "name": "Drawdown guard", "desc": "After a marked fall from the peak, moves part of the portfolio to a defensive holding." },
-        "periodic_purchase": { "name": "Periodic contribution", "desc": "Adds a fixed amount at a regular interval, split by the target weights." },
-        "price_threshold": { "name": "Price threshold", "desc": "Simulates an acquisition or a reduction when a holding crosses a price." }
+        "allocation_target": {
+            "name": "Rebalancing",
+            "desc": "Brings the portfolio back to target weights, every quarter or when the gap grows too wide.",
+            "short": "Rebalancing"
+        },
+        "weight_cap": {
+            "name": "Weight cap",
+            "desc": "Keeps any single holding from going over a set share of the portfolio.",
+            "short": "Cap"
+        },
+        "drawdown_guard": {
+            "name": "Drawdown guard",
+            "desc": "After a marked fall from the peak, moves part of the portfolio to a defensive holding.",
+            "short": "Guard"
+        },
+        "periodic_purchase": {
+            "name": "Periodic contribution",
+            "desc": "Adds a fixed amount at a regular interval, split by the target weights.",
+            "short": "Contribution"
+        },
+        "price_threshold": {
+            "name": "Price threshold",
+            "desc": "Simulates an acquisition or a reduction when a holding crosses a price.",
+            "short": "Price threshold"
+        }
     },
     "sentence": {
         "allocation_target_drift": "<mode>When the gap from target goes over</mode> <drift>{driftV}</drift>, bring the portfolio back to <targets>{targetsV}</targets>.",
@@ -86,8 +106,14 @@
             "change_pct_below": "has a daily change under",
             "change_pct_above": "has a daily change over"
         },
-        "side": { "buy": "simulate an acquisition", "sell": "simulate reducing the position" },
-        "once": { "true": "(once only)", "false": "(each time it crosses)" }
+        "side": {
+            "buy": "simulate an acquisition",
+            "sell": "simulate reducing the position"
+        },
+        "once": {
+            "true": "(once only)",
+            "false": "(each time it crosses)"
+        }
     },
     "chip": {
         "edit": "Change: {label}",
@@ -178,5 +204,63 @@
     },
     "errors": {
         "noValue": "The value of the simulated portfolio is not known yet."
+    },
+    "flow": {
+        "label": "The strategy as a diagram, rule by rule, in the order they apply",
+        "viewLabel": "Rule display",
+        "viewSentences": "Sentences",
+        "viewFlow": "Diagram",
+        "step": {
+            "when": "When",
+            "check": "Check",
+            "action": "Then"
+        },
+        "when": {
+            "allocation_target_drift": "<mode>Gap from target</mode> above <drift>{driftV}</drift> on a holding",
+            "allocation_target_quarterly": "<mode>Start of every quarter</mode>",
+            "weight_cap": "A holding goes over <cap>{capV}</cap> of the portfolio",
+            "drawdown_guard": "The fall from the peak goes past <trigger>{triggerV}</trigger>",
+            "periodic_purchase_month": "<every>Every month</every>",
+            "periodic_purchase_days": "<every>Every</every> <n>{nV}</n>",
+            "price_threshold": "<symbol>{symbolV}</symbol> <trigger>{triggerV}</trigger> <value>{valueV}</value>"
+        },
+        "check": "{days}-trading-day delay · minimum order {min}",
+        "checkPrice": "At most once per {days, plural, one {trading day} other {# trading days}} · minimum order {min}",
+        "action": {
+            "allocation_target": "Bring the portfolio back to <targets>{targetsV}</targets>",
+            "weight_cap": "Trim the holding to the cap, the excess goes <dest>{destV}</dest>",
+            "drawdown_guard": "Move <move>{moveV}</move> to <symbol>{symbolV}</symbol>; come back below a <recover>{recoverV}</recover> fall",
+            "periodic_purchase": "Add <amount>{amountV}</amount> of new money, split by the target",
+            "price_threshold": "<side>{sideV}</side> of <amount>{amountV}</amount> <once>{onceV}</once>"
+        },
+        "orders": "Simulated orders filled on the next trading day"
+    },
+    "suggestions": {
+        "title": "Suggestions for your profile",
+        "sub": "Three examples for a {risk, select, Low {Low} Medium {Medium} High {High} other {{risk}}} risk profile, taken from a versioned rules table ({version}). Start from one, then change any value as you see fit.",
+        "preview": "Preview on history",
+        "previewOf": "Preview on history: {name}",
+        "previewClose": "Close the preview",
+        "adopt": "Start from this example",
+        "adopting": "Creating…",
+        "adopted": "Strategy “{name}” created from the example. Every value can still be changed.",
+        "suggestedValue": "suggested value for your profile",
+        "why": {
+            "risk": "Thresholds of table {version} for a {risk, select, Low {Low} Medium {Medium} High {High} other {{risk}}} risk profile.",
+            "targets_portfolio": "Targets: the current weights of your {count, plural, one {# simulated holding} other {# simulated holdings}}.",
+            "targets_model": "Targets: the weights of the suggested portfolio “{name}” ({count, plural, one {# line} other {# lines}}), since nothing is held.",
+            "largest_holding": "Chosen holding: {symbol}, your largest position ({weight, number}% of the portfolio).",
+            "cap_over": "{symbol} weighs {weight, number}% today, above the {cap, number}% cap: the rule would trim it.",
+            "targets_capped": "{count, plural, one {# target lowered} other {# targets lowered}} to {cap, number}% to stay under the cap."
+        },
+        "ruleValue": {
+            "drawdown_guard": "{trigger} fall → {move} to {symbol}",
+            "weight_cap": "Cap of {cap}",
+            "allocation_target_drift": "Gap of {drift} points",
+            "allocation_target_quarterly": "Every quarter",
+            "periodic_purchase_month": "{amount} a month",
+            "periodic_purchase_days": "{amount} every {n} trading days",
+            "price_threshold": "{symbol} {trigger} {value}"
+        }
     }
 }

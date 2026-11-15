@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { History, Clock } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -49,10 +49,12 @@ type Props = {
     /** The simulated portfolio's value, used as the starting capital. */
     capitalCad: number | null;
     ruleLabel: (ruleId: string) => string;
+    /** Runs the preview once as soon as it is shown (the suggestion cards open it on demand). */
+    autoRun?: boolean;
 };
 
 /** "Aperçu sur l'historique": POST /api/replay with the current portfolio and the strategy, shown compactly. */
-export default function HistoryPreview({ strategy, savedId, capitalCad, ruleLabel }: Props) {
+export default function HistoryPreview({ strategy, savedId, capitalCad, ruleLabel, autoRun }: Props) {
     const t = useTranslations('Strategy');
     const locale = useLocale();
     const fmt = useFmt();
@@ -80,6 +82,14 @@ export default function HistoryPreview({ strategy, savedId, capitalCad, ruleLabe
             setBusy(false);
         }
     };
+
+    const started = useRef(false);
+    useEffect(() => {
+        if (!autoRun || started.current) return;
+        started.current = true;
+        void run();
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on first display
+    }, [autoRun]);
 
     const date = (iso: string) => formatDateTime(iso, locale, { dateStyle: 'medium', timeZone: 'UTC' });
     const money = (value: number) => formatMoney(value, 'CAD', locale, { maximumFractionDigits: 0 });

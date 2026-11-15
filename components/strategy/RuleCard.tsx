@@ -42,8 +42,14 @@ export const KIND_ICON: Record<RuleKind, typeof Scale> = {
 
 type Tags = Record<string, (chunks: ReactNode) => ReactNode>;
 
-/** The rule as one sentence with its values as chips (next-intl rich text, namespace Strategy). */
-export function RuleSentence({ rule, edit, issues }: { rule: StrategyRule; edit?: RuleEditing; issues?: string[] }) {
+/** The values of a rule's message: chips (rich-text tags) and formatted values. */
+export type RuleTags = Record<string, ReactNode | ((chunks: ReactNode) => ReactNode)>;
+
+/**
+ * The parts of a rule's sentence: the message key (Strategy.sentence.<key>) and its tags. The sentence and the flow
+ * view (RuleFlow) use the same tags, so a value is the same clickable chip in both.
+ */
+export function useRuleTags(rule: StrategyRule, edit?: RuleEditing, issues?: string[]): { key: string; tags: RuleTags } {
     const t = useTranslations('Strategy');
     const locale = useLocale();
     const pct = (value: number) => formatPercent(value, locale, { maximumFractionDigits: 1 });
@@ -69,11 +75,14 @@ export function RuleSentence({ rule, edit, issues }: { rule: StrategyRule; edit?
         return sorted.length > 3 ? t('values.targetsMore', { list: shown, more: sorted.length - 3 }) : t('values.targetsSummary', { list: shown });
     };
 
+    let key = '';
+    let tags: RuleTags = {};
+    const record = (sentence: string, values: RuleTags) => { key = sentence.replace(/^sentence\./, ''); tags = values; return null; };
     let content: ReactNode;
     switch (rule.kind) {
         case 'allocation_target': {
             const drift = rule.rebalance.mode === 'drift' ? rule.rebalance.driftPts : null;
-            const tags: Tags = {
+            const common: Tags = {
                 mode: chip(t('chip.mode'), (close) => (
                     <ChoiceEditor
                         value={rule.rebalance.mode}
@@ -86,9 +95,9 @@ export function RuleSentence({ rule, edit, issues }: { rule: StrategyRule; edit?
                 )),
             };
             content = drift === null
-                ? t.rich('sentence.allocation_target_quarterly', { ...tags, targetsV: targetsText(rule.targets) })
-                : t.rich('sentence.allocation_target_drift', {
-                    ...tags,
+                ? record('sentence.allocation_target_quarterly', { ...common, targetsV: targetsText(rule.targets) })
+                : record('sentence.allocation_target_drift', {
+                    ...common,
                     drift: numberChip(t('chip.drift'), drift, LIMITS.driftPts, (driftPts) => ({ ...rule, rebalance: { mode: 'drift', driftPts } })),
                     driftV: t('values.points', { value: num(drift) }),
                     targetsV: targetsText(rule.targets),
@@ -96,7 +105,7 @@ export function RuleSentence({ rule, edit, issues }: { rule: StrategyRule; edit?
             break;
         }
         case 'weight_cap': {
-            content = t.rich('sentence.weight_cap', {
+            content = record('sentence.weight_cap', {
                 cap: numberChip(t('chip.cap'), rule.maxWeightPct, LIMITS.capPct, (maxWeightPct) => ({ ...rule, maxWeightPct })),
                 capV: pct(rule.maxWeightPct),
                 dest: chip(t('chip.dest'), (close) => <DestinationEditor value={rule.proceedsSymbol} holdings={edit?.holdings ?? []} onApply={(proceedsSymbol) => {
@@ -110,7 +119,7 @@ export function RuleSentence({ rule, edit, issues }: { rule: StrategyRule; edit?
             break;
         }
         case 'drawdown_guard':
-            content = t.rich('sentence.drawdown_guard', {
+            content = record('sentence.drawdown_guard', {
                 trigger: numberChip(t('chip.trigger'), rule.triggerDrawdownPct, LIMITS.triggerDrawdownPct, (triggerDrawdownPct) => ({ ...rule, triggerDrawdownPct })),
                 triggerV: pct(rule.triggerDrawdownPct),
                 move: numberChip(t('chip.move'), rule.movePct, LIMITS.movePct, (movePct) => ({ ...rule, movePct })),
@@ -122,7 +131,7 @@ export function RuleSentence({ rule, edit, issues }: { rule: StrategyRule; edit?
             });
             break;
         case 'periodic_purchase': {
-            const tags: Tags = {
+            const common: Tags = {
                 every: chip(t('chip.every'), (close) => (
                     <ChoiceEditor
                         value={rule.every.unit}
@@ -133,9 +142,9 @@ export function RuleSentence({ rule, edit, issues }: { rule: StrategyRule; edit?
                 amount: numberChip(t('chip.amount'), rule.amountCad, LIMITS.purchaseCad, (amountCad) => ({ ...rule, amountCad })),
             };
             content = rule.every.unit === 'month'
-                ? t.rich('sentence.periodic_purchase_month', { ...tags, amountV: money(rule.amountCad) })
-                : t.rich('sentence.periodic_purchase_days', {
-                    ...tags,
+                ? record('sentence.periodic_purchase_month', { ...common, amountV: money(rule.amountCad) })
+                : record('sentence.periodic_purchase_days', {
+                    ...common,
                     n: numberChip(t('chip.n'), rule.every.n, LIMITS.everyTradingDays, (n) => ({ ...rule, every: { unit: 'trading_days', n } }), true),
                     nV: t('values.tradingDays', { n: rule.every.n }),
                     amountV: money(rule.amountCad),
@@ -146,7 +155,7 @@ export function RuleSentence({ rule, edit, issues }: { rule: StrategyRule; edit?
             const onPrice = rule.trigger.type === 'price_below' || rule.trigger.type === 'price_above';
             const plain: PriceThresholdRule = { ...rule };
             delete plain.text;
-            content = t.rich('sentence.price_threshold', {
+            content = record('sentence.price_threshold', {
                 symbol: symbolChip(t('chip.symbol'), rule.symbol, (symbol) => ({ ...plain, symbol })),
                 symbolV: rule.symbol,
                 trigger: chip(t('chip.triggerType'), (close) => (
@@ -185,7 +194,15 @@ export function RuleSentence({ rule, edit, issues }: { rule: StrategyRule; edit?
             break;
         }
     }
-    return <p className="text-[15px] leading-8 text-muted-foreground">{content}</p>;
+    void content;
+    return { key, tags };
+}
+
+/** The rule as one sentence with its values as chips (next-intl rich text, namespace Strategy). */
+export function RuleSentence({ rule, edit, issues }: { rule: StrategyRule; edit?: RuleEditing; issues?: string[] }) {
+    const t = useTranslations('Strategy');
+    const { key, tags } = useRuleTags(rule, edit, issues);
+    return <p className="text-[15px] leading-8 text-muted-foreground">{t.rich(`sentence.${key}`, tags as Parameters<typeof t.rich>[1])}</p>;
 }
 
 function DestinationEditor({ value, holdings, onApply }: { value?: string; holdings: string[]; onApply: (symbol: string | undefined) => void }) {

@@ -3,20 +3,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Briefcase, ChevronRight, MessageSquareText, Plus, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Briefcase, ChevronRight, MessageSquareText, Plus, Save, Sparkles, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { askAgent } from '@/lib/agent/page-detail';
 import { api } from '@/components/portfolio/logic';
 import { useFmt } from '@/components/portfolio/useFmt';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { formatDateTime } from '@/i18n/format';
+import { formatDateTime, formatMoney, formatNumber, formatPercent } from '@/i18n/format';
 import { LIMITS, type AllocationTarget, type RuleKind, type StrategyRule } from '@/lib/strategy/types';
 import HistoryPreview from './HistoryPreview';
 import { ApiIssues } from './issues';
 import LiveCheck from './LiveCheck';
-import { byPriority, defaultRule, PRIORITY, ruleIndexOf, sameDraft, targetsFromHoldings, toInput, type Holding, type ServerIssue, type StoredStrategy, type StrategyDraft } from './model';
+import { byPriority, defaultRule, newRuleId, PRIORITY, ruleIndexOf, sameDraft, targetsFromHoldings, toInput, type Holding, type ServerIssue, type StoredStrategy, type StrategyDraft } from './model';
 import { KIND_ICON, RuleCard } from './RuleCard';
+import { RuleFlow } from './RuleFlow';
+import { StrategySuggestions, type SuggestionsResponse } from './Suggestions';
+import { ViewToggle, type RuleView } from './ViewToggle';
 import { OrderNote } from './StrategySummary';
 import { FIELD } from './Chip';
 
@@ -44,6 +47,8 @@ export default function StrategyBuilder() {
     const [strategies, setStrategies] = useState<StoredStrategy[] | null>(null);
     const [portfolio, setPortfolio] = useState<PortfolioInfo | null>(null);
     const [loadError, setLoadError] = useState<unknown>(null);
+    // Suggestions are an extra: the page works the same when they cannot be read
+    const [suggestions, setSuggestions] = useState<SuggestionsResponse | null>(null);
 
     const load = useCallback(async () => {
         setLoadError(null);
@@ -64,6 +69,9 @@ export default function StrategyBuilder() {
     }, []);
 
     useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        api<SuggestionsResponse>('/api/strategy/suggestions').then(setSuggestions).catch(() => setSuggestions(null));
+    }, []);
     // The agent can create or change a strategy: read the list again when it says something changed
     useEffect(() => {
         const onChange = () => { void api<{ strategies: StoredStrategy[] }>('/api/strategy').then((list) => setStrategies(list.strategies)).catch(() => undefined); };
@@ -124,6 +132,7 @@ export default function StrategyBuilder() {
                 key={selected.id}
                 stored={selected}
                 portfolio={portfolio}
+                suggested={suggestions}
                 onBack={() => open(null)}
                 onSaved={(saved) => setStrategies((list) => (list ?? []).some((s) => s.id === saved.id) ? (list ?? []).map((s) => (s.id === saved.id ? saved : s)) : [...(list ?? []), saved])}
             />
@@ -133,6 +142,14 @@ export default function StrategyBuilder() {
     return (
         <div className="flex flex-col gap-4">
             {head}
+            {suggestions && suggestions.strategies.length > 0 && (
+                <StrategySuggestions
+                    data={suggestions}
+                    existingNames={strategies.map((s) => s.name)}
+                    capitalCad={portfolio.valueCad}
+                    onAdopted={(saved) => { setStrategies([...strategies, saved]); toast.success(t('suggestions.adopted', { name: saved.name })); open(saved.id); }}
+                />
+            )}
             <StrategyList
                 strategies={strategies}
                 locale={locale}
@@ -256,8 +273,9 @@ function RemoveStrategy({ strategy, onRemoved }: { strategy: StoredStrategy; onR
     );
 }
 
-function StrategyEditor({ stored, portfolio, onBack, onSaved }: { stored: StoredStrategy; portfolio: PortfolioInfo; onBack: () => void; onSaved: (saved: StoredStrategy) => void }) {
+function StrategyEditor({ stored, portfolio, suggested, onBack, onSaved }: { stored: StoredStrategy; portfolio: PortfolioInfo; suggested: SuggestionsResponse | null; onBack: () => void; onSaved: (saved: StoredStrategy) => void }) {
     const t = useTranslations('Strategy');
+    const locale = useLocale();
     const fmt = useFmt();
     const fromStored = (s: StoredStrategy): StrategyDraft => ({ id: s.id, name: s.name, rules: byPriority(s.rules), version: s.version });
     const [baseline, setBaseline] = useState<StrategyDraft>(() => fromStored(stored));
@@ -266,6 +284,8 @@ function StrategyEditor({ stored, portfolio, onBack, onSaved }: { stored: Stored
     const [issues, setIssues] = useState<ServerIssue[]>([]);
     const [failure, setFailure] = useState<string | null>(null);
     const [adding, setAdding] = useState(false);
+    const [view, setView] = useState<RuleView>('sentences');
+    const suggestedRule = (kind: RuleKind): StrategyRule | undefined => suggested?.rules.find((r) => r.kind === kind)?.rule;
 
     const dirty = !sameDraft(draft, baseline);
     const holdings = useMemo(() => [...portfolio.holdings].sort((a, b) => b.valueCad - a.valueCad).map((h) => h.symbol), [portfolio]);
@@ -280,7 +300,9 @@ function StrategyEditor({ stored, portfolio, onBack, onSaved }: { stored: Stored
     // The server's issues belong to the rules as they were sent: once a rule changes they are out of date
     const setRules = (rules: StrategyRule[]) => { setDraft((d) => ({ ...d, rules: byPriority(rules) })); setIssues([]); };
     const addRule = (kind: RuleKind) => {
-        setRules([...draft.rules, defaultRule(kind, portfolio.holdings, currentTargets)]);
+        // The threshold suggested for the profile when there is one (rules/v1.json strategy_suggestions), else the default
+        const hint = suggestedRule(kind);
+        setRules([...draft.rules, hint ? { ...hint, id: newRuleId(kind), version: 1 } as StrategyRule : defaultRule(kind, portfolio.holdings, currentTargets)]);
         setAdding(false);
     };
 
@@ -359,10 +381,31 @@ function StrategyEditor({ stored, portfolio, onBack, onSaved }: { stored: Stored
 
             <div className="grid items-start gap-4 @4xl:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)]">
                 <section className="grid gap-3">
+                    {draft.rules.length > 0 && (
+                        <div className="flex justify-end">
+                            <ViewToggle value={view} onChange={setView} />
+                        </div>
+                    )}
                     {draft.rules.length === 0 && (
                         <div className="hatch"><div className="card px-4 py-6 text-center text-[13.5px] text-faint">{t('editor.noRules')}</div></div>
                     )}
-                    {draft.rules.map((rule, index) => (
+                    {view === 'flow' && draft.rules.length > 0 && (
+                        <div className="hatch">
+                            <div className="card p-4">
+                                <RuleFlow
+                                    rules={draft.rules}
+                                    issuesFor={(rule) => issuesOf(draft.rules.findIndex((r) => r.id === rule.id))}
+                                    editFor={(rule) => ({
+                                        holdings,
+                                        currentTargets,
+                                        onChange: (next) => setRules(draft.rules.map((r) => (r.id === rule.id ? next : r))),
+                                        onRemove: () => setRules(draft.rules.filter((r) => r.id !== rule.id)),
+                                    })}
+                                />
+                            </div>
+                        </div>
+                    )}
+                    {view === 'sentences' && draft.rules.map((rule, index) => (
                         <div key={rule.id} className="hatch">
                             <RuleCard
                                 rule={rule}
@@ -389,6 +432,7 @@ function StrategyEditor({ stored, portfolio, onBack, onSaved }: { stored: Stored
                             <ul className="grid gap-0.5">
                                 {PRIORITY.map((kind) => {
                                     const Icon = KIND_ICON[kind];
+                                    const hint = suggestedRule(kind);
                                     return (
                                         <li key={kind}>
                                             <button type="button" onClick={() => addRule(kind)} className="flex w-full items-start gap-2.5 rounded-[9px] px-2 py-2 text-start outline-none hover:bg-hover focus-visible:bg-hover">
@@ -396,6 +440,12 @@ function StrategyEditor({ stored, portfolio, onBack, onSaved }: { stored: Stored
                                                 <span className="grid gap-0.5">
                                                     <span className="text-[13.5px] font-bold text-foreground">{t(`kinds.${kind}.name`)}</span>
                                                     <span className="text-[12.5px] leading-snug text-muted-foreground">{t(`kinds.${kind}.desc`)}</span>
+                                                    {hint && (
+                                                        <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[12px]">
+                                                            <span className="font-semibold text-foreground num">{suggestedValue(hint, t, locale)}</span>
+                                                            <span className="pill is-brand h-auto py-0.5"><Sparkles />{t('suggestions.suggestedValue')}</span>
+                                                        </span>
+                                                    )}
                                                 </span>
                                             </button>
                                         </li>
@@ -415,4 +465,28 @@ function StrategyEditor({ stored, portfolio, onBack, onSaved }: { stored: Stored
             </div>
         </div>
     );
+}
+
+/** A suggested rule's main values in a few words, for the "Ajouter une règle" list. */
+function suggestedValue(rule: StrategyRule, t: ReturnType<typeof useTranslations<'Strategy'>>, locale: string): string {
+    const pct = (value: number) => formatPercent(value, locale, { maximumFractionDigits: 1 });
+    const money = (value: number) => formatMoney(value, 'CAD', locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    switch (rule.kind) {
+        case 'drawdown_guard':
+            return t('suggestions.ruleValue.drawdown_guard', { trigger: pct(rule.triggerDrawdownPct), move: pct(rule.movePct), symbol: rule.defensiveSymbol });
+        case 'weight_cap':
+            return t('suggestions.ruleValue.weight_cap', { cap: pct(rule.maxWeightPct) });
+        case 'allocation_target':
+            return rule.rebalance.mode === 'drift'
+                ? t('suggestions.ruleValue.allocation_target_drift', { drift: formatNumber(rule.rebalance.driftPts, locale) })
+                : t('suggestions.ruleValue.allocation_target_quarterly');
+        case 'periodic_purchase':
+            return rule.every.unit === 'month'
+                ? t('suggestions.ruleValue.periodic_purchase_month', { amount: money(rule.amountCad) })
+                : t('suggestions.ruleValue.periodic_purchase_days', { amount: money(rule.amountCad), n: rule.every.n });
+        case 'price_threshold': {
+            const onPrice = rule.trigger.type === 'price_below' || rule.trigger.type === 'price_above';
+            return t('suggestions.ruleValue.price_threshold', { symbol: rule.symbol, trigger: t(`values.trigger.${rule.trigger.type}`), value: onPrice ? formatNumber(rule.trigger.value, locale) : pct(rule.trigger.value) });
+        }
+    }
 }

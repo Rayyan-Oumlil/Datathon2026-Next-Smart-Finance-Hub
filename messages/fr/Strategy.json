@@ -57,23 +57,28 @@
   "kinds": {
     "allocation_target": {
       "name": "Rééquilibrage",
-      "desc": "Ramène le portefeuille vers des poids cibles, chaque trimestre ou quand l’écart devient trop grand."
+      "desc": "Ramène le portefeuille vers des poids cibles, chaque trimestre ou quand l’écart devient trop grand.",
+      "short": "Rééquilibrage"
     },
     "weight_cap": {
       "name": "Plafond par titre",
-      "desc": "Empêche une seule position de dépasser une part donnée du portefeuille."
+      "desc": "Empêche une seule position de dépasser une part donnée du portefeuille.",
+      "short": "Plafond"
     },
     "drawdown_guard": {
       "name": "Garde-fou de baisse",
-      "desc": "Après un repli marqué depuis le sommet, déplace une partie du portefeuille vers un titre défensif."
+      "desc": "Après un repli marqué depuis le sommet, déplace une partie du portefeuille vers un titre défensif.",
+      "short": "Garde-fou"
     },
     "periodic_purchase": {
       "name": "Apport périodique",
-      "desc": "Ajoute un montant fixe à intervalle régulier, réparti selon la cible."
+      "desc": "Ajoute un montant fixe à intervalle régulier, réparti selon la cible.",
+      "short": "Apport"
     },
     "price_threshold": {
       "name": "Seuil de cours",
-      "desc": "Simule une acquisition ou une réduction quand un titre franchit un cours."
+      "desc": "Simule une acquisition ou une réduction quand un titre franchit un cours.",
+      "short": "Seuil de cours"
     }
   },
   "sentence": {
@@ -199,5 +204,63 @@
   },
   "errors": {
     "noValue": "La valeur du portefeuille simulé n’est pas connue pour l’instant."
+  },
+  "flow": {
+    "label": "La stratégie en schéma, règle par règle, dans l’ordre d’application",
+    "viewLabel": "Affichage des règles",
+    "viewSentences": "Phrases",
+    "viewFlow": "Schéma",
+    "step": {
+      "when": "Quand",
+      "check": "Vérification",
+      "action": "Action"
+    },
+    "when": {
+      "allocation_target_drift": "<mode>Écart à la cible</mode> de plus de <drift>{driftV}</drift> sur une position",
+      "allocation_target_quarterly": "<mode>Début de chaque trimestre</mode>",
+      "weight_cap": "Une position dépasse <cap>{capV}</cap> du portefeuille",
+      "drawdown_guard": "Le repli depuis le sommet dépasse <trigger>{triggerV}</trigger>",
+      "periodic_purchase_month": "<every>Chaque mois</every>",
+      "periodic_purchase_days": "<every>Tous les</every> <n>{nV}</n>",
+      "price_threshold": "Le titre <symbol>{symbolV}</symbol> <trigger>{triggerV}</trigger> <value>{valueV}</value>"
+    },
+    "check": "Délai de {days} jours de bourse · ordre minimal {min}",
+    "checkPrice": "Une fois par {days, plural, one {jour} other {# jours}} de bourse au plus · ordre minimal {min}",
+    "action": {
+      "allocation_target": "Ramener le portefeuille vers <targets>{targetsV}</targets>",
+      "weight_cap": "Réduire la position jusqu’au plafond, l’excédent va <dest>{destV}</dest>",
+      "drawdown_guard": "Déplacer <move>{moveV}</move> vers <symbol>{symbolV}</symbol>; revenir sous <recover>{recoverV}</recover> de repli",
+      "periodic_purchase": "Ajouter <amount>{amountV}</amount> d’argent nouveau, réparti selon la cible",
+      "price_threshold": "<side>{sideV}</side> de <amount>{amountV}</amount> <once>{onceV}</once>"
+    },
+    "orders": "Ordres simulés exécutés le jour de bourse suivant"
+  },
+  "suggestions": {
+    "title": "Suggestions pour votre profil",
+    "sub": "Trois exemples pour un profil de risque {risk, select, Low {Faible} Medium {Moyen} High {Élevé} other {{risk}}}, tirés d’une table de règles versionnée ({version}). Partez d’un exemple, puis changez chaque valeur comme vous l’entendez.",
+    "preview": "Aperçu sur l’historique",
+    "previewOf": "Aperçu sur l’historique : {name}",
+    "previewClose": "Fermer l’aperçu",
+    "adopt": "Partir de cet exemple",
+    "adopting": "Création…",
+    "adopted": "Stratégie « {name} » créée à partir de l’exemple. Toutes ses valeurs restent modifiables.",
+    "suggestedValue": "valeur suggérée pour votre profil",
+    "why": {
+      "risk": "Seuils de la table {version} pour un profil de risque {risk, select, Low {Faible} Medium {Moyen} High {Élevé} other {{risk}}}.",
+      "targets_portfolio": "Cibles : les poids actuels de vos {count, plural, one {# position} other {# positions}} simulées.",
+      "targets_model": "Cibles : les poids du portefeuille suggéré « {name} » ({count, plural, one {# ligne} other {# lignes}}), car aucune position n’est détenue.",
+      "largest_holding": "Titre choisi : {symbol}, votre plus grosse position ({weight, number} % du portefeuille).",
+      "cap_over": "{symbol} pèse aujourd’hui {weight, number} %, au-dessus du plafond de {cap, number} % : la règle le réduirait.",
+      "targets_capped": "{count, plural, one {# cible ramenée} other {# cibles ramenées}} à {cap, number} % pour rester sous le plafond."
+    },
+    "ruleValue": {
+      "drawdown_guard": "Repli de {trigger} → {move} vers {symbol}",
+      "weight_cap": "Plafond de {cap}",
+      "allocation_target_drift": "Écart de {drift} points",
+      "allocation_target_quarterly": "Chaque trimestre",
+      "periodic_purchase_month": "{amount} par mois",
+      "periodic_purchase_days": "{amount} tous les {n} jours de bourse",
+      "price_threshold": "{symbol} {trigger} {value}"
+    }
   }
 }
