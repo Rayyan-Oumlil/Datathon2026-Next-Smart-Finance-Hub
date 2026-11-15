@@ -3,7 +3,7 @@
 // delayed 15 minutes or more and the response does not say so, hence the label.
 
 import type { Sourced } from '@/lib/domain/types';
-import { DAY_MS, QUOTE_TTL_MS, remember } from './cache';
+import { DAY_MS, QUOTE_TTL_MS, remember, type LastKnown } from './cache';
 import { fetchJson } from './http';
 import { isNumber, isoDate, type DailyClose, type Quote } from './types';
 
@@ -45,7 +45,8 @@ export type TmxQuote = Quote & {
     sector?: Sourced<string>;           // TMX's own label; empty for ETFs, then absent here
 };
 
-export function quote(symbolTO: string): Promise<TmxQuote> {
+/** lastKnown: for screens only (lib/sources/cache.ts); a trade always waits for a quote under 60 s old. */
+export function quote(symbolTO: string, lastKnown?: LastKnown): Promise<TmxQuote> {
     const symbol = tmxSymbol(symbolTO);
     return remember(`tmx-quote-${symbol}`, QUOTE_TTL_MS, async () => {
         const { getQuoteBySymbol: q } = await graphql<{ getQuoteBySymbol: TmxQuoteJson | null }>('getQuoteBySymbol', QUOTE_QUERY, { symbol, locale: 'en' });
@@ -59,7 +60,7 @@ export function quote(symbolTO: string): Promise<TmxQuote> {
         if (isNumber(q.averageVolume10D) && q.averageVolume10D > 0) result.avgVolume10dShares = { value: q.averageVolume10D, unit: 'shares per day', ...stamp, note: 'averageVolume10D' };
         if (q.sector) result.sector = { value: q.sector, ...stamp, note: 'TMX Money sector (its own classification, not GICS)' };
         return result;
-    });
+    }, lastKnown);
 }
 
 const HISTORY_QUERY = `query getTimeSeriesData($symbol: String!, $freq: String, $start: String) {

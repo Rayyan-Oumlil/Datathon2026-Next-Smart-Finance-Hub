@@ -16,6 +16,7 @@ import { getEntry } from '@/lib/universe';
 import type { Locale } from '@/lib/watchlist/text';
 import { computeEngine } from '@/lib/xray/engine';
 import type { EngineHolding } from '@/lib/xray/types';
+import { createViewCache } from './cache';
 import { ServiceError, round2 } from './errors';
 import { getPortfolioState, simulateTrade } from './portfolio';
 
@@ -247,21 +248,43 @@ export const MIN_APPLY_CAD: number = 500;
 
 const scopeOr = async (scope?: Scope): Promise<Scope> => scope ?? currentScope();
 
-// Figures depend only on the weights: computed once per distinct set of lines in this process
-const figuresCache = new Map<string, Promise<OptionFigures | null>>();
+// Figures depend only on the weights and the frozen snapshot: computed once per distinct set of lines (and snapshot)
+// in this process, shared by every visitor (they hold no personal data). A failure is not kept: the next call retries.
+const figuresCache = createViewCache<OptionFigures | null>('model-portfolio-figures', { softTtlMs: 24 * 60 * 60_000, maxEntries: 200 });
+const figuresKey = (option: ModelOption) => `${process.env.REPLAY_SNAPSHOT_ID ?? ''}|${option.lines.map((line) => `${line.symbol}:${line.weightPct}`).join('|')}`;
 
 async function figuresOf(option: ModelOption): Promise<OptionFigures | null> {
-    const key = option.lines.map((line) => `${line.symbol}:${line.weightPct}`).join('|');
-    let pending = figuresCache.get(key);
-    if (!pending) {
-        pending = computeFigures(option).catch((error) => {
-            console.warn('model portfolio figures unavailable:', error instanceof Error ? error.message : error);
-            figuresCache.delete(key);
-            return null;
-        });
-        figuresCache.set(key, pending);
+    try {
+        return await figuresCache.get(figuresKey(option), () => computeFigures(option));
+    } catch (error) {
+        console.warn('model portfolio figures unavailable:', error instanceof Error ? error.message : error);
+        return null;
     }
-    return pending;
+}
+
+/**
+ * Loads the replay snapshot and computes the figures of every risk level's base options, in the background, so the
+ * first visitor of the suggested portfolios or the time machine does not wait for the files. Runs once per process,
+ * 1.5 s after it is first called.
+ */
+export function warmModelPortfolios(): void {
+    const holder = globalThis as { __modelPortfoliosWarm?: boolean };
+    if (holder.__modelPortfoliosWarm) return;
+    holder.__modelPortfoliosWarm = true;
+    // A moment after the first page, so reading the files does not slow that page down
+    const warm = async () => {
+        const provider = getReplayProvider();
+        const symbols = (await listReplaySymbols()).map((row) => row.symbol);
+        await Promise.all([provider.describe(), provider.getFx(), provider.getDailyPrices(symbols)]);
+        const risks = Object.keys(MODEL_TABLE.options) as Risk[];
+        const options = risks.flatMap((risk) => buildModelOptions({ risk, answers: { markets: 'global', themes: [], avoid: [] } }));
+        await Promise.all(options.map(figuresOf));
+    };
+    setTimeout(() => {
+        warm().catch((error) => {
+            console.warn('replay snapshot warm-up failed:', error instanceof Error ? error.message : error);
+        });
+    }, 1500);
 }
 
 /** The X-ray engine on snapshot closes: today's weights applied to every past day (no dividends), full window. */

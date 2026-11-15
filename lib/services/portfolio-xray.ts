@@ -13,8 +13,10 @@ import { checkProfileConflict } from '@/lib/watchlist/conflict';
 import type { Locale } from '@/lib/watchlist/text';
 import { computeComparison, computeEngine } from '@/lib/xray/engine';
 import { XRAY_VERSION, type EngineHolding, type EngineInput, type EngineOutput } from '@/lib/xray/types';
+import { createHash } from 'node:crypto';
+import { createViewCache } from './cache';
 import { ServiceError, round2 } from './errors';
-import { getPortfolio } from './portfolio';
+import { getPortfolio, getPortfolioState } from './portfolio';
 import { dailyClosesLongFor, fxUsdCadHistory, isTradable, liveQuote, signalsFor } from './quotes';
 import { renderText, serviceRef } from './text';
 
@@ -73,15 +75,26 @@ function describeSeries(label: string, series: Sourced<Array<{ date: string }>>,
 
 /** The held positions with their daily closes, the cash, and the USD/CAD history when a USD close needs it. */
 async function gather(locale: Locale, scope: Scope): Promise<Gathered> {
-    const view = await getPortfolio(locale, scope);
+    // The closes, the FX history and the profile do not depend on the prices: they load while the portfolio is valued
+    const held = (await getPortfolioState(scope)).positions;
+    const seriesOf = new Map(held.map((position) => {
+        const entry = getEntry(position.symbol);
+        const loading: Promise<Sourced<DailyClose[]> | null> = entry ? dailyClosesLongFor(entry).catch(() => null) : Promise.resolve(null);
+        return [position.symbol, loading] as const;
+    }));
+    const [view, fx, profile] = await Promise.all([
+        getPortfolio(locale, scope),
+        fxUsdCadHistory(fxStart()).catch(() => null),
+        getProfile(scope.profileUserId),
+    ]);
     const priced = view.positions.filter((position) => position.valueCad !== null);
-    const fx = await fxUsdCadHistory(fxStart()).catch(() => null);
     const sources: Array<Sourced<string>> = [];
     let usedFx = false;
 
     const holdings = await Promise.all(priced.map(async (position): Promise<EngineHolding> => {
         const entry = getEntry(position.symbol);
-        const series: Sourced<DailyClose[]> | null = entry ? await dailyClosesLongFor(entry).catch(() => null) : null;
+        const series: Sourced<DailyClose[]> | null = await (seriesOf.get(position.symbol)
+            ?? (entry ? dailyClosesLongFor(entry).catch(() => null) : Promise.resolve(null)));
         const currency = position.price?.currency ?? series?.currency ?? '';
         // A USD close with no exchange-rate history cannot be put in CAD: it is listed as having no history, never converted by a guess
         const usable = series && (currency === 'CAD' || (currency === 'USD' && fx)) ? series : null;
@@ -106,9 +119,20 @@ async function gather(locale: Locale, scope: Scope): Promise<Gathered> {
         input: { holdings, cashCad: view.cashCad, fx: fx?.value ?? [] },
         unpriced: view.unpriced,
         sources,
-        profile: await getProfile(scope.profileUserId),
+        profile,
     };
 }
+
+// The engine is pure: the same input gives the same output. Its output is reused for an identical input (same
+// holdings, values, cash, series and labels) for up to an hour. The key is a hash of that input only, so two
+// visitors share an entry only if their inputs are identical, and the output then holds nothing but those inputs' figures.
+const engineRuns = createViewCache<EngineOutput>('xray-engine', { softTtlMs: 60 * 60_000, maxEntries: 300 });
+
+// The whole input is hashed (a few hundred kB of closes: about a millisecond), so only an identical input matches
+const engineKey = (input: EngineInput): string => createHash('sha256').update(JSON.stringify(input)).digest('hex');
+
+const runEngine = async (input: EngineInput): Promise<EngineOutput> =>
+    structuredClone(await engineRuns.get(engineKey(input), async () => computeEngine(input)));
 
 function assemble(out: EngineOutput, gathered: Gathered, sources: Array<Sourced<string>> = gathered.sources): XrayView {
     const { profile } = gathered;
@@ -131,7 +155,7 @@ function assemble(out: EngineOutput, gathered: Gathered, sources: Array<Sourced<
 /** The X-ray of the simulated portfolio as it stands, valued now. Text it carries (group names) is in `locale`. */
 export async function getPortfolioXray(locale?: Locale, scope?: Scope): Promise<XrayView> {
     const gathered = await gather(locale ?? await getAppLocale(), scope ?? await currentScope());
-    return assemble(computeEngine(gathered.input), gathered);
+    return assemble(await runEngine(gathered.input), gathered);
 }
 
 const EPSILON = 0.005;

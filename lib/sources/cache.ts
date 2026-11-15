@@ -59,13 +59,23 @@ async function readEntry<T>(key: string): Promise<Entry<T> | null> {
 }
 
 /**
+ * For screens only (never for a trade): when the held value is older than the TTL but younger than TTL + forMs,
+ * wait at most waitMs for the refresh, then answer with the held value (its fetchedAt unchanged).
+ */
+export type LastKnown = { forMs: number; waitMs: number };
+
+/** Screens wait at most 1.5 s for a fresh quote, then show the last one held (up to a day old, with its own time). */
+export const SCREEN_QUOTE: LastKnown = { forMs: DAY_MS, waitMs: 1500 };
+
+/**
  * Returns the cached value while it is younger than ttlMs; otherwise calls load() and stores the result.
  * If load() fails and an older entry exists, that entry comes back with stale: true and the caller decides
  * what to do with it. With no entry at all, the error from load() is thrown.
  */
-export async function cached<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<Cached<T>> {
+export async function cached<T>(key: string, ttlMs: number, load: () => Promise<T>, lastKnown?: LastKnown): Promise<Cached<T>> {
     const entry = await readEntry<T>(key);
-    if (entry && Date.now() - Date.parse(entry.storedAt) < ttlMs) return { value: entry.value, storedAt: entry.storedAt, stale: false };
+    const age = entry ? Date.now() - Date.parse(entry.storedAt) : Infinity;
+    if (entry && age < ttlMs) return { value: entry.value, storedAt: entry.storedAt, stale: false };
 
     // One provider call per key at a time, however many callers ask
     let pending = inFlight.get(key) as Promise<Cached<T>> | undefined;
@@ -82,6 +92,17 @@ export async function cached<T>(key: string, ttlMs: number, load: () => Promise<
             }
         })().finally(() => inFlight.delete(key));
         inFlight.set(key, pending);
+    }
+    // A screen may show the last value held while the provider is slow: it keeps its own fetchedAt, so its age shows.
+    // The refresh goes on in the background and the next read gets it.
+    if (lastKnown && entry && age < ttlMs + lastKnown.forMs) {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const late = new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), lastKnown.waitMs); });
+        const failed: Cached<T> = { value: entry.value, storedAt: entry.storedAt, stale: true };
+        const first = await Promise.race([pending.catch(() => failed), late]);
+        clearTimeout(timer);
+        if (first) return first;
+        return { value: entry.value, storedAt: entry.storedAt, stale: false };
     }
     return pending;
 }
@@ -102,8 +123,8 @@ const isSourced = (x: unknown): x is { fetchedAt: string; note?: string } =>
  * cached() for what the source modules return: one Sourced value, or an object whose fields are Sourced values.
  * A stale result keeps its original fetchedAt and gets a note saying the provider failed, so it can be shown as such.
  */
-export async function remember<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<T> {
-    const hit = await cached(key, ttlMs, load);
+export async function remember<T>(key: string, ttlMs: number, load: () => Promise<T>, lastKnown?: LastKnown): Promise<T> {
+    const hit = await cached(key, ttlMs, load, lastKnown);
     if (!hit.stale) return hit.value;
     if (isSourced(hit.value)) return withStaleNote(hit.value);
     const marked = Object.entries(hit.value as Record<string, unknown>).map(([field, x]) => [field, isSourced(x) ? withStaleNote(x) : x]);

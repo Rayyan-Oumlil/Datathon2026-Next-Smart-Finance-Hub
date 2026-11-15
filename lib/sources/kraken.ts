@@ -1,7 +1,7 @@
 // Kraken public market data: BTC and ETH priced in CAD on its own order books, and daily closes. Keyless.
 
 import type { Sourced } from '@/lib/domain/types';
-import { DAY_MS, QUOTE_TTL_MS, remember } from './cache';
+import { DAY_MS, QUOTE_TTL_MS, remember, type LastKnown } from './cache';
 import { fetchJson } from './http';
 import { isoDate, type DailyClose, type Quote } from './types';
 
@@ -21,7 +21,8 @@ async function call<T>(endpoint: string): Promise<{ data: T; last?: number }> {
     return { data, last: typeof last === 'number' ? last : undefined };
 }
 
-export function quote(asset: CryptoAsset): Promise<Quote> {
+/** lastKnown: for screens only (lib/sources/cache.ts); a trade always waits for a quote under 60 s old. */
+export function quote(asset: CryptoAsset, lastKnown?: LastKnown): Promise<Quote> {
     const endpoint = `${BASE_URL}/Ticker?pair=${PAIRS[asset]}`;
     return remember(`kraken-quote-${asset}`, QUOTE_TTL_MS, async () => {
         const { data: ticker } = await call<{ c?: string[]; o?: string }>(endpoint);
@@ -32,7 +33,7 @@ export function quote(asset: CryptoAsset): Promise<Quote> {
         const result: Quote = { price: { value: last, unit: 'CAD', currency: 'CAD', ...stamp, note: 'last trade on the CAD pair' } };
         if (open > 0) result.changePercent = { value: (last / open - 1) * 100, unit: '%', ...stamp, note: "change since today's opening price (00:00 UTC), computed from Kraken's last and open" };
         return result;
-    });
+    }, lastKnown);
 }
 
 async function closesOf(asset: CryptoAsset, keep: number): Promise<Sourced<DailyClose[]>> {

@@ -13,6 +13,7 @@ import { appendDecision, getProfile, listDecisions } from '@/lib/store';
 import { getEntry } from '@/lib/universe';
 import { checkProfileConflict } from '@/lib/watchlist/conflict';
 import type { Locale } from '@/lib/watchlist/text';
+import { createViewCache } from './cache';
 import { ServiceError, round2 } from './errors';
 import { renderOr, renderText, serviceRef } from './text';
 import { dailyClosesFor, fxUsdCad, isTradable, liveQuote, signalsFor, toCad } from './quotes';
@@ -123,6 +124,7 @@ function loadTrades(portfolioUserId: string): Promise<SimulatedTrade[]> {
 /** Forgets the trades held in memory; the next read replays the log. */
 export function resetPortfolioCache(): void {
     holder.__simulatedTrades = new Map();
+    views.clear();
 }
 
 const scopeOr = async (scope?: Scope): Promise<Scope> => scope ?? currentScope();
@@ -136,11 +138,17 @@ export async function getPortfolioState(scope?: Scope): Promise<Portfolio> {
 
 const sectorKey = (position: Position) => position.sector ?? ({ etf: 'ETF', crypto: 'Crypto' } as Record<string, string>)[position.assetClass] ?? 'Other';
 
+// A screen shows the last quote held when a provider is slow (lib/services/quotes.ts forScreen); the quotes of all
+// positions are asked at once, and the Finnhub module spreads them within its rate limit.
 async function priced(portfolio: Portfolio): Promise<{ positions: Array<Omit<PositionView, 'dayChangeCad' | 'dayChangePct'>>; fx: Sourced | null }> {
-    const fx = await fxUsdCad().catch(() => null);
-    const positions = await Promise.all(portfolio.positions.map(async (position) => {
+    const fxPromise = fxUsdCad().catch(() => null);
+    const quotes = portfolio.positions.map((position) => {
         const entry = getEntry(position.symbol);
-        const quote = entry ? await liveQuote(entry).catch(() => null) : null;
+        return entry ? liveQuote(entry, { forScreen: true }).catch(() => null) : Promise.resolve(null);
+    });
+    const fx = await fxPromise;
+    const positions = await Promise.all(portfolio.positions.map(async (position, i) => {
+        const quote = await quotes[i];
         const unitCad = quote ? toCad(quote.price.value, quote.price.currency, fx ?? undefined) : null;
         return {
             ...position,
@@ -160,22 +168,33 @@ async function priced(portfolio: Portfolio): Promise<{ positions: Array<Omit<Pos
 // A daily close is placed at 21:00 UTC, the end of the Toronto and New York session in winter time
 const closeTime = (day: string) => `${day}T21:00:00.000Z`;
 
-async function valueHistory(portfolio: Portfolio, fx: Sourced | null, now: string, valueNow: number | null, locale: Locale): Promise<{ history: PortfolioView['history']; note: string; closes: number }> {
+type Closes = { closes: Map<string, Sourced<DailyClose[]>>; withoutCloses: string[] };
+
+/** The daily closes of every symbol ever traded (started before the quotes are read, so both load at once). */
+async function tradedCloses(trades: SimulatedTrade[]): Promise<Closes> {
+    const symbols = [...new Set(trades.map((trade) => trade.symbol))];
+    const series = await Promise.all(symbols.map(async (symbol) => {
+        const entry = getEntry(symbol);
+        return entry ? dailyClosesFor(entry).catch(() => null) : null;
+    }));
+    const closes = new Map<string, Sourced<DailyClose[]>>();
+    const withoutCloses: string[] = [];
+    symbols.forEach((symbol, i) => {
+        const found = series[i];
+        if (found) closes.set(symbol, found);
+        else withoutCloses.push(symbol);
+    });
+    return { closes, withoutCloses };
+}
+
+async function valueHistory(portfolio: Portfolio, fx: Sourced | null, now: string, valueNow: number | null, locale: Locale, loaded: Promise<Closes>): Promise<{ history: PortfolioView['history']; note: string; closes: number }> {
     const { trades } = portfolio;
     if (trades.length === 0) {
         return { history: [{ t: now, valueCad: portfolio.startingCashCad }], note: renderText(serviceRef('svc.portfolio.no_trade', {}), locale), closes: 0 };
     }
     const history = [{ t: trades[0].at, valueCad: portfolio.startingCashCad }];
     const today = marketDate(new Date(now));
-    const symbols = [...new Set(trades.map((trade) => trade.symbol))];
-    const closes = new Map<string, Sourced<DailyClose[]>>();
-    const withoutCloses: string[] = [];
-    await Promise.all(symbols.map(async (symbol) => {
-        const entry = getEntry(symbol);
-        const series = entry && await dailyClosesFor(entry).catch(() => null);
-        if (series) closes.set(symbol, series);
-        else withoutCloses.push(symbol);
-    }));
+    const { closes, withoutCloses } = await loaded;
 
     const firstDay = marketDate(new Date(trades[0].at));
     const days = [...new Set([...closes.values()].flatMap((series) => series.value.map((row) => row.date)))]
@@ -270,15 +289,36 @@ export function renderTrade(trade: SimulatedTrade, locale: Locale): SimulatedTra
     return trade.reasonRef ? { ...trade, reason: renderOr(trade.reasonRef, locale, trade.reason) } : trade;
 }
 
+// The valued portfolio of one portfolio generation in one language. The key starts with the portfolio user id
+// (`${sessionId}:f${n}`, from the signed session cookie), so a visitor only ever reads views computed from their
+// own trades. A view is reused for 10 s, served while it is refreshed up to 30 s, and dropped on every trade of
+// that generation (a rule firing trades through the same path); a reset moves the session to a new id.
+// The view keeps the time it was computed (valueCad.fetchedAt) and each price keeps its own fetchedAt.
+const views = createViewCache<PortfolioView>('portfolio-view', { softTtlMs: 10_000, hardTtlMs: 30_000, maxEntries: 500 });
+const viewKey = (portfolioUserId: string, locale: Locale) => `${portfolioUserId}|${locale}`;
+
+/** Drops the cached views of one portfolio generation (called after each trade). */
+export function invalidatePortfolioViews(portfolioUserId: string): void {
+    views.invalidatePrefix(`${portfolioUserId}|`);
+}
+
 /**
  * The simulated portfolio, valued now. Its notes, the trades' reasons and the names of the groups in bySector
  * (a sector, or ETF / Crypto / Other for a position with no sector) are in `locale` (default: the request's language).
  */
 export async function getPortfolio(locale?: Locale, scope?: Scope): Promise<PortfolioView> {
     const lang = locale ?? await getAppLocale();
+    const s = await scopeOr(scope);
+    // A copy, so a caller changing its view cannot change another caller's
+    return structuredClone(await views.get(viewKey(s.portfolioUserId, lang), () => computePortfolio(lang, s)));
+}
+
+async function computePortfolio(lang: Locale, scope: Scope): Promise<PortfolioView> {
     const stored = await getPortfolioState(scope);
     const portfolio = { ...stored, trades: stored.trades.map((trade) => renderTrade(trade, lang)) };
     const now = new Date().toISOString();
+    const closesLoading = tradedCloses(portfolio.trades);
+    closesLoading.catch(() => undefined);
     const { positions: valued, fx } = await priced(portfolio);
     const session = marketSession(new Date(now));
     const byDay = await dayChanges(portfolio, valued, session.previousSession);
@@ -326,7 +366,7 @@ export async function getPortfolio(locale?: Locale, scope?: Scope): Promise<Port
             unpriced,
         }), lang),
     };
-    const { history, note, closes } = await valueHistory(portfolio, fx, now, unpriced.length === 0 ? total : null, lang);
+    const { history, note, closes } = await valueHistory(portfolio, fx, now, unpriced.length === 0 ? total : null, lang, closesLoading);
     return {
         portfolio,
         valueCad,
@@ -480,6 +520,7 @@ async function fill(input: TradeInput, locale: Locale, scope: Scope): Promise<Tr
         payload: { trade, unitPriceCad: unitCad, fxUsdCad: fx, conflicts, conflictDecisionId, cashBeforeCad: before.cashCad, simulated: true },
     });
     (await loadTrades(scope.portfolioUserId)).push(trade);
+    invalidatePortfolioViews(scope.portfolioUserId);
     return { status: 'filled', trade, portfolio: await getPortfolioState(scope), conflicts, unitPriceCad: unitCad, fxUsdCad: fx ?? null };
 }
 

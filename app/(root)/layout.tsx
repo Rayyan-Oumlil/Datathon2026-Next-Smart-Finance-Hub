@@ -5,6 +5,7 @@ import HtmlLang from "@/components/HtmlLang";
 import AppShell from "@/components/shell/AppShell";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
 import { displayUser } from "@/lib/demo-user";
+import { warmModelPortfolios } from "@/lib/services/model-portfolio";
 import { getProfile } from "@/lib/services/profile";
 import { getSession } from "@/lib/session";
 
@@ -12,14 +13,18 @@ import { getSession } from "@/lib/session";
 export const dynamic = 'force-dynamic';
 
 const Layout = async ({ children }: { children: React.ReactNode }) => {
-    // The app needs a level and a risk profile before it can show anything
-    if (!(await getProfile())) redirect('/onboarding');
+    // The replay snapshot and the suggested portfolios' figures load in the background on the first page of the process
+    warmModelPortfolios();
 
-    const [initialStocks, locale, session] = await Promise.all([
+    // The profile check and the shell's own data are read together; none of them depends on another
+    const [profile, initialStocks, locale, session] = await Promise.all([
+        getProfile(),
         searchStocks(),
         getLocale(),
         getSession(),
     ]);
+    // The app needs a level and a risk profile before it can show anything
+    if (!profile) redirect('/onboarding');
 
     return (
         <NextIntlClientProvider>

@@ -1,8 +1,10 @@
 // Live values for one universe entry, each with its source. The source modules cache a quote for 60 s and
-// daily closes for 24 h, so nothing here keeps a cache of its own.
+// daily closes for 24 h, so nothing here keeps a cache of its own. A screen may ask for the last quote held when
+// the provider is slow (forScreen); that quote keeps its own fetchedAt, so its age stays visible.
 
 import type { SignalSet, Sourced, UniverseEntry } from '@/lib/domain/types';
 import * as boc from '@/lib/sources/boc';
+import { SCREEN_QUOTE } from '@/lib/sources/cache';
 import { loadDailySignals } from '@/lib/sources/daily-signals';
 import * as finnhub from '@/lib/sources/finnhub';
 import * as kraken from '@/lib/sources/kraken';
@@ -14,12 +16,17 @@ import * as yahoo from '@/lib/sources/yahoo';
 export const isTradable = (entry: UniverseEntry): boolean =>
     entry.assetClass === 'stock' || entry.assetClass === 'etf' || entry.assetClass === 'crypto';
 
-/** Last price and % change today from the entry's provider. Throws when the provider gives none. */
-export function liveQuote(entry: UniverseEntry): Promise<Quote> {
+/**
+ * Last price and % change today from the entry's provider. Throws when the provider gives none.
+ * forScreen: when the held quote is over 60 s old, wait at most 1.5 s for a new one, then return the held one
+ * (up to a day old, its fetchedAt unchanged) while the refresh finishes. Never for a trade or a rule.
+ */
+export function liveQuote(entry: UniverseEntry, options: { forScreen?: boolean } = {}): Promise<Quote> {
     const symbol = entry.symbol.toUpperCase();
-    if (entry.assetClass === 'crypto' && (symbol === 'BTC' || symbol === 'ETH')) return kraken.quote(symbol);
-    if ((entry.assetClass === 'stock' || entry.assetClass === 'etf') && entry.market === 'US') return finnhub.quote(entry.symbol);
-    if ((entry.assetClass === 'stock' || entry.assetClass === 'etf') && entry.market === 'Canada') return tmx.quote(entry.symbol);
+    const lastKnown = options.forScreen ? SCREEN_QUOTE : undefined;
+    if (entry.assetClass === 'crypto' && (symbol === 'BTC' || symbol === 'ETH')) return kraken.quote(symbol, lastKnown);
+    if ((entry.assetClass === 'stock' || entry.assetClass === 'etf') && entry.market === 'US') return finnhub.quote(entry.symbol, lastKnown);
+    if ((entry.assetClass === 'stock' || entry.assetClass === 'etf') && entry.market === 'Canada') return tmx.quote(entry.symbol, lastKnown);
     return Promise.reject(new Error(`no live quote source for ${entry.symbol}`));
 }
 
