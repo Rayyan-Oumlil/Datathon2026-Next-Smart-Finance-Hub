@@ -19,6 +19,7 @@ import { useAgentStream } from "@/hooks/useAgentStream";
 import { SpeakerButton, VoiceButton, VoiceStatus } from "@/components/agent/Voice";
 import { useSpeech } from "@/hooks/useSpeech";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { KEY_STEP, PANEL_DEFAULT, PANEL_MAX, PANEL_MIN, stepWidth, swipeOf, widthFromDrag } from "@/components/agent/panel-width";
 
 type Source = { label: string; source: string; fetchedAt?: string; asOf?: string };
 type Check = { filter: string; pass: boolean; detail: string };
@@ -316,11 +317,48 @@ const PreviewCard = ({ message, busy, onDecide, onUndo }: PreviewProps) => {
 
 import { AGENT_ASK_EVENT, getPageDetail } from "@/lib/agent/page-detail";
 
-type AgentPanelProps = { open: boolean; onOpenChange: (open: boolean) => void; onDataChanged?: () => void };
+// width and onResize: the panel's width on a wide screen (px); final is true when a drag or swipe ends, to keep the value
+type AgentPanelProps = { open: boolean; onOpenChange: (open: boolean) => void; onDataChanged?: () => void; width?: number; onResize?: (width: number, final: boolean) => void };
 
 // The agent: it explains data and proposes changes. A change is shown as a preview and runs only after Confirm.
-const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
+const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, onResize }: AgentPanelProps) => {
     const t = useTranslations('AgentPanel');
+    const drag = useRef<{ startX: number; startWidth: number } | null>(null);
+    const swipe = useRef<{ x: number; y: number } | null>(null);
+    const isRtl = () => document.documentElement.dir === 'rtl';
+    const wide = () => window.matchMedia('(min-width: 1024px)').matches;
+    // Dragging the panel's inner edge resizes it continuously
+    const startDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+        drag.current = { startX: event.clientX, startWidth: width };
+        event.currentTarget.setPointerCapture(event.pointerId);
+    };
+    const moveDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+        if (drag.current) onResize?.(widthFromDrag(drag.current.startWidth, drag.current.startX, event.clientX, isRtl(), window.innerWidth), false);
+    };
+    const endDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+        if (!drag.current) return;
+        onResize?.(widthFromDrag(drag.current.startWidth, drag.current.startX, event.clientX, isRtl(), window.innerWidth), true);
+        drag.current = null;
+    };
+    const keyResize = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        const toward = isRtl() ? 'ArrowRight' : 'ArrowLeft';
+        const away = isRtl() ? 'ArrowLeft' : 'ArrowRight';
+        if (event.key !== toward && event.key !== away && event.key !== 'Home' && event.key !== 'End') return;
+        event.preventDefault();
+        const next = event.key === 'Home' ? PANEL_MIN : event.key === 'End' ? PANEL_MAX : width + (event.key === toward ? KEY_STEP : -KEY_STEP);
+        onResize?.(next, true);
+    };
+    // A swipe on the header steps between compact, normal and wide; on a small screen, swiping toward the edge closes the drawer
+    const swipeStart = (event: React.PointerEvent<HTMLElement>) => { swipe.current = { x: event.clientX, y: event.clientY }; };
+    const swipeEnd = (event: React.PointerEvent<HTMLElement>) => {
+        const start = swipe.current;
+        swipe.current = null;
+        if (!start) return;
+        const direction = swipeOf(event.clientX - start.x, event.clientY - start.y, isRtl());
+        if (!direction) return;
+        if (!wide()) { if (direction === 'narrower') onOpenChange(false); return; }
+        onResize?.(stepWidth(width, direction === 'wider' ? 1 : -1, window.innerWidth), true);
+    };
     const locale = useLocale();
     const router = useRouter();
     const pathname = usePathname();
@@ -504,10 +542,20 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
             <aside
                 id="agent-panel"
                 aria-label={t('title')}
-                className="min-h-0 max-lg:fixed max-lg:inset-y-0 max-lg:right-0 max-lg:z-50 max-lg:w-full max-lg:max-w-[420px] max-lg:rtl:left-0 max-lg:rtl:right-auto lg:py-2.5 lg:pe-2.5"
+                className="relative min-h-0 max-lg:fixed max-lg:inset-y-0 max-lg:right-0 max-lg:z-50 max-lg:w-full max-lg:max-w-[420px] max-lg:rtl:left-0 max-lg:rtl:right-auto lg:py-2.5 lg:pe-2.5"
             >
+                {/* The inner edge: drag it, or focus it and use the arrow keys. Wide screens only. */}
+                <div
+                    role="separator" aria-orientation="vertical" tabIndex={0}
+                    aria-label={t('resize')} title={t('resizeShort')} aria-valuemin={PANEL_MIN} aria-valuemax={PANEL_MAX} aria-valuenow={width}
+                    onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onKeyDown={keyResize}
+                    onDoubleClick={() => onResize?.(PANEL_DEFAULT, true)}
+                    className="group absolute inset-y-2.5 start-0 z-10 hidden w-3 -translate-x-1/2 cursor-col-resize touch-none items-center justify-center outline-none rtl:translate-x-1/2 lg:flex"
+                >
+                    <span aria-hidden className="h-12 w-1 rounded-full bg-line-strong transition-colors group-hover:bg-brand group-focus-visible:bg-brand group-active:bg-brand" />
+                </div>
                 <div className="flex h-full flex-col overflow-hidden bg-card lg:rounded-2xl lg:border lg:border-line">
-                    <header className="flex items-start justify-between gap-2 border-b border-line px-3.5 py-3">
+                    <header className="flex touch-pan-y items-start justify-between gap-2 border-b border-line px-3.5 py-3" onPointerDown={swipeStart} onPointerUp={swipeEnd} onPointerCancel={() => { swipe.current = null; }}>
                         <div className="min-w-0">
                             <p className="kicker">{t('kicker')}</p>
                             <h2 className="section-title">{t('title')}</h2>

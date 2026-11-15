@@ -249,5 +249,7 @@
       "dailyCap": "Voice input has reached today's limit on this server. Type your message instead.",
       "wording": "This text cannot be read aloud."
     }
-  }
+  },
+  "resize": "Resize the agent panel: drag, swipe the header, or use the left and right arrow keys. Double-click to reset.",
+  "resizeShort": "Resize"
 }

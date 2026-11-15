@@ -249,5 +249,7 @@
       "dailyCap": "La saisie vocale a atteint la limite d'aujourd'hui sur ce serveur. Écrivez plutôt votre message.",
       "wording": "Ce texte ne peut pas être lu à voix haute."
     }
-  }
+  },
+  "resize": "Redimensionner le panneau de l’agent : glisser, balayer l’en-tête ou utiliser les flèches gauche et droite. Double-clic pour réinitialiser.",
+  "resizeShort": "Redimensionner"
 }
