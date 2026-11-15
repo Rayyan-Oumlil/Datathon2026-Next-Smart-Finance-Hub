@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/better-auth/auth";
+import { DEMO_USER } from "@/lib/demo-user";
 import { getLiveQuotes } from "@/lib/actions/finnhub.actions";
 import { isRateLimited } from "@/lib/rate-limit";
 
 const MAX_SYMBOLS = 25;
 const SYMBOL_PATTERN = /^[A-Z0-9.:\-]{1,20}$/;
 
-// Polled by on-screen prices. Signed-in only and capped, so nobody can burn the shared Finnhub quota.
+// Polled by on-screen prices. Capped, so polling cannot burn the Finnhub quota.
 export async function GET(req: NextRequest) {
-    const session = await getSession();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     const symbols = [...new Set(
         (req.nextUrl.searchParams.get("symbols") ?? "")
             .split(",")
@@ -19,8 +16,8 @@ export async function GET(req: NextRequest) {
     )].slice(0, MAX_SYMBOLS);
 
     // Counted per symbol: unseen tickers each cost a Finnhub call. A 25-symbol watchlist polled every 15 s uses
-    // about 100 a minute; the cap stops one free account from draining the shared key pool.
-    if (await isRateLimited(`quotes:user:${session.user.id}`, 300, 60, symbols.length)) {
+    // about 100 a minute; the cap stops a runaway page from draining the key.
+    if (await isRateLimited(`quotes:user:${DEMO_USER.id}`, 300, 60, symbols.length)) {
         return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 

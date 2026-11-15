@@ -1,7 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { NextRequest } from 'next/server';
 import { describe, expect, it, afterEach } from 'vitest';
-import { config, middleware } from '@/middleware';
 import { isPublicPath, PUBLIC_EXACT_PATHS } from '@/lib/public-paths';
 import { GUIDES, findGuide } from '@/lib/seo/comparisons';
 import { filingUrl, formatFiscalYearEnd, formatFilingDate, parseSubmissions, stateName } from '@/lib/seo/edgar';
@@ -16,38 +14,11 @@ describe('isPublicPath', () => {
         }
     });
 
-    it('keeps the signed-in app private, including paths that share a prefix', () => {
-        for (const path of ['/stocks', '/stocks/AAPL', '/dashboard', '/watchlist', '/profile', '/sign-in', '/something']) {
+    it('keeps app pages out of the public list, including paths that share a prefix', () => {
+        for (const path of ['/stocks', '/stocks/AAPL', '/dashboard', '/something']) {
             expect(isPublicPath(path), path).toBe(false);
         }
         expect(isPublicPath('/sponsor')).toBe(true);
-    });
-});
-
-describe('middleware', () => {
-    it('does not redirect public pages or crawler files', async () => {
-        for (const path of ['/robots.txt', '/sitemap.xml', '/s/AAPL', '/compare/free-tradingview-alternative', '/about']) {
-            const response = await middleware(new NextRequest(`http://localhost${path}`));
-            expect(response.headers.get('location'), path).toBeNull();
-        }
-    });
-
-    it('sends signed-out visitors on app routes to sign-in', async () => {
-        const response = await middleware(new NextRequest('http://localhost/stocks/AAPL'));
-        expect(response.status).toBe(307);
-        expect(response.headers.get('location')).toBe('http://localhost/sign-in');
-    });
-
-    it('leaves a signed-in stock page alone', async () => {
-        const request = new NextRequest('http://localhost/stocks/AAPL', {
-            headers: { cookie: 'better-auth.session_token=present' },
-        });
-        const response = await middleware(request);
-        expect(response.headers.get('location')).toBeNull();
-    });
-
-    it('runs only on the signed-in app, so public pages, prefetches and crawler files never pay for it', () => {
-        expect(config.matcher).toEqual(['/dashboard/:path*', '/watchlist/:path*', '/profile/:path*', '/stocks/:path*']);
     });
 });
 
@@ -145,14 +116,14 @@ describe('sitemap', () => {
 });
 
 describe('siteUrl', () => {
-    const previous = process.env.BETTER_AUTH_URL;
+    const previous = process.env.APP_URL;
     afterEach(() => {
-        if (previous === undefined) delete process.env.BETTER_AUTH_URL;
-        else process.env.BETTER_AUTH_URL = previous;
+        if (previous === undefined) delete process.env.APP_URL;
+        else process.env.APP_URL = previous;
     });
 
-    it('uses BETTER_AUTH_URL without a trailing slash', () => {
-        process.env.BETTER_AUTH_URL = 'https://openstock.example/';
+    it('uses APP_URL without a trailing slash', () => {
+        process.env.APP_URL = 'https://openstock.example/';
         expect(siteUrl()).toBe('https://openstock.example');
     });
 });

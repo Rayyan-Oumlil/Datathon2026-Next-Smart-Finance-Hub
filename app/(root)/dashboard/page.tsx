@@ -16,7 +16,6 @@ import {
     timelineConfig,
 } from "@/lib/constants";
 import { MARKETS, MARKET_COOKIE, getMarket, isMarketOpen, marketForCountry } from "@/lib/markets";
-import { getSession } from "@/lib/better-auth/auth";
 import { toMessageKey } from "@/i18n/config";
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
@@ -27,9 +26,9 @@ type FeedKey = keyof Messages['Markets']['feed'];
 // Widgets come from TradingView (live, no Finnhub quota) and render immediately; the tiles stream in.
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ market?: string }> }) {
     const { market: requested } = await searchParams;
-    // Explicit choice, then the remembered one, then the market of the user's country
+    // Explicit choice, then the remembered one, then the default market
     const saved = (await cookies()).get(MARKET_COOKIE)?.value;
-    const market = getMarket(requested ?? saved ?? marketForCountry((await getSession())?.user.country));
+    const market = getMarket(requested ?? saved ?? marketForCountry(null));
     const [t, tm, tw, locale] = await Promise.all([getTranslations('Dashboard'), getTranslations('Markets'), getTranslations('TradingViewWidget'), getLocale()]);
     const name = tm(`names.${market.id}`);
     const feed = toMessageKey(market.feed) as FeedKey;

@@ -22,7 +22,7 @@ const TIERS = [
     {
         name: 'Community', price: 'Free', cadence: 'Hourly', perHour: 1,
         body: 'This site. Quotes refresh every hour and are shared by everyone from the edge. Charts stay live.',
-        cta: { label: 'Get started', href: '/sign-up' },
+        cta: { label: 'Get started', href: '/dashboard' },
     },
     {
         name: 'OpenStock Cloud', price: '$5', per: '/month', tag: 'Coming soon', cadence: 'Every 15 seconds', perHour: 240,
@@ -90,7 +90,7 @@ const SponsorBanner = () => {
 
 export default async function LandingPage() {
     const repo = await getRepoStats();
-    const start = { href: '/sign-up', label: 'Get started free' };
+    const start = { href: '/dashboard', label: 'Get started free' };
 
     return (
         <>

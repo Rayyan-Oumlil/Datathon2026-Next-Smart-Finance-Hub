@@ -77,7 +77,7 @@ export default async function GuidePage({ params }: { params: Promise<Params> })
             }} />
 
             <PageHero kicker={guide.kicker} title={guide.title} sub={guide.lede}>
-                <Link href="/sign-up" className="btn btn-primary h-11 px-5 text-[15px]">Get started free</Link>
+                <Link href="/dashboard" className="btn btn-primary h-11 px-5 text-[15px]">Get started free</Link>
                 <Link href="/s" className="btn btn-ghost h-11 px-5 text-[15px]">Browse US stocks</Link>
             </PageHero>
 
@@ -141,7 +141,7 @@ export default async function GuidePage({ params }: { params: Promise<Params> })
                 <SignUpCta
                     title="Use OpenStock free"
                     body="Charts, a watchlist and the US filing pages are free. OpenStock is not a broker and this is not investment advice."
-                    href="/sign-up"
+                    href="/dashboard"
                     label="Create a free account"
                 />
             </section>

@@ -7,7 +7,6 @@ import { QUOTE_TTL_SECONDS } from '@/lib/market-data';
 import { hasFinnhubCompanyData, hasFinnhubQuotes } from '@/lib/markets';
 import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
 import { isYahooSymbol } from '@/lib/yahoo';
-import { getSession } from '@/lib/better-auth/auth';
 import { getTranslations } from 'next-intl/server';
 
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
@@ -358,8 +357,6 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
                 __exchange: exchange,
             }));
         } else {
-            // A public server action: only signed-in users may spend Finnhub quota on searches
-            if (!(await getSession())?.user) return [];
             const url = `${FINNHUB_BASE_URL}/search?q=${encodeURIComponent(trimmed)}`;
             const data = await fetchJSON<FinnhubSearchResponse>(url, 1800);
             results = Array.isArray(data?.result) ? data.result : [];

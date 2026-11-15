@@ -23,7 +23,7 @@ const FOOTER_LINKS = [
 ];
 
 // No session read here: it made every public page (and every <Link> prefetch of one) a function call.
-// The header always shows the signed-out buttons; /sign-in and /sign-up send a signed-in visitor to /dashboard.
+// There is no sign-in: the header button opens the app directly.
 export default async function MarketingLayout({ children }: { children: React.ReactNode }) {
     const repo = await getRepoStats();
 
@@ -48,8 +48,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
                             <Github />
                             {repo && <span className="num">{formatCount(repo.stars)}</span>}
                         </a>
-                        <Link href="/sign-in" className="btn h-9 px-3 text-muted-foreground hover:text-foreground">Sign in</Link>
-                        <Link href="/sign-up" className="btn btn-primary h-9">Get started</Link>
+                        <Link href="/dashboard" className="btn btn-primary h-9">Open the app</Link>
                     </div>
                 </div>
             </header>

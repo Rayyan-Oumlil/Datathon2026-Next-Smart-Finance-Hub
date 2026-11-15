@@ -1,9 +1,6 @@
-import { Bell, CalendarClock, Gauge, Landmark, MoveVertical } from "lucide-react";
+import { CalendarClock, Gauge, Landmark, MoveVertical } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
-import WatchlistButton from "@/components/WatchlistButton";
-import CreateAlertModal from "@/components/watchlist/CreateAlertModal";
 import StockLivePrice from "@/components/stocks/StockLivePrice";
-import { isStockInWatchlist } from "@/lib/actions/watchlist.actions";
 import { getCompanyProfile, getLiveQuotes } from "@/lib/actions/finnhub.actions";
 import { formatNumber, formatPrice, formatSymbolForTradingView, isChartEmbeddable } from "@/lib/utils";
 import { hasFinnhubQuotes } from "@/lib/markets";
@@ -19,8 +16,7 @@ import { isYahooSymbol } from "@/lib/yahoo";
 // Warsaw falls back to that panel; Tadawul's is blocked either way.
 async function TradingViewHeader({ symbol }: { symbol: string }) {
     const yahooPriced = isYahooSymbol(symbol);
-    const [isInWatchlist, yahoo, t, locale] = await Promise.all([
-        isStockInWatchlist(symbol),
+    const [yahoo, t, locale] = await Promise.all([
         yahooPriced ? getYahooDailyQuotes([symbol]) : null,
         getTranslations('StockHeader'),
         getLocale(),
@@ -43,12 +39,6 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
                         <ChangePill value={quote.changePercent} />
                     </div>
                 )}
-                <div className="flex items-center gap-2">
-                    <WatchlistButton symbol={symbol} company={symbol} isInWatchlist={isInWatchlist} />
-                    <span className="pill h-9 px-3" title={t('alertsHint')}>
-                        <Bell /> {t('alertsScope')}
-                    </span>
-                </div>
             </div>
             {!hidePanel && (
                 <div className="card mt-[3px] p-1">
@@ -62,8 +52,7 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
 export default async function StockHeader({ symbol }: { symbol: string }) {
     if (!hasFinnhubQuotes(symbol)) return <TradingViewHeader symbol={symbol} />;
 
-    const [isInWatchlist, quotes, profile, t] = await Promise.all([
-        isStockInWatchlist(symbol),
+    const [quotes, profile, t] = await Promise.all([
         getLiveQuotes([symbol]),
         getCompanyProfile(symbol),
         getTranslations('StockHeader'),
@@ -100,12 +89,6 @@ export default async function StockHeader({ symbol }: { symbol: string }) {
 
                 <StockLivePrice symbol={symbol} initial={quote} currency={currency} />
 
-                <div className="flex items-center gap-2">
-                    <WatchlistButton symbol={symbol} company={company} isInWatchlist={isInWatchlist} />
-                    <CreateAlertModal symbol={symbol} currentPrice={quote?.c} currency={currency}>
-                        <button type="button" className="btn btn-primary"><Bell /> {t('setAlert')}</button>
-                    </CreateAlertModal>
-                </div>
             </div>
 
             <div className="bento mt-[3px]">

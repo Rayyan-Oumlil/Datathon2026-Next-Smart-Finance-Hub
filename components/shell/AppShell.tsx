@@ -11,12 +11,11 @@ import UpdateBanner from "@/components/UpdateBanner";
 
 type AppShellProps = {
     user: User;
-    watchlist: { symbol: string; company: string }[];
     initialStocks: StockWithWatchlistStatus[];
     children: React.ReactNode;
 };
 
-const AppShell = ({ user, watchlist, initialStocks, children }: AppShellProps) => {
+const AppShell = ({ user, initialStocks, children }: AppShellProps) => {
     const t = useTranslations('UpdateBanner');
     const pathname = usePathname();
     const [navOpen, setNavOpen] = useState(false);
@@ -37,7 +36,7 @@ const AppShell = ({ user, watchlist, initialStocks, children }: AppShellProps) =
                     navOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full max-lg:rtl:translate-x-full',
                 )}
             >
-                <Sidebar user={user} watchlist={watchlist} />
+                <Sidebar user={user} />
             </div>
             {navOpen && (
                 <div className="fixed inset-0 z-40 bg-page/60 backdrop-blur-[2px] lg:hidden" onClick={() => setNavOpen(false)} />

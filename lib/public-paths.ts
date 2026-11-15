@@ -1,4 +1,4 @@
-// Exact paths the marketing site already served, plus the public SEO sections.
+// Exact paths of the marketing site, plus the public SEO sections. Used to build the sitemap.
 // Prefix checks are whole segments: `/s` must not unlock `/stocks` or `/sponsor`.
 export const PUBLIC_EXACT_PATHS = [
     '/',

@@ -100,7 +100,7 @@ export default async function PublicTickerPage({ params }: { params: Promise<Par
             </header>
 
             <div className="mt-8 flex flex-wrap gap-2">
-                <Link href="/sign-up" className="btn btn-primary h-11 px-5 text-[15px]">
+                <Link href="/dashboard" className="btn btn-primary h-11 px-5 text-[15px]">
                     {`Track ${ticker.symbol} free`}
                 </Link>
                 <a href={tvHref} target="_blank" rel="noopener nofollow" className="btn btn-ghost h-11 px-5 text-[15px]">View on TradingView</a>
@@ -232,7 +232,7 @@ export default async function PublicTickerPage({ params }: { params: Promise<Par
                 <SignUpCta
                     title={`Track ${ticker.symbol} free on OpenStock`}
                     body="Save it to a watchlist, keep the chart open in a tab, and read the filings from one place. OpenStock is not a broker, and nothing here is investment advice."
-                    href="/sign-up"
+                    href="/dashboard"
                     label={`Track ${ticker.symbol} free`}
                 />
             </div>
