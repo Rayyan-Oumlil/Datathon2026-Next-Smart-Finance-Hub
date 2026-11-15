@@ -118,6 +118,21 @@ def test_log_failure_is_reported_in_the_response(monkeypatch, stub):
     assert "table unreachable" in reply["trace"]["logErrors"][0]
 
 
+def test_the_log_is_given_up_after_two_failed_rows_and_the_response_says_so(monkeypatch, stub):
+    class Broken:
+        calls = 0
+
+        def put_item(self, **_):
+            Broken.calls += 1
+            raise ConnectionError("table unreachable")
+
+    scripted(monkeypatch, Broken(), [GOOD], conflict_then_propose)
+    reply = main.invoke(PAYLOAD)              # prompt_built, tool_call, guardrail_check
+    assert reply["refused"] is False and reply["logComplete"] is False
+    assert len(reply["trace"]["logErrors"]) == 2 and Broken.calls == 4
+    assert reply["trace"]["logStopped"] is True and reply["trace"]["logSkipped"] == 1
+
+
 # ---- proposals
 
 def test_trade_needs_the_conflict_check_first(current, stub):
@@ -239,6 +254,29 @@ def test_figures_from_the_history_do_not_ground_a_reply(monkeypatch, table, stub
     payload = {**PAYLOAD, "history": history, "message": "what about 999.99?"}
     first = main.invoke(payload)["trace"]["guardrail"][0]
     assert first["own"]["ungroundedNumbers"] == ["999.99"]
+
+
+REPEATS_AMOUNT = ("I prepared a simulated purchase of 500 CAD of TSLA. TSLA: volatility 58.4% against a cap of "
+                  "35.0% (Medium). You can go ahead in simulation after confirming.")
+
+
+def test_the_amount_of_the_action_proposed_in_this_request_grounds_the_reply(monkeypatch, table, stub):
+    sent = []
+    monkeypatch.setattr(checks, "bedrock_check", lambda reply, grounding, query: sent.append(grounding) or {"passed": True})
+    asked = scripted(monkeypatch, table, [REPEATS_AMOUNT, "never used"], conflict_then_propose)
+    reply = main.invoke(PAYLOAD)
+    assert reply["refused"] is False and reply["text"] == REPEATS_AMOUNT and len(asked) == 1
+    assert reply["trace"]["guardrail"][0]["own"]["ungroundedNumbers"] == []
+    assert reply["proposed"]["params"]["amountCad"] == 500
+    assert '"amountCad": 500' in sent[0]
+
+
+def test_the_message_alone_still_does_not_ground_the_amount(monkeypatch, table, stub):
+    # Same message ("simulate 500 dollars of TSLA") and reply, but no action was proposed in this request
+    scripted(monkeypatch, table, [REPEATS_AMOUNT, "never used"],
+             lambda current: orchestrator.check_profile_conflict(symbol="TSLA"))
+    first = main.invoke(PAYLOAD)["trace"]["guardrail"][0]
+    assert first["own"]["ungroundedNumbers"] == ["500"]
 
 
 def test_the_guardrail_grounding_source_holds_no_history(monkeypatch, table, stub):

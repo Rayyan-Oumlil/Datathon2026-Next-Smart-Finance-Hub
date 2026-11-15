@@ -3,12 +3,12 @@ import type { HoldingsSummary, Risk, SignalSet } from '@/lib/domain/types';
 import { RULES } from '@/lib/rules';
 import type { ProfileView } from '@/lib/watchlist/format';
 import { scoreCandidate, sectorMedianPe, topDrivers, type Factors, type SectorMedians } from '@/lib/watchlist/score';
-import { EMPTY_HOLDINGS, profile, signals } from './fixtures';
+import { EMPTY_HOLDINGS, profile, signals, withoutTextRefs } from './fixtures';
 
 const IT = 'Information Technology';
 const medians = (median: number, count = 3): SectorMedians => ({ [IT]: { median, count } });
 const score = (set: SignalSet, who: ProfileView = profile('Expert', 'Medium'), sectorMedian: SectorMedians = {}, holdings: HoldingsSummary = EMPTY_HOLDINGS) =>
-    scoreCandidate(set, who, RULES, { sectorMedianPe: sectorMedian, holdings });
+    withoutTextRefs(scoreCandidate(set, who, RULES, { sectorMedianPe: sectorMedian, holdings }));
 
 describe('score: weights', () => {
     it('are the board values and sum to 100', () => {

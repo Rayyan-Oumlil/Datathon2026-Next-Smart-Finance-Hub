@@ -1,12 +1,14 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as AGENT } from '@/app/api/agent/route';
-import { NEUTRAL_REPLY, chat, confirm, undoAction } from '@/lib/agent/chat';
+import { getAppLocale } from '@/i18n/locale';
+import { NEUTRAL_REPLY, NEUTRAL_REPLY_FR, chat, confirm, undoAction } from '@/lib/agent/chat';
 import { callAgent, runtimeSessionId } from '@/lib/agent/client';
 import { DEMO_USER } from '@/lib/demo-user';
 import { getLayout } from '@/lib/services/layout';
 import { ServiceError } from '@/lib/services/errors';
 import { listAgentActions } from '@/lib/store';
+import { failsWordCheck } from '@/lib/agent/wording';
 import { containsNeverWord } from '@/lib/watchlist/reasons';
 import { freshWorld } from '../services/helpers';
 
@@ -16,14 +18,18 @@ vi.mock('@/lib/services/watchlist', () => ({
     resetWatchlistMemory: () => undefined,
 }));
 vi.mock('@/lib/agent/client', async (original) => ({ ...(await original<typeof import('@/lib/agent/client')>()), callAgent: vi.fn() }));
+// The request's language: English unless a test sets French
+vi.mock('@/i18n/locale', () => ({ getAppLocale: vi.fn(async () => 'en'), resolveLocale: vi.fn(async () => 'en') }));
 
 const agent = vi.mocked(callAgent);
+const locale = vi.mocked(getAppLocale);
 const answer = (over: object = {}) => ({ text: 'An ETF is a fund whose units trade on an exchange.', sources: [{ label: 'Glossary: ETF', source: 'agent/glossary/etf.md', fetchedAt: null }], refused: false, promptVersion: 'p1', modelCalls: [{ actor: 'orchestrator', awsRequestId: 'req-1' }], ...over });
 const steps = async (actionId: string) => (await listAgentActions(DEMO_USER.id, { actionId })).map((row) => row.step);
 
 beforeEach(async () => {
     await freshWorld();
     agent.mockReset();
+    locale.mockResolvedValue('en');
 });
 
 describe('chat', () => {
@@ -33,7 +39,8 @@ describe('chat', () => {
         const payload = agent.mock.calls[0][0];
         expect(payload).toMatchObject({ actionId: reply.actionId, userId: DEMO_USER.id, message: 'What is an ETF?' });
         expect(payload.history).toHaveLength(10);
-        expect(Object.keys(payload.context).sort()).toEqual(['agentStyle', 'holdings', 'layout', 'level', 'profile', 'risk', 'watchlist']);
+        expect(Object.keys(payload.context).sort()).toEqual(['agentStyle', 'holdings', 'layout', 'level', 'locale', 'profile', 'risk', 'watchlist']);
+        expect(payload.context.locale).toBe('en');
         expect(payload.context.watchlist).toEqual([{ rank: 1, symbol: 'AAPL', name: 'Apple Inc.', total: 76.1 }]);     // no signals, no news
         expect(reply).toMatchObject({ refused: false, sources: [{ label: 'Glossary: ETF', source: 'agent/glossary/etf.md' }] });
         expect(reply).not.toHaveProperty('preview');
@@ -117,6 +124,57 @@ describe('chat', () => {
     });
 });
 
+describe('chat in French', () => {
+    beforeEach(() => { locale.mockResolvedValue('fr'); });
+
+    it('sends the request language in the context and logs it', async () => {
+        agent.mockResolvedValue(answer({ text: 'Un FNB est un fonds dont les parts se négocient en bourse.' }));
+        const reply = await chat({ message: 'Qu’est-ce qu’un FNB?' });
+        expect(agent.mock.calls[0][0].context.locale).toBe('fr');
+        expect(reply).toMatchObject({ refused: false, text: 'Un FNB est un fonds dont les parts se négocient en bourse.' });
+        const built = (await listAgentActions(DEMO_USER.id, { actionId: reply.actionId })).find((row) => row.step === 'context_built');
+        expect(built).toMatchObject({ dataUsed: { locale: 'fr' } });
+    });
+
+    it('withholds a French reply with a never-word or judgement word, with the French neutral sentence', async () => {
+        expect(failsWordCheck(NEUTRAL_REPLY_FR)).toBe(false);
+        for (const text of ['Vous devriez acheter AAPL.', 'AAPL est un bon titre.', 'Je vous recommande ce FNB.', 'Ce titre va monter.', 'C’est une aubaine.', 'Un placement sûr.']) {
+            agent.mockResolvedValue(answer({ text, proposed: { type: 'layout_change', summary: 's', params: { layout: ['total_value'] } } }));
+            const reply = await chat({ message: 'bonjour' });
+            expect(reply, text).toMatchObject({ text: NEUTRAL_REPLY_FR, refused: true, sources: [] });
+            expect(reply).not.toHaveProperty('preview');
+        }
+    });
+
+    it('lets a factual French reply and a quoted watchlist name through', async () => {
+        for (const text of ['Bien sûr : la volatilité de AAPL est de 24,3 % (source : Finnhub).', 'Apple Inc. figure au rang 1 de votre liste de suivi intelligente.']) {
+            agent.mockResolvedValue(answer({ text }));
+            expect((await chat({ message: 'bonjour' })).text).toBe(text);
+        }
+    });
+
+    it('words the preview, the notice and the confirm and undo messages in French', async () => {
+        agent.mockResolvedValue(answer({ text: 'Voici une disposition plus courte.', proposed: { type: 'layout_change', summary: 's', params: { layout: ['total_value', 'holdings'] } } }));
+        const reply = await chat({ message: 'montrez-m’en moins' });
+        expect(reply.preview!.summary).toMatch(/^Disposition du tableau de bord : retire /);
+        expect(reply.preview!.rows[0].label).toBe('Onglet Portefeuille');
+        expect(await confirm(reply.actionId, true)).toMatchObject({ applied: true, message: 'La disposition du tableau de bord a été modifiée.' });
+        expect(await undoAction(reply.actionId)).toMatchObject({ restored: true, message: 'La disposition précédente du tableau de bord est rétablie.' });
+        await expect(confirm(reply.actionId, true)).rejects.toMatchObject({ status: 409, message: expect.stringMatching(/^Cette modification est annulée après application/) });
+
+        agent.mockResolvedValue(answer({ proposed: { type: 'wire_transfer', summary: 's', params: {} } }));
+        expect((await chat({ message: 'bonjour' })).notice).toBe('Une modification proposée n’a pas été affichée : « wire_transfer » n’est pas une action permise par l’application.');
+        agent.mockResolvedValue(answer({ proposed: { type: 'simulated_trade', summary: 's', params: { symbol: 'AAPL', side: 'hold', amountCad: 100 } } }));
+        const dropped = await chat({ message: 'bonjour' });
+        expect(dropped.notice).toBe('Une modification proposée n’a pas été affichée : Les paramètres de la modification proposée ne sont pas valides.');
+        const routed = (await listAgentActions(DEMO_USER.id, { actionId: dropped.actionId })).find((row) => row.step === 'action_routed');
+        expect(routed!.statedReason).toContain('side');                 // the schema's detail stays in the log
+
+        agent.mockResolvedValue(answer({ proposed: { type: 'layout_change', summary: 's', params: { layout: ['total_value'] } } }));
+        expect(await confirm((await chat({ message: 'bonjour' })).actionId, false)).toMatchObject({ message: 'Annulé. Rien n’a été modifié.' });
+    });
+});
+
 describe('agent route', () => {
     it('allows 10 requests a minute, then answers 429', async () => {
         agent.mockResolvedValue(answer());
@@ -125,11 +183,27 @@ describe('agent route', () => {
         const over = await post();
         expect(over.status).toBe(429);
         expect(await over.json()).toEqual({ error: 'Too many requests. Wait a minute and try again.' });
+        locale.mockResolvedValue('fr');
+        expect(await (await post()).json()).toEqual({ error: 'Trop de demandes. Attendez une minute, puis réessayez.' });
         expect(agent).toHaveBeenCalledTimes(10);
     });
 });
 
 describe('agent client', () => {
+    it('words its own errors in the language of the request', async () => {
+        const { callAgent: realCall } = await vi.importActual<typeof import('@/lib/agent/client')>('@/lib/agent/client');
+        const url = process.env.AGENT_URL;
+        process.env.AGENT_URL = 'http://127.0.0.1:9';           // nothing listens there
+        try {
+            const payload = { actionId: 'a', userId: DEMO_USER.id, message: 'm', history: [], context: { locale: 'fr' as const, holdings: [], watchlist: [], layout: [] } };
+            await expect(realCall(payload)).rejects.toMatchObject({ status: 503, message: 'Le service de l’agent est injoignable pour le moment. Rien n’a été modifié.' });
+            await expect(realCall({ ...payload, context: { ...payload.context, locale: 'en' } })).rejects.toMatchObject({ message: 'The agent service is not reachable right now. Nothing was changed.' });
+        } finally {
+            if (url === undefined) delete process.env.AGENT_URL;
+            else process.env.AGENT_URL = url;
+        }
+    });
+
     it('derives a stable AgentCore session id of 33 characters or more', () => {
         const id = runtimeSessionId('demo-user', 'c1');
         expect(id.length).toBeGreaterThanOrEqual(33);

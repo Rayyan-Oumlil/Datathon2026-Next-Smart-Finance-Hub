@@ -12,10 +12,11 @@ const PINNED = ['/portfolio', '/overview', '/profile'];
 const STORAGE_KEY = 'openstock-tabs';
 const MAX_TABS = 12;
 
-const PAGE_LABELS: Record<string, string> = {
-    '/portfolio': 'Portfolio',
-    '/overview': 'Overview',
-    '/profile': 'Profile',
+// Message keys of the Shell namespace (nav.*)
+const PAGE_LABELS: Record<string, 'portfolio' | 'overview' | 'profile'> = {
+    '/portfolio': 'portfolio',
+    '/overview': 'overview',
+    '/profile': 'profile',
 };
 
 // Pages become browser-style tabs; stock pages are labelled by their symbol.
@@ -33,6 +34,7 @@ const withTab = (tabs: string[], path: string) => {
 
 const TabBar = ({ onMenu }: { onMenu: () => void }) => {
     const t = useTranslations('TabBar');
+    const tn = useTranslations('Shell.nav');
     const pathname = usePathname();
     const router = useRouter();
     const [tabs, setTabs] = useState(() => withTab(PINNED, pathname));
@@ -62,7 +64,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
         el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }, [pathname, tabs]);
 
-    const tabLabel = (path: string) => stockSymbol(path) ?? (PAGE_LABELS[path] ?? null);
+    const tabLabel = (path: string) => stockSymbol(path) ?? (PAGE_LABELS[path] ? tn(PAGE_LABELS[path]) : null);
 
     const closeTab = (path: string) => {
         const index = tabs.indexOf(path);

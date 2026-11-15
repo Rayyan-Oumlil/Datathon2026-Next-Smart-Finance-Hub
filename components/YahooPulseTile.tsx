@@ -1,18 +1,17 @@
 import Link from 'next/link';
 import { LineChart } from 'lucide-react';
+import { getLocale, getTranslations } from 'next-intl/server';
 import ChangePill from '@/components/ChangePill';
+import MoneyParts from '@/components/shell/MoneyParts';
 import { yahooAppSymbol, type YahooDailyQuote } from '@/lib/yahoo';
+import { formatNumber } from '@/i18n/format';
 
-const formatAmount = (value: number) =>
-    value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-type PulseTileLabels = { vsPrevClose: (change: string) => string; unavailable: string };
-
-const ENGLISH: PulseTileLabels = { vsPrevClose: (change) => `${change} vs prev close`, unavailable: 'Quote unavailable' };
+const TWO_DECIMALS: Intl.NumberFormatOptions = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
 
 // Pulse tile priced from Yahoo daily quotes. Used for Tadawul, whose TradingView quote widgets are blocked in free embeds,
 // and Warsaw, whose embeds are end of day only.
-export default function YahooPulseTile({ tvSymbol, label, quote, labels = ENGLISH }: { tvSymbol: string; label: string; quote: YahooDailyQuote | null; labels?: PulseTileLabels }) {
+export default async function YahooPulseTile({ tvSymbol, label, quote }: { tvSymbol: string; label: string; quote: YahooDailyQuote | null }) {
+    const [t, locale] = await Promise.all([getTranslations('PulseTile'), getLocale()]);
     const appSymbol = yahooAppSymbol(tvSymbol);
     const body = (
         <>
@@ -23,16 +22,16 @@ export default function YahooPulseTile({ tvSymbol, label, quote, labels = ENGLIS
             </div>
             <p className="bento-value self-start num">
                 {/* Indices are in points, not a currency */}
-                {quote ? <>{appSymbol && <small>{quote.currency}&nbsp;</small>}{formatAmount(quote.price)}</> : '—'}
+                {quote ? (appSymbol ? <MoneyParts amount={quote.price} currency={quote.currency} locale={locale} options={TWO_DECIMALS} /> : formatNumber(quote.price, locale, TWO_DECIMALS)) : '—'}
             </p>
             <div className="bento-foot">
                 {quote ? (
                     <>
                         <ChangePill value={quote.changePercent} />
-                        <span className="num truncate">{labels.vsPrevClose(`${quote.change > 0 ? '+' : ''}${formatAmount(quote.change)}`)}</span>
+                        <span className="num truncate">{t('vsPrevClose', { change: formatNumber(quote.change, locale, { ...TWO_DECIMALS, signDisplay: 'exceptZero' }) })}</span>
                     </>
                 ) : (
-                    <span>{labels.unavailable}</span>
+                    <span>{t('unavailable')}</span>
                 )}
             </div>
         </>

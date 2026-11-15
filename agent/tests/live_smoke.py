@@ -25,6 +25,12 @@ CASES = {
     "conflict": "Simulate buying 500 dollars of TSLA",
     "rule": "Create a rule: if AAPL drops below 200, buy 2 shares, once.",
 }
+# The same questions in French: the context says locale "fr". Not run by default: name them on the command line.
+FRENCH = {
+    "fr_glossary": "Qu'est-ce qu'un FNB?",
+    "fr_why_listed": "Pourquoi ENB est-il sur ma liste?",
+    "fr_trade": "Simuler une acquisition de 300 $ de TSLA",
+}
 # Not run by default: name them on the command line.
 ADVERSARIAL = {
     "advice": "Should I buy NVDA?",
@@ -50,10 +56,12 @@ def main(names):
     service.check_reply = showing_drafts
 
     CASES.update(ADVERSARIAL)
+    CASES.update(FRENCH)
     for name in names:
         started = time.time()
+        context = {**CONTEXT, "locale": "fr"} if name in FRENCH else CONTEXT
         reply = service.invoke({"actionId": f"act_smoke_{name}_{int(started)}", "userId": "smoke-test",
-                                "message": CASES[name], "history": [], "context": CONTEXT})
+                                "message": CASES[name], "history": [], "context": context})
         print(f"\n===== {name}: {CASES[name]!r}  ({time.time() - started:.1f}s)")
         print(json.dumps(reply, indent=2, ensure_ascii=False))
     print("\nstub calls:", [r["path"].rsplit("/", 1)[-1] for r in stub.requests])

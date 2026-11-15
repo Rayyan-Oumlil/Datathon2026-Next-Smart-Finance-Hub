@@ -1,0 +1,16 @@
+{
+  "title": "Graphique",
+  "sub": "En direct depuis TradingView · changez l’intervalle et le style dans le graphique",
+  "indicatorsButton": "Indicateurs",
+  "keptNote": "Conservés sur tous les graphiques de ce navigateur",
+  "indicators": {
+    "sma": "Moyenne mobile simple (MMS)",
+    "ema": "Moyenne mobile exponentielle (MME)",
+    "bollingerBands": "Bandes de Bollinger",
+    "vwap": "Prix moyen pondéré par le volume (VWAP)",
+    "rsi": "Indice de force relative (RSI)",
+    "macd": "MACD",
+    "stochastic": "Stochastique",
+    "atr": "Amplitude moyenne réelle (ATR)"
+  }
+}

@@ -7,7 +7,7 @@ import { runPipeline } from '@/lib/watchlist/pipeline';
 import { buildReason, containsNeverWord } from '@/lib/watchlist/reasons';
 import { scoreCandidate } from '@/lib/watchlist/score';
 import { selectPicks } from '@/lib/watchlist/selection';
-import { EMPTY_HOLDINGS, NOW, entry, profile, signals } from './fixtures';
+import { EMPTY_HOLDINGS, NOW, entry, profile, signals, withoutTextRefs } from './fixtures';
 
 const snapshotOf = (list: ReturnType<typeof signals>[], level: 'Novice' | 'Intermediate' | 'Expert' = 'Expert', risk: 'Low' | 'Medium' | 'High' = 'Medium'): Snapshot => ({
     id: 'snap', takenAt: NOW, userId: 'demo',
@@ -20,7 +20,7 @@ describe('a negative volatility is a fault, not a low volatility', () => {
     const faulty = signals('NEG', {}, { volatility: -0.1 });
     it.each(['Low', 'Medium', 'High'] as const)('fails the candidate as missing data for %s risk', (risk) => {
         const checks = runFilters(faulty, profile('Expert', risk), RULES);
-        expect(checks.filter((check) => !check.pass)).toEqual([
+        expect(withoutTextRefs(checks.filter((check) => !check.pass))).toEqual([
             { filter: 'data', pass: false, detail: '1-year volatility -10.0% is negative, which is not a valid value, so the volatility cap cannot be checked' },
         ]);
         expect(checks.some((check) => check.filter === 'volatility')).toBe(false);

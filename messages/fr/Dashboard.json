@@ -1,0 +1,19 @@
+{
+  "title": "Marchés",
+  "sub": "{market} · {status, select, open {ouvert en ce moment} other {fermé en ce moment}} · {feed, select, live {données en direct} delayed {données différées} other {données de fin de journée}}",
+  "pulseTitle": "Pouls du marché",
+  "pulseSubFinnhub": "Cours partagés · Source : Finnhub",
+  "pulseSubYahoo": "Cours différés · Source : Yahoo Chart (non officiel)",
+  "pulseSubTradingView": "{feed, select, live {Cours en direct · Source : TradingView} delayed {Cours différés · Source : TradingView} other {Cours de fin de journée · Source : TradingView}}",
+  "moversTitle": "Variations marquantes",
+  "moversSub": "Les plus fortes variations du jour",
+  "leadersTitle": "Meneurs",
+  "leadersSub": "Tendance sur 12 mois par groupe",
+  "stockHeatmapTitle": "Carte thermique du S&P 500",
+  "cryptoHeatmapTitle": "Carte thermique des cryptomonnaies",
+  "heatmapSub": "Taille selon la capitalisation boursière, couleur selon la variation du jour",
+  "quotesTitle": "Cours",
+  "quotesSub": "{market} : meneurs par groupe",
+  "storiesTitle": "Manchettes",
+  "storiesSub": "Les plus récentes d’abord"
+}

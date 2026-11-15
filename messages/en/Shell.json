@@ -1,0 +1,10 @@
+{
+  "nav": {
+    "portfolio": "Portfolio",
+    "overview": "Overview",
+    "profile": "Profile"
+  },
+  "logoLabel": "AlphaForge portfolio",
+  "disclaimer": "Simulation only. No real trades and no investment advice. Every number shows its source and time.",
+  "credit": "Built on <link>OpenStock</link> by Open Dev Society, AGPL-3.0."
+}

@@ -25,6 +25,8 @@ COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 COPY --from=build /app/rules ./rules
 COPY --from=build /app/data ./data
+# Translation files are read from disk at run time
+COPY --from=build /app/messages ./messages
 # Writable folder for the provider cache and the small app-state file (rules, layout).
 # The cache built on the deploying machine (scripts/refresh-signals.mjs) is carried in, with each value's
 # own fetch time, so the first watchlist of the day does not wait minutes on the providers.

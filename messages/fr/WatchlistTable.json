@@ -1,0 +1,9 @@
+{
+  "headers": {
+    "company": "Société",
+    "price": "Cours",
+    "change": "Variation",
+    "marketCap": "Capitalisation boursière",
+    "action": "Outils"
+  }
+}

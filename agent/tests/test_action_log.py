@@ -55,6 +55,44 @@ def test_unreachable_table_does_not_raise_and_is_recorded(capsys):
     assert "action log write failed" in capsys.readouterr().err
 
 
+def test_writes_stop_after_two_failed_rows(capsys):
+    class Broken:
+        calls = 0
+
+        def put_item(self, **_):
+            Broken.calls += 1
+            raise ConnectionError("table unreachable")
+
+    request = trace.RequestTrace(action_id="act_1", user_id="u", message="m", context={})
+    request.log_table = Broken()
+    request.log("prompt_built", "writer")
+    assert not request.log_stopped                # one failed row: the next one is still tried
+    request.log("tool_call", "writer")
+    assert request.log_stopped and Broken.calls == 4
+    request.log("tool_call", "writer")
+    request.log("guardrail_check", "writer")
+    assert Broken.calls == 4                      # no further attempt, so no further timeouts
+    assert request.log_rows == 0 and len(request.log_errors) == 2 and request.log_skipped == 2
+
+
+def test_failed_rows_count_across_the_request_not_in_a_row(table):
+    class Alternating:
+        calls = 0
+
+        def put_item(self, **kwargs):
+            Alternating.calls += 1
+            if Alternating.calls in (1, 2, 4, 5):  # rows 1 and 3 fail twice; row 2 is written
+                raise ConnectionError("timeout")
+            table.put_item(**kwargs)
+
+    request = trace.RequestTrace(action_id="act_1", user_id="u", message="m", context={})
+    request.log_table = Alternating()
+    for step in ("prompt_built", "tool_call", "tool_call", "guardrail_check"):
+        request.log(step, "writer")
+    # Two rows failed in the request (not in a row), so the fourth one is skipped
+    assert request.log_rows == 1 and len(request.log_errors) == 2 and request.log_skipped == 1
+
+
 def test_a_failed_write_is_retried_once(table):
     class Flaky:
         failures = 1

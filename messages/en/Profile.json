@@ -1,0 +1,113 @@
+{
+  "title": "Profile",
+  "subtitle": "Your level and risk profile, the answers behind them, and what the app has done with them. Simulation only.",
+  "level": "{level, select, Novice {Novice} Intermediate {Intermediate} Expert {Expert} other {{level}}}",
+  "risk": "{risk, select, Low {Low} Medium {Medium} High {High} other {{risk}}}",
+  "answers": {
+    "title": "Your answers",
+    "subtitle": "Stored as given. Scored by rules {levelRule} and {riskRule}. Last saved {when} (Toronto time).",
+    "edit": "Edit answers",
+    "startOver": "Start over",
+    "note": "Editing re-runs both rules on the server and shows the result before and after. Starting over asks every question again; your current profile stays in place until the new answers are saved."
+  },
+  "modules": {
+    "level": { "title": "Level", "note": "Changes the interface." },
+    "risk": { "title": "Risk", "note": "Changes the watchlist only." },
+    "chosenByYou": "Chosen by you",
+    "computedFromAnswers": "Computed from your answers",
+    "returnToComputed": "Return to computed ({computed})",
+    "computedHint": "computed",
+    "override": "Computed: <strong>{computed}</strong>. Chosen: <strong>{chosen}</strong>. The app uses the chosen value; the computed one is kept beside it.",
+    "lastChange": "Last change here: before <strong>{before}</strong>, after <strong>{after}</strong>. Saved and logged at {at}.",
+    "howComputed": "How {computed} was computed",
+    "toastLevel": "Level: {before} → {after}",
+    "toastRisk": "Risk profile: {before} → {after}",
+    "changeFailed": "The change could not be saved. Nothing was changed."
+  },
+  "breakdown": {
+    "points": "{count, plural, one {# point} other {# points}}",
+    "notTraded": "You have not placed a trade yourself. In that case the level rule gives {level}, with no points counted.",
+    "rule": "Rule {version}",
+    "experienceRow": "Trading experience: {value}",
+    "toolRow": "Tool used: {value}",
+    "levelTotal": "Total {points} of {max}. Bands: {bands}.",
+    "riskTotal": "Total {points} of {max}. Bands: {bands}.",
+    "band": "{min}–{max} {label}",
+    "goalRow": "Investing goal: {value}",
+    "echeanceRow": "Time to see progress: {value}",
+    "dropRow": "After a {percent} drop: {value}",
+    "selfRow": "Your own rating: {value}",
+    "capped": "Limit applied: choosing “{answer}” on the {percent} drop question keeps the result at {risk} at most, whatever the points.",
+    "differs": "You rated yourself <strong>{selfRated}</strong>. The rule computed <strong>{risk}</strong> from all four answers. Both are kept."
+  },
+  "history": {
+    "title": "History",
+    "subtitle": "Past picks and why, simulated trades and profile conflicts. Source: the decision log (append-only).",
+    "reload": "Reload",
+    "show": "Show",
+    "kinds": {
+      "all": "All",
+      "pick": "Watchlist picks",
+      "simulated_trade": "Simulated trades",
+      "profile_conflict": "Profile conflicts"
+    },
+    "failedTitle": "The decision log did not answer",
+    "failedBody": "No history is shown rather than a partial one. Use Reload to try again.",
+    "reading": "Reading the decision log…",
+    "emptyTitle": "Nothing logged yet",
+    "emptyBody": "Picks appear after the first watchlist run; trades and conflicts after the first simulated trade.",
+    "notAvailable": "not available",
+    "tags": {
+      "pick": "Pick",
+      "simulated_trade": "Simulated trade",
+      "profile_conflict": "Profile conflict"
+    },
+    "pick": {
+      "title": "{subject} listed at rank {rank}",
+      "noReason": "No reason sentence was written for this pick: facts only.",
+      "score": "Score {score} of 100",
+      "factors": "Main factors: {factors}",
+      "template": "Sentence template: {id}",
+      "drivers": {
+        "profile_fit": "profile match",
+        "risk_fit": "risk match",
+        "fundamentals": "fundamentals",
+        "diversification": "diversification"
+      }
+    },
+    "trade": {
+      "purchase": "Simulated purchase",
+      "reduction": "Simulated position reduction",
+      "unknown": "Simulated trade (side not available)",
+      "title": "{action} of {quantity} {symbol}, {value}",
+      "byRule": "Triggered by investment rule {ruleId}.",
+      "asked": "Asked {origin}.",
+      "acknowledged": "Made after a profile conflict was acknowledged.",
+      "origins": {
+        "card": "from a watchlist card",
+        "rule": "by an investment rule",
+        "agent": "through the agent",
+        "unknown": "(origin not available)"
+      },
+      "filled": "Filled at the last price {price} {currency} · source {source} · fetched {fetched}",
+      "asOfSuffix": " · as of {asOf}",
+      "noPrice": "Fill price not available",
+      "converted": "Converted to CAD at {rate} CAD per USD · source {source} · fetched {fetched}",
+      "noRate": "USD/CAD rate not available",
+      "reason": "Logged reason: {reason}"
+    },
+    "conflict": {
+      "title": "{symbol} did not pass {count, plural, one {# profile filter} other {# profile filters}}",
+      "noDetails": "Filter details not available.",
+      "profileThen": "Profile at the time: {level}, {risk} risk",
+      "proceeded": "Acknowledged, then simulated anyway",
+      "notProceeded": "Nothing was simulated"
+    },
+    "meta": {
+      "rules": "rules {versions}",
+      "noRules": "rule versions not available on this row",
+      "snapshot": "snapshot {id}",
+      "logId": "log id {id}"
+    }
+  }
+}

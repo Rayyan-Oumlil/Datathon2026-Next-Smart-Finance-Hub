@@ -1,0 +1,14 @@
+{
+  "sentimentTitle": "Sentiment du marché",
+  "sentimentSub": "Reddit, X.com, nouvelles et Polymarket",
+  "dividendYieldTitle": "Rendement en dividendes",
+  "chartTitle": "Graphique",
+  "chartUnavailableSub": "Offert seulement sur TradingView pour cette Bourse",
+  "chartUnavailableTitle": "Graphique non disponible ici",
+  "chartUnavailableBody": "TradingView n’autorise pas l’affichage des graphiques de {exchange} sur d’autres sites. Les données financières, l’analyse technique et le profil ci-dessous restent accessibles.",
+  "openOnTradingView": "Ouvrir le graphique sur TradingView",
+  "financialsTitle": "Données financières",
+  "financialsSub": "État des résultats, bilan et ratios",
+  "profileTitle": "Profil",
+  "profileSub": "Activités de la société"
+}

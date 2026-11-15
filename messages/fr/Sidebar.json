@@ -1,0 +1,14 @@
+{
+  "searchStocks": "Rechercher un titre",
+  "overview": "Aperçu",
+  "watchlist": "Liste de suivi",
+  "watching": "Suivis",
+  "watchingEmpty": "Marquez un titre d’une étoile pour l’épingler ici.",
+  "resources": {
+    "help": "Aide",
+    "apiDocs": "Documentation de l’API",
+    "about": "À propos",
+    "terms": "Conditions d’utilisation"
+  },
+  "signOut": "Se déconnecter"
+}

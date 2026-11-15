@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { respond } from '@/lib/services/http';
+import { requestLocale, respond } from '@/lib/services/http';
 import { simulateTrade } from '@/lib/services/portfolio';
 
 const schema = z.object({
@@ -14,8 +14,9 @@ const schema = z.object({
 });
 
 // Simulation only. 409 names the profile conflict with the actual values; resending with acknowledgeConflict proceeds.
+// Messages and conflict details follow the request's language.
 export const POST = (req: NextRequest) => respond(async () => {
-    const outcome = await simulateTrade(schema.parse(await req.json()));
+    const outcome = await simulateTrade(schema.parse(await req.json()), await requestLocale(req));
     if (outcome.status === 'conflict') {
         const { conflicts, signals, message } = outcome;
         return NextResponse.json({ conflicts, signals, message }, { status: 409 });
@@ -23,4 +24,4 @@ export const POST = (req: NextRequest) => respond(async () => {
     const { trade, portfolio, conflicts, unitPriceCad, fxUsdCad } = outcome;
     // fxUsdCad is the Bank of Canada rate a USD price was converted with; null for a price already in CAD
     return { trade, portfolio, conflicts, unitPriceCad, fxUsdCad, simulated: true };
-});
+}, req);

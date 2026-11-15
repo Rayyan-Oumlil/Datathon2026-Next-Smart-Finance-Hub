@@ -1,0 +1,19 @@
+{
+  "title": "Markets",
+  "sub": "{market} · {status, select, open {open now} other {closed now}} · {feed, select, live {live data} delayed {delayed data} other {end of day data}}",
+  "pulseTitle": "Pulse",
+  "pulseSubFinnhub": "Our shared quotes via Finnhub",
+  "pulseSubYahoo": "Delayed quotes via Yahoo chart (unofficial)",
+  "pulseSubTradingView": "{feed, select, live {Live quotes via TradingView} delayed {Delayed quotes via TradingView} other {End of day quotes via TradingView}}",
+  "moversTitle": "Movers",
+  "moversSub": "Biggest moves today",
+  "leadersTitle": "Leaders",
+  "leadersSub": "12-month trend by group",
+  "stockHeatmapTitle": "S&P 500 heatmap",
+  "cryptoHeatmapTitle": "Crypto heatmap",
+  "heatmapSub": "Sized by market cap, coloured by today’s move",
+  "quotesTitle": "Quotes",
+  "quotesSub": "{market} leaders by group",
+  "storiesTitle": "Top stories",
+  "storiesSub": "Newest first"
+}

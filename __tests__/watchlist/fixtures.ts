@@ -80,3 +80,13 @@ export function shuffled<T>(items: T[]): T[] {
     const cut = Math.floor(reversed.length / 3);
     return [...reversed.slice(cut), ...reversed.slice(0, cut)];
 }
+
+/**
+ * The same value without the catalog references (textRef) kept beside each sentence, for the tests that compare
+ * a check, a factor or a reason with its expected sentence. The references are tested in text.test.ts.
+ */
+export function withoutTextRefs<T>(value: T): T {
+    if (Array.isArray(value)) return value.map(withoutTextRefs) as T;
+    if (!value || typeof value !== 'object') return value;
+    return Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'textRef').map(([key, item]) => [key, withoutTextRefs(item)])) as T;
+}

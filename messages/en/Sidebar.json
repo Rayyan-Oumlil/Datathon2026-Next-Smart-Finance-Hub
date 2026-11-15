@@ -1,0 +1,14 @@
+{
+  "searchStocks": "Search stocks",
+  "overview": "Overview",
+  "watchlist": "Watchlist",
+  "watching": "Watching",
+  "watchingEmpty": "Star a stock to pin it here.",
+  "resources": {
+    "help": "Help",
+    "apiDocs": "API docs",
+    "about": "About",
+    "terms": "Terms"
+  },
+  "signOut": "Sign out"
+}

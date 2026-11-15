@@ -1,26 +1,50 @@
 // Pure helpers of the Portfolio tab: number and time formats, the chart's period windows, the layout merge.
 
 import type { Sourced } from '@/lib/domain/types';
+import { formatDateTime, formatNumber, formatPercent } from '@/i18n/format';
 
-export const money = (value: number) => value.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-export const signed = (value: number) => `${value > 0 ? '+' : value < 0 ? '−' : ''}${money(Math.abs(value))}`;
-export const units = (value: number) => value.toLocaleString('en-CA', { maximumFractionDigits: 6 });
-export const when = (iso: string) => {
-    const date = new Date(iso);
-    // A provider date with no time of day is shown as that date, not shifted by the viewer's time zone
-    if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return date.toLocaleDateString('en-CA', { dateStyle: 'medium', timeZone: 'UTC' });
+/** A next-intl translator, narrowed to what these helpers call. */
+export type Translate = (key: string, values?: Record<string, string | number>) => string;
+
+// Every number and date below is formatted for the active language through the i18n helpers (never by hand).
+const TWO = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const;
+const NBSP = '\u00a0';
+
+export const money = (value: number, locale: string) => formatNumber(value, locale, TWO);
+export const signed = (value: number, locale: string) => formatNumber(value, locale, { ...TWO, signDisplay: 'exceptZero' });
+export const units = (value: number, locale: string) => formatNumber(value, locale, { maximumFractionDigits: 6 });
+/** An amount in Canadian dollars, the currency code kept so the figure can be checked against its source. */
+export const cad = (value: number, locale: string) => `${money(value, locale)}${NBSP}CAD`;
+export const signedCad = (value: number, locale: string) => `${signed(value, locale)}${NBSP}CAD`;
+/** A value already in percent, one decimal: 12.5 -> "12.5%" / "12,5 %". */
+export const share = (value: number, locale: string) => formatPercent(value, locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+/** A signed percent, two decimals: 2.5 -> "+2.50%" / "+2,50 %". */
+export const signedPct = (value: number, locale: string) => formatPercent(value, locale, { ...TWO, signDisplay: 'exceptZero' });
+
+export const when = (iso: string, locale: string) => {
+    // A provider date with no time of day is shown as that date, not shifted by a time zone
+    if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return formatDateTime(iso, locale, { dateStyle: 'medium', timeZone: 'UTC' });
     // The zone is printed: a time with no zone cannot be checked against the source
-    return Number.isNaN(date.getTime()) ? iso : date.toLocaleString('en-CA', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+    return formatDateTime(iso, locale, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
 };
 
 /** "Finnhub, as of Nov 13, 4:00 p.m." The provider's own time when it gives one, otherwise when we fetched it. */
-export const sourceLine = (sourced: Pick<Sourced<unknown>, 'source' | 'asOf' | 'fetchedAt'>) =>
-    `${sourced.source}, ${sourced.asOf ? `as of ${when(sourced.asOf)}` : `fetched ${when(sourced.fetchedAt)}`}`;
+export const sourceLine = (sourced: Pick<Sourced<unknown>, 'source' | 'asOf' | 'fetchedAt'>, locale: string, t: Translate) =>
+    sourced.asOf
+        ? t('sourceLine.asOf', { source: sourced.source, when: when(sourced.asOf, locale) })
+        : t('sourceLine.fetched', { source: sourced.source, when: when(sourced.fetchedAt, locale) });
 
-// Words the app never shows. A server message that carries one (a raw validation echo) is replaced.
-const NEVER = /\b(buy|buying|sell|selling|should|good|safe|will rise|fits you|recommend\w*)\b/i;
+// Words the app never shows, in English and French. A server message that carries one (a raw validation echo) is replaced.
+const NEVER_WORDS = [
+    'buy', 'buying', 'sell', 'selling', 'should', 'good', 'safe', 'will rise', 'fits you', 'recommend\\w*',
+    'acheter', 'achetez', 'vendre', 'vendez', 'devriez', 'devrait', 'devraient', 'il faut', 'bon', 'bonne', 'bons', 'bonnes',
+    'sûre?s?', 's[eé]curitaires?', 'sans risque', 'va monter', 'va augmenter', 'vous conviennent?',
+    'recommand[eé]\\w*', 'conseill[eé]\\w*',
+];
+const NEVER = new RegExp(`(?<![\\p{L}\\p{N}])(?:${NEVER_WORDS.map((word) => word.replace(/ /g, '[\\s\\u00a0]+')).join('|')})(?![\\p{L}\\p{N}])`, 'iu');
 export const hasNeverWord = (text: string) => NEVER.test(text);
-export const safeMessage = (text: unknown, fallback = 'The request was not accepted.') =>
+/** A server message that is safe to show as received, otherwise the fallback ('' lets the caller choose its own words). */
+export const safeMessage = (text: unknown, fallback = '') =>
     typeof text === 'string' && text.length > 0 && !hasNeverWord(text) ? text : fallback;
 
 // ---------------------------------------------------------------- chart periods
@@ -80,14 +104,35 @@ export function moveModule(order: ModuleId[], id: ModuleId, step: -1 | 1, fixed:
 
 // ---------------------------------------------------------------- fetch
 
-/** JSON call to the app's own API. Throws an Error whose message can be shown as it is. */
+/** A failed call. The message is the server's own wording when it can be shown, otherwise empty (see errorText). */
+export class ApiError extends Error {
+    constructor(message: string, readonly status: number) {
+        super(message);
+    }
+}
+
+/** What to show for a failed call: the server's message as received, or a translated generic sentence. */
+export const errorText = (failure: unknown, t: Translate): string => {
+    if (failure instanceof ApiError) {
+        if (failure.message) return failure.message;
+        return failure.status > 0 ? t('errors.notAcceptedHttp', { status: failure.status }) : t('errors.network');
+    }
+    return failure instanceof Error && failure.message ? failure.message : t('errors.notAccepted');
+};
+
+/** JSON call to the app's own API. Throws an ApiError; show it with errorText. */
 export async function api<T>(url: string, init?: { method: string; body?: unknown }): Promise<T> {
-    const response = await fetch(url, {
-        method: init?.method ?? 'GET',
-        cache: 'no-store',
-        ...(init?.body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(init.body) }),
-    });
+    let response: Response;
+    try {
+        response = await fetch(url, {
+            method: init?.method ?? 'GET',
+            cache: 'no-store',
+            ...(init?.body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(init.body) }),
+        });
+    } catch {
+        throw new ApiError('', 0);
+    }
     const body = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(safeMessage(body?.error ?? body?.message, `The request was not accepted (HTTP ${response.status}).`));
+    if (!response.ok) throw new ApiError(safeMessage(body?.error ?? body?.message), response.status);
     return body as T;
 }

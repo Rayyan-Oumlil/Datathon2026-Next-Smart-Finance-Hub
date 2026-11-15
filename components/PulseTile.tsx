@@ -2,23 +2,22 @@
 
 import Link from "next/link";
 import { LineChart } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import ChangePill from "@/components/ChangePill";
 import PriceFlash from "@/components/PriceFlash";
+import MoneyParts from "@/components/shell/MoneyParts";
 import { useLiveQuotes, type LiveQuote } from "@/hooks/useLiveQuotes";
+import { formatNumber } from "@/i18n/format";
 
-const formatAmount = (value: number) =>
-    value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: value < 1 ? 4 : 2 });
+const amountOptions = (value: number): Intl.NumberFormatOptions => ({ minimumFractionDigits: 2, maximumFractionDigits: value < 1 ? 4 : 2 });
 
 type PulseTileProps = { symbol: string; label: string; initial: LiveQuote | null };
-type PulseTileLabels = { vsPrevClose: (change: string) => string; unavailable: string };
-
-// English for the marketing preview, which renders outside NextIntlClientProvider
-const ENGLISH: PulseTileLabels = { vsPrevClose: (change) => `${change} vs prev close`, unavailable: 'Quote unavailable' };
 
 // A pulse tile priced from our own quote cache. In realtime mode it refreshes on screen,
 // so the "Live · 15s" label is true; in cached mode it shows the server-rendered quote.
-export default function PulseTile({ symbol, label, initial, labels = ENGLISH }: PulseTileProps & { labels?: PulseTileLabels }) {
+export default function PulseTile({ symbol, label, initial }: PulseTileProps) {
+    const t = useTranslations('PulseTile');
+    const locale = useLocale();
     const live = useLiveQuotes([symbol]);
     const quote = live[symbol] ?? initial;
     const isCrypto = symbol.startsWith('BINANCE:');
@@ -32,25 +31,21 @@ export default function PulseTile({ symbol, label, initial, labels = ENGLISH }: 
             </div>
             <PriceFlash value={quote?.c} className="bento-value self-start">
                 {quote?.c ? (
-                    isCrypto ? <>{formatAmount(quote.c)}<small> USDT</small></> : <><small>$</small>{formatAmount(quote.c)}</>
+                    isCrypto
+                        ? <>{formatNumber(quote.c, locale, amountOptions(quote.c))}<small> USDT</small></>
+                        : <MoneyParts amount={quote.c} currency="USD" locale={locale} options={amountOptions(quote.c)} />
                 ) : '—'}
             </PriceFlash>
             <div className="bento-foot">
                 {quote?.c ? (
                     <>
                         <ChangePill value={quote.dp} />
-                        <span className="num truncate">{labels.vsPrevClose(`${(quote.d ?? 0) > 0 ? '+' : ''}${formatAmount(quote.d ?? 0)}`)}</span>
+                        <span className="num truncate">{t('vsPrevClose', { change: formatNumber(quote.d ?? 0, locale, { ...amountOptions(quote.d ?? 0), signDisplay: 'exceptZero' }) })}</span>
                     </>
                 ) : (
-                    <span>{labels.unavailable}</span>
+                    <span>{t('unavailable')}</span>
                 )}
             </div>
         </Link>
     );
-}
-
-// The same tile in the viewer's language, for pages inside NextIntlClientProvider
-export function LocalizedPulseTile(props: PulseTileProps) {
-    const t = useTranslations('PulseTile');
-    return <PulseTile {...props} labels={{ vsPrevClose: (change) => t('vsPrevClose', { change }), unavailable: t('unavailable') }} />;
 }

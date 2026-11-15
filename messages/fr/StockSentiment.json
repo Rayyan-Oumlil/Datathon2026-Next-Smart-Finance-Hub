@@ -1,0 +1,29 @@
+{
+  "avgBuzz": "Intensité moyenne",
+  "bullishAvg": "Moyenne haussière",
+  "coverage": "Couverture",
+  "coverageValue": "{count} sources sur {total}",
+  "sourceAlignment": "Concordance des sources : <value>{alignment}</value>",
+  "alignment": {
+    "noSentimentMix": "Aucune répartition du sentiment",
+    "singleSourceView": "Une seule source",
+    "bullishAlignment": "Concordance haussière",
+    "bearishAlignment": "Concordance baissière",
+    "tightAlignment": "Forte concordance",
+    "wideDivergence": "Forte divergence",
+    "mixed": "Mitigé"
+  },
+  "metric": {
+    "mentions": "{value} mentions",
+    "trades": "{value} transactions"
+  },
+  "newsSource": "Nouvelles",
+  "buzz": "intensité",
+  "bullPct": "{pct} % haussier",
+  "trend": {
+    "rising": "En hausse",
+    "falling": "En baisse",
+    "stable": "Stable"
+  },
+  "noTrend": "Aucune tendance"
+}

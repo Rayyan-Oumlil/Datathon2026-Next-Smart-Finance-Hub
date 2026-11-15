@@ -4,9 +4,9 @@ import { RULES } from '@/lib/rules';
 import { checkProfileConflict } from '@/lib/watchlist/conflict';
 import { runFilters } from '@/lib/watchlist/filters';
 import type { ProfileView } from '@/lib/watchlist/format';
-import { profile, signals, sourced } from './fixtures';
+import { profile, signals, sourced, withoutTextRefs } from './fixtures';
 
-const run = (set: SignalSet, who: ProfileView, fx = sourced(1.25, { source: 'Bank of Canada' })) => runFilters(set, who, RULES, fx);
+const run = (set: SignalSet, who: ProfileView, fx = sourced(1.25, { source: 'Bank of Canada' })) => withoutTextRefs(runFilters(set, who, RULES, fx));
 const passed = (checks: FilterCheck[]) => checks.every((check) => check.pass);
 const failed = (checks: FilterCheck[]) => checks.filter((check) => !check.pass);
 const only = (checks: FilterCheck[], filter: FilterCheck['filter']) => {
@@ -123,7 +123,7 @@ describe('filter: market-cap floor by risk (stocks only)', () => {
     it('fails on missing data, not on a guess, when the CAD value cannot be converted', () => {
         const set = signals('RY.TO', { market: 'Canada' });
         set.marketCapUsd = sourced(12.5e9, { currency: 'CAD' });
-        const checks = runFilters(set, profile('Expert', 'Low', { markets: 'Canada' }), RULES, undefined);
+        const checks = withoutTextRefs(runFilters(set, profile('Expert', 'Low', { markets: 'Canada' }), RULES, undefined));
         expect(only(checks, 'data')).toEqual({ filter: 'data', pass: false, detail: 'USD/CAD rate is missing, so the market cap in CAD cannot be converted for the market-cap floor' });
     });
 

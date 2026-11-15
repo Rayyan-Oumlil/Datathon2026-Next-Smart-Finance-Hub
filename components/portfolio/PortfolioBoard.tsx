@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowDown, ArrowUp, EyeOff, Pencil, Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import type { InvestmentRule, Level, ProfileConfig, SimulatedTrade } from '@/lib/domain/types';
 import type { PortfolioView } from '@/lib/services/portfolio';
@@ -14,24 +15,31 @@ import PerformanceChart from './PerformanceChart';
 import SectorAllocation from './SectorAllocation';
 import TotalValue from './TotalValue';
 import { PORTFOLIO_MODULES, api, mergeLayout, modulesOf, moveModule, type ModuleId } from './logic';
+import { useFmt } from './useFmt';
 
 type LibraryItem = { id: string; title: string; tab: 'portfolio' | 'overview'; fixed: boolean };
 type Evaluation = { fired: SimulatedTrade[]; checkedAt: string; checks: RuleCheck[] };
 
 const CHECK_EVERY_MS = 60_000;
+const MODULE_IDS: Record<ModuleId, true> = { total_value: true, performance: true, holdings: true, sector_allocation: true, investment_rules: true };
 
 // The Portfolio tab: loads the simulated portfolio, draws the modules in the saved order and runs the rules check.
 export default function PortfolioBoard() {
+    const t = useTranslations('Portfolio');
+    const fmt = useFmt();
     const [view, setView] = useState<PortfolioView | null>(null);
     const [rules, setRules] = useState<InvestmentRule[]>([]);
     const [layout, setLayout] = useState<string[]>([]);
     const [library, setLibrary] = useState<LibraryItem[]>([]);
     const [profile, setProfile] = useState<ProfileConfig | null | undefined>(undefined);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<{ failure: unknown } | null>(null);
     const [draft, setDraft] = useState<ModuleId[] | null>(null);
     const [saving, setSaving] = useState(false);
     const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
-    const [checkError, setCheckError] = useState<string | null>(null);
+    const [checkError, setCheckError] = useState<{ failure: unknown } | null>(null);
+
+    const tRef = useRef(t);
+    tRef.current = t;
 
     const refresh = useCallback(async () => {
         try {
@@ -43,7 +51,7 @@ export default function PortfolioBoard() {
             setRules(ruleList.rules);
             setError(null);
         } catch (failure) {
-            setError((failure as Error).message);
+            setError({ failure });
         }
     }, []);
 
@@ -71,12 +79,12 @@ export default function PortfolioBoard() {
                 setEvaluation(result);
                 setCheckError(null);
                 if (result.fired.length > 0) {
-                    toast.success(`${result.fired.length === 1 ? 'A rule' : `${result.fired.length} rules`} acted: ${result.fired.map((trade) => trade.symbol).join(', ')} (simulated).`);
+                    toast.success(tRef.current('board.ruleActed', { count: result.fired.length, symbols: result.fired.map((trade) => trade.symbol).join(', ') }));
                 }
                 // Prices on screen are never older than one check; the first load has just fetched them
                 if (result.fired.length > 0 || !initial) refresh();
             } catch (failure) {
-                if (!stopped) setCheckError(`The rules check did not run: ${(failure as Error).message}`);
+                if (!stopped) setCheckError({ failure });
             }
         };
         check();
@@ -88,7 +96,7 @@ export default function PortfolioBoard() {
     }, [refresh]);
 
     const level: Level = profile?.level ?? 'Novice';
-    const titleOf = (id: string) => library.find((item) => item.id === id)?.title ?? id;
+    const titleOf = (id: string) => (id in MODULE_IDS ? t(`modules.${id}`) : library.find((item) => item.id === id)?.title ?? id);
     // Total value stays fixed even when the library could not be loaded
     const fixed = new Set(['total_value', ...library.filter((item) => item.fixed).map((item) => item.id)]);
     const order = draft ?? modulesOf(layout);
@@ -101,9 +109,9 @@ export default function PortfolioBoard() {
             const saved = await api<{ layout: string[] }>('/api/layout', { method: 'PUT', body: { layout: mergeLayout(layout, draft) } });
             setLayout(saved.layout);
             setDraft(null);
-            toast.success('Layout saved.');
+            toast.success(t('board.layoutSaved'));
         } catch (failure) {
-            toast.error((failure as Error).message);
+            toast.error(fmt.error(failure));
         } finally {
             setSaving(false);
         }
@@ -120,7 +128,7 @@ export default function PortfolioBoard() {
                 trades={view!.portfolio.trades}
                 lastChecked={evaluation?.checkedAt ?? null}
                 checks={evaluation?.checks ?? []}
-                checkError={checkError}
+                checkError={checkError ? t('board.checkFailed', { error: fmt.error(checkError.failure) }) : null}
                 level={level}
                 onChanged={refresh}
             />
@@ -131,32 +139,33 @@ export default function PortfolioBoard() {
         <>
             <header className="page-head">
                 <div>
-                    <h1 className="page-title">Portfolio <span className="pill is-brand ms-1 align-middle">simulated</span></h1>
+                    <h1 className="page-title">{t('title')} <span className="pill is-brand ms-1 align-middle">{t('simulated')}</span></h1>
                     <p className="page-sub">
-                        A practice portfolio that starts with a fixed amount of simulated cash. No real trade is placed and nothing here is investment advice.
+                        {t('intro')}
                     </p>
                 </div>
                 {draft ? (
                     <div className="flex gap-2">
-                        <button type="button" className="btn btn-ghost" onClick={() => setDraft(null)} disabled={saving}>Cancel</button>
-                        <button type="button" className="btn btn-primary" onClick={saveLayout} disabled={saving}>{saving ? 'Saving…' : 'Save layout'}</button>
+                        <button type="button" className="btn btn-ghost" onClick={() => setDraft(null)} disabled={saving}>{t('cancel')}</button>
+                        <button type="button" className="btn btn-primary" onClick={saveLayout} disabled={saving}>{saving ? t('board.saving') : t('board.saveLayout')}</button>
                     </div>
                 ) : (
                     <button type="button" className="btn btn-ghost" onClick={() => setDraft(modulesOf(layout))} disabled={layout.length === 0}>
-                        <Pencil /> Edit layout
+                        <Pencil /> {t('board.editLayout')}
                     </button>
                 )}
             </header>
 
             {profile === null && (
                 <p className="rounded-[12px] bg-brand-soft px-4 py-3 text-[13.5px] text-foreground">
-                    No profile exists yet, so this tab uses the plain-words view and simulated trades are off until the{' '}
-                    <Link href="/onboarding" className="font-semibold text-brand-ink underline underline-offset-2">profile questions</Link> are answered.
+                    {t.rich('board.noProfile', {
+                        link: (chunks) => <Link href="/onboarding" className="font-semibold text-brand-ink underline underline-offset-2">{chunks}</Link>,
+                    })}
                 </p>
             )}
 
             {draft && (
-                <Panel title="Edit layout" sub="Order and visibility of the modules on this tab. Nothing changes until you save." bodyClassName="p-2">
+                <Panel title={t('board.layoutPanelTitle')} sub={t('board.layoutPanelSub')} bodyClassName="p-2">
                     <ul className="row-list">
                         {draft.map((id, index) => {
                             const locked = fixed.has(id);
@@ -164,11 +173,11 @@ export default function PortfolioBoard() {
                                 <li key={id} className="flex items-center gap-2 px-2 py-1.5">
                                     <span className="num w-5 flex-none text-[12px] text-faint">{index + 1}</span>
                                     <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-foreground">{titleOf(id)}</span>
-                                    {locked ? <span className="pill">fixed</span> : (
+                                    {locked ? <span className="pill">{t('board.fixed')}</span> : (
                                         <>
-                                            <button type="button" className="icon-btn" aria-label={`Move ${titleOf(id)} up`} disabled={moveModule(draft, id, -1, fixed) === draft} onClick={() => setDraft(moveModule(draft, id, -1, fixed))}><ArrowUp /></button>
-                                            <button type="button" className="icon-btn" aria-label={`Move ${titleOf(id)} down`} disabled={moveModule(draft, id, 1, fixed) === draft} onClick={() => setDraft(moveModule(draft, id, 1, fixed))}><ArrowDown /></button>
-                                            <button type="button" className="icon-btn" aria-label={`Hide ${titleOf(id)}`} onClick={() => setDraft(draft.filter((other) => other !== id))}><EyeOff /></button>
+                                            <button type="button" className="icon-btn" aria-label={t('board.moveUp', { title: titleOf(id) })} disabled={moveModule(draft, id, -1, fixed) === draft} onClick={() => setDraft(moveModule(draft, id, -1, fixed))}><ArrowUp /></button>
+                                            <button type="button" className="icon-btn" aria-label={t('board.moveDown', { title: titleOf(id) })} disabled={moveModule(draft, id, 1, fixed) === draft} onClick={() => setDraft(moveModule(draft, id, 1, fixed))}><ArrowDown /></button>
+                                            <button type="button" className="icon-btn" aria-label={t('board.hide', { title: titleOf(id) })} onClick={() => setDraft(draft.filter((other) => other !== id))}><EyeOff /></button>
                                         </>
                                     )}
                                 </li>
@@ -177,8 +186,8 @@ export default function PortfolioBoard() {
                         {hidden.map((id) => (
                             <li key={id} className="flex items-center gap-2 px-2 py-1.5">
                                 <span className="w-5 flex-none" />
-                                <span className="min-w-0 flex-1 truncate text-[14px] text-faint">{titleOf(id)} <span className="text-[12px]">(hidden)</span></span>
-                                <button type="button" className="btn btn-ghost h-8 px-3 text-[13px]" onClick={() => setDraft([...draft, id])}><Plus /> Show</button>
+                                <span className="min-w-0 flex-1 truncate text-[14px] text-faint">{titleOf(id)} <span className="text-[12px]">{t('board.hiddenTag')}</span></span>
+                                <button type="button" className="btn btn-ghost h-8 px-3 text-[13px]" onClick={() => setDraft([...draft, id])}><Plus /> {t('board.show')}</button>
                             </li>
                         ))}
                     </ul>
@@ -187,20 +196,20 @@ export default function PortfolioBoard() {
 
             {error && (
                 <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-line bg-card px-4 py-3 text-[13.5px] text-down">
-                    <span>The simulated portfolio could not be loaded: {error}</span>
-                    <button type="button" className="btn btn-ghost h-8 px-3 text-[13px]" onClick={refresh}>Try again</button>
+                    <span>{t('board.loadError', { error: fmt.error(error.failure) })}</span>
+                    <button type="button" className="btn btn-ghost h-8 px-3 text-[13px]" onClick={refresh}>{t('board.tryAgain')}</button>
                 </div>
             )}
 
             {!view ? (
-                !error && <div className="hatch" aria-busy="true"><div className="card p-5 text-[13.5px] text-faint">Loading the simulated portfolio and the last prices…</div></div>
+                !error && <div className="hatch" aria-busy="true"><div className="card p-5 text-[13.5px] text-faint">{t('board.loading')}</div></div>
             ) : (
                 <>
                     {view.portfolio.trades.length === 0 && (
                         <p className="rounded-[12px] border border-line bg-card px-4 py-3 text-[13.5px] text-muted-foreground">
-                            New here: the simulated portfolio is all cash. Open the{' '}
-                            <Link href="/overview" className="font-semibold text-brand-ink underline underline-offset-2">Overview tab</Link>
-                            {' '}to see the watchlist built from your profile and add a first simulated position.
+                            {t.rich('board.newHere', {
+                                link: (chunks) => <Link href="/overview" className="font-semibold text-brand-ink underline underline-offset-2">{chunks}</Link>,
+                            })}
                         </p>
                     )}
                     {order.map((id) => <div key={id}>{modules[id]()}</div>)}

@@ -8,4 +8,4 @@ const schema = z.object({ symbol: z.string().trim().min(1).max(20), action: z.en
 export const POST = (req: NextRequest) => respond(async () => {
     const { symbol, action } = schema.parse(await req.json());
     return userAction(symbol, action);
-});
+}, req);

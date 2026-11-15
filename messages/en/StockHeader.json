@@ -1,0 +1,14 @@
+{
+  "quoteViaYahoo": "delayed quote via Yahoo chart (unofficial)",
+  "quoteViaTradingView": "quote via TradingView",
+  "alertsHint": "Price alerts need a quote source we can check every 5 minutes",
+  "alertsScope": "Alerts: US stocks and crypto",
+  "setAlert": "Set alert",
+  "open": "Open",
+  "openHint": "First trade of the session",
+  "dayRange": "Day range",
+  "dayRangeHint": "Low to high",
+  "prevClose": "Prev close",
+  "prevCloseHint": "Last session",
+  "marketCap": "Market cap"
+}

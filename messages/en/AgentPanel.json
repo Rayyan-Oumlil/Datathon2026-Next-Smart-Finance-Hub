@@ -1,0 +1,101 @@
+{
+  "title": "Agent",
+  "kicker": "Simulation · explains data · no investment advice",
+  "newConversation": "Start a new conversation",
+  "closePanel": "Close the agent panel",
+  "closeTitle": "Close",
+  "conversation": "Conversation",
+  "emptyTitle": "Ask about your data",
+  "emptyBody": "Every figure in a reply comes with its source and time. A change to your layout, rules, profile or simulated portfolio is shown as a preview first, and you can undo it.",
+  "youSaid": "You: ",
+  "agentSaid": "Agent: ",
+  "sources": "Sources",
+  "noSource": "This reply cites no data source.",
+  "working": "Working on it. A reply can take up to a minute: each figure is fetched and checked.",
+  "quickActions": "Quick actions",
+  "quick": {
+    "explain": {
+      "label": "Explain a pick on my list",
+      "message": "Explain a pick on my list"
+    },
+    "less": {
+      "label": "Show me less",
+      "message": "Show me less: hide every widget whose minLevel is above Novice, keep the others in their order"
+    },
+    "etf": {
+      "label": "What is an ETF?",
+      "message": "What is an ETF?"
+    },
+    "rule": {
+      "label": "Create a rule",
+      "message": "Create a rule: when "
+    }
+  },
+  "inputLabel": "Message to the agent",
+  "placeholder": "Ask about a term, a pick, your simulated portfolio…",
+  "send": "Send message",
+  "errors": {
+    "request": "The request could not be completed.",
+    "apply": "The change could not be applied.",
+    "undo": "The change could not be undone."
+  },
+  "trace": {
+    "summary": "Trace",
+    "actionId": "action id: {id}",
+    "unavailable": "The log rows are not available right now.",
+    "loading": "Loading the log rows…",
+    "empty": "No row is readable yet. The index can lag by a few seconds.",
+    "tokens": "tokens {input} in / {output} out",
+    "awsRequestId": "AWS request id: {id}",
+    "reload": "Reload rows",
+    "steps": {
+      "chat_input": "Message received",
+      "context_built": "Context built",
+      "prompt_built": "Instructions built",
+      "orchestrator_call": "Orchestrator model call",
+      "subagent_call": "Sub-agent model call",
+      "tool_call": "Tool call",
+      "guardrail_check": "Guardrail check",
+      "action_routed": "Action routed",
+      "preview_shown": "Preview shown",
+      "confirmed": "Confirmed",
+      "cancelled": "Cancelled",
+      "applied": "Applied",
+      "result": "Result",
+      "undo": "Undo",
+      "error": "Error"
+    },
+    "actors": {
+      "web": "Web app",
+      "orchestrator": "Orchestrator",
+      "writer": "Writer",
+      "subagent": "Sub-agent: {name}"
+    }
+  },
+  "times": {
+    "asOf": "as of {time}",
+    "fetched": "fetched {time}",
+    "none": "time not available"
+  },
+  "conflict": {
+    "title": "Profile conflict: {symbol}",
+    "note": "Values are from the profile’s own filters. You can still proceed in the simulation; the conflict is logged."
+  },
+  "preview": {
+    "kicker": "Preview · nothing is applied yet · simulated",
+    "factLabel": "{label}:",
+    "before": "Before",
+    "after": "After",
+    "confirm": "Confirm",
+    "confirmSimulation": "Confirm in simulation",
+    "cancel": "Cancel",
+    "applied": "Applied",
+    "undone": "Undone",
+    "cancelled": "Cancelled",
+    "undo": "Undo"
+  },
+  "sourceNames": {
+    "demodata": "demo data",
+    "derived": "derived"
+  }
+}

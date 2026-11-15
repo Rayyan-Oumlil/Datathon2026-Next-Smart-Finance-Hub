@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, IBM_Plex_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import {Toaster} from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -8,38 +10,34 @@ const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
 });
 
-// The Latin display face has no Arabic glyphs. Only Arabic pages use this one (see globals.css),
-// so it isn't preloaded on the rest.
-const arabic = IBM_Plex_Sans_Arabic({
-  variable: "--font-arabic",
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
-  preload: false,
-});
-
 const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
 });
 
-export const metadata: Metadata = {
-  title: "AlphaForge — simulated investing with a traceable AI agent",
-  description: "A profile-aware stock quotes demo. Every number shows its source and time. Simulation only: no real trades, no investment advice. Built on OpenStock (AGPL-3.0).",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('Metadata');
+  return { title: t('title'), description: t('description') };
+}
 
-export default function RootLayout({
+// Every page reads the locale (cookie, then Accept-Language), so <html lang> is right on the first paint.
+// The provider here also covers the pages outside the app shell, such as onboarding.
+export default async function RootLayout({
                                        children,
                                    }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const locale = await getLocale();
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html lang={locale} suppressHydrationWarning>
             <body
-                className={`${jakarta.variable} ${arabic.variable} ${plexMono.variable} font-sans antialiased`}
+                className={`${jakarta.variable} ${plexMono.variable} font-sans antialiased`}
             >
-                {children}
-                <Toaster/>
+                <NextIntlClientProvider>
+                    {children}
+                    <Toaster/>
+                </NextIntlClientProvider>
             </body>
         </html>
     );

@@ -2,21 +2,30 @@
 // saved layout. A layout is the ordered list of widget ids shown. Only the Portfolio tab draws from the saved
 // layout (the Overview tab is fixed), so the library holds only the modules that tab renders.
 
+import { getAppLocale } from '@/i18n/locale';
 import { DEMO_USER } from '@/lib/demo-user';
 import type { Level } from '@/lib/domain/types';
 import { getProfile, readState, updateState } from '@/lib/store';
+import type { Locale } from '@/lib/watchlist/text';
 import { ServiceError } from './errors';
+import { renderText, serviceRef } from './text';
 
 export type Widget = { id: string; title: string; tab: 'portfolio'; fixed: boolean; minLevel: Level };
 
+const widgetTitle = (id: string, locale: Locale = 'en') => renderText(serviceRef('svc.layout.widget_title', { id }), locale);
+
 // The modules components/portfolio renders from the layout. The simulated balance is fixed: it cannot be removed.
+// Titles here are English (the agent reads this list); widgetLibrary(locale) gives them in a language.
 export const WIDGET_LIBRARY: Widget[] = [
-    { id: 'total_value', title: 'Total value (simulated)', tab: 'portfolio', fixed: true, minLevel: 'Novice' },
-    { id: 'performance', title: 'Performance chart', tab: 'portfolio', fixed: false, minLevel: 'Novice' },
-    { id: 'holdings', title: 'Holdings', tab: 'portfolio', fixed: false, minLevel: 'Novice' },
-    { id: 'sector_allocation', title: 'Sector allocation', tab: 'portfolio', fixed: false, minLevel: 'Intermediate' },
-    { id: 'investment_rules', title: 'Investment rules (simulated)', tab: 'portfolio', fixed: false, minLevel: 'Intermediate' },
+    { id: 'total_value', title: widgetTitle('total_value'), tab: 'portfolio', fixed: true, minLevel: 'Novice' },
+    { id: 'performance', title: widgetTitle('performance'), tab: 'portfolio', fixed: false, minLevel: 'Novice' },
+    { id: 'holdings', title: widgetTitle('holdings'), tab: 'portfolio', fixed: false, minLevel: 'Novice' },
+    { id: 'sector_allocation', title: widgetTitle('sector_allocation'), tab: 'portfolio', fixed: false, minLevel: 'Intermediate' },
+    { id: 'investment_rules', title: widgetTitle('investment_rules'), tab: 'portfolio', fixed: false, minLevel: 'Intermediate' },
 ];
+
+/** The widget library with each title in the language. */
+export const widgetLibrary = (locale: Locale): Widget[] => WIDGET_LIBRARY.map((widget) => ({ ...widget, title: widgetTitle(widget.id, locale) }));
 
 const LEVELS: Level[] = ['Novice', 'Intermediate', 'Expert'];
 
@@ -26,36 +35,42 @@ export function defaultLayout(level: Level): string[] {
     return WIDGET_LIBRARY.filter((widget) => LEVELS.indexOf(widget.minLevel) <= rank).map((widget) => widget.id);
 }
 
-/** Problems with a proposed layout, in plain words; an empty list means it can be saved. */
-export function validateLayout(layout: unknown): string[] {
-    if (!Array.isArray(layout) || layout.some((id) => typeof id !== 'string')) return ['A layout is a list of widget ids.'];
+function layoutProblems(layout: unknown) {
+    if (!Array.isArray(layout) || layout.some((id) => typeof id !== 'string')) return [serviceRef('svc.layout.not_a_list', {})];
     const ids = layout as string[];
     const known = new Set(WIDGET_LIBRARY.map((widget) => widget.id));
-    const errors: string[] = [];
+    const errors = [];
     const unknown = [...new Set(ids.filter((id) => !known.has(id)))];
-    if (unknown.length > 0) errors.push(`Not in the widget library: ${unknown.join(', ')}.`);
+    if (unknown.length > 0) errors.push(serviceRef('svc.layout.unknown', { ids: unknown }));
     const repeated = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
-    if (repeated.length > 0) errors.push(`Listed more than once: ${repeated.join(', ')}.`);
+    if (repeated.length > 0) errors.push(serviceRef('svc.layout.repeated', { ids: repeated }));
     const missing = WIDGET_LIBRARY.filter((widget) => widget.fixed && !ids.includes(widget.id));
-    if (missing.length > 0) errors.push(`Fixed widgets cannot be removed: ${missing.map((widget) => widget.title).join(', ')}.`);
+    if (missing.length > 0) errors.push(serviceRef('svc.layout.fixed', { ids: missing.map((widget) => widget.id) }));
     return errors;
 }
 
-export async function getLayout(): Promise<{ layout: string[]; library: Widget[]; saved: boolean }> {
+/** Problems with a proposed layout, in plain words, in `locale` (default English); an empty list means it can be saved. */
+export function validateLayout(layout: unknown, locale: Locale = 'en'): string[] {
+    return layoutProblems(layout).map((ref) => renderText(ref, locale));
+}
+
+/** The saved layout (or the level template) and the widget library, its titles in `locale` (default: the request's). */
+export async function getLayout(locale?: Locale): Promise<{ layout: string[]; library: Widget[]; saved: boolean }> {
+    const library = widgetLibrary(locale ?? await getAppLocale());
     const { layout } = await readState();
     if (layout) {
         // A layout saved before a widget left the library keeps its other widgets; the removed id is dropped.
         const known = new Set(WIDGET_LIBRARY.map((widget) => widget.id));
         const ids = [...new Set(layout.widgets.map((widget) => widget.widget).filter((id) => known.has(id)))];
-        return { layout: ids, library: WIDGET_LIBRARY, saved: true };
+        return { layout: ids, library, saved: true };
     }
     const profile = await getProfile(DEMO_USER.id);
-    return { layout: defaultLayout(profile?.level ?? 'Novice'), library: WIDGET_LIBRARY, saved: false };
+    return { layout: defaultLayout(profile?.level ?? 'Novice'), library, saved: false };
 }
 
 export async function putLayout(layout: unknown): Promise<{ layout: string[] }> {
-    const errors = validateLayout(layout);
-    if (errors.length > 0) throw new ServiceError(400, errors.join(' '));
+    const errors = layoutProblems(layout);
+    if (errors.length > 0) throw new ServiceError(400, serviceRef('svc.joined', { items: errors }));
     const ids = layout as string[];
     const tabOf = new Map(WIDGET_LIBRARY.map((widget) => [widget.id, widget.tab]));
     const count: Record<string, number> = {};

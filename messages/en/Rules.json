@@ -1,0 +1,91 @@
+{
+  "describe": {
+    "conditionPrice": "{symbol} is {relation} {value} {currency}",
+    "conditionChange": "the day change of {symbol} is {relation} {value}",
+    "sizeUnits": "{count, plural, one {{quantity} unit} other {{quantity} units}}",
+    "sentence": "When {condition}, {side, select, add {simulate a purchase of} other {simulate a position reduction of}} {size}, {frequency, select, once {once} other {at most once per market day while it stays true}}."
+  },
+  "triggers": {
+    "price_below": "Price below",
+    "price_above": "Price above",
+    "change_pct_below": "Day change below",
+    "change_pct_above": "Day change above"
+  },
+  "origin": {
+    "card": "Card",
+    "rule": "Rule",
+    "agent": "Agent"
+  },
+  "status": {
+    "active": "active",
+    "paused": "paused"
+  },
+  "side": {
+    "buy": "Purchase",
+    "sell": "Reduction"
+  },
+  "assetClass": {
+    "stock": "Stock",
+    "etf": "ETF",
+    "crypto": "Crypto",
+    "gold": "Gold",
+    "bond_yield": "Bond yield"
+  },
+  "module": {
+    "title": "Investment rules (simulated)",
+    "lastChecked": "Last checked {when} against the last quotes; checked again every 60 seconds while this tab is open",
+    "checking": "Checking the rules against the last quotes…",
+    "add": "Add a rule",
+    "rules": "Rules",
+    "noRules": "No rule yet. A rule watches one asset and, when its trigger is true, simulates a trade at the last price.",
+    "asWritten": "As written: “{text}”",
+    "created": "created {when}",
+    "lastActed": "last acted {when}",
+    "neverActed": "has not acted yet",
+    "lastCheck": "Last check: {note}",
+    "lastCheckWithPrice": "Last check: {note} ({source})",
+    "pause": "Pause",
+    "resume": "Resume",
+    "trades": "Simulated trades",
+    "noTrades": "No simulated trade yet. Each one is listed here with the card or rule that produced it and its reason, and is written to the decision log.",
+    "tradeDetail": "{units} at {price} {currency}",
+    "tradeUnits": "{count, plural, one {{quantity} unit} other {{quantity} units}}",
+    "simulated": "simulated",
+    "reason": "Reason: {reason}",
+    "ruleRef": "Rule: {rule}",
+    "fillPrice": "fill price: {line}"
+  },
+  "form": {
+    "asset": "Asset",
+    "change": "Change",
+    "searchPlaceholder": "Search by ticker or name, for example AAPL",
+    "noMatch": "No asset in the app's list matches “{query}”.",
+    "matching": "Matching assets",
+    "trigger": "Trigger",
+    "priceWithCurrency": "Price ({currency})",
+    "changeToday": "Change today (%)",
+    "action": "Action (simulated)",
+    "simulatePurchase": "Simulate a purchase",
+    "reducePosition": "Reduce position",
+    "sizeGivenAs": "Size given as",
+    "amountInCad": "Amount in CAD",
+    "quantity": "Quantity",
+    "amountCad": "Amount (CAD)",
+    "units": "Units",
+    "howOften": "How often",
+    "once": "Once",
+    "repeating": "Repeating",
+    "preview": "Preview",
+    "previewNote": "Checked every 60 seconds while this tab is open. A hit is filled at the last price, in the simulation only.",
+    "cancel": "Cancel",
+    "save": "Save rule",
+    "busy": "Checking…",
+    "saved": "Rule saved. It acts in the simulation only.",
+    "problemAsset": "Pick an asset.",
+    "problemTriggerValue": "Give the trigger value.",
+    "problemPrice": "A price trigger needs a price above zero.",
+    "problemChange": "A day change trigger needs a value between -100 and 100, other than 0.",
+    "problemSize": "Give the size of the simulated trade, above zero.",
+    "price": "Price"
+  }
+}

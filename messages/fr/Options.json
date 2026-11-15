@@ -1,0 +1,20 @@
+{
+  "investmentGoals": {
+    "growth": "Croissance",
+    "income": "Revenu",
+    "balanced": "Équilibré",
+    "conservative": "Prudent"
+  },
+  "riskTolerance": {
+    "low": "Faible",
+    "medium": "Moyen",
+    "high": "Élevé"
+  },
+  "industries": {
+    "technology": "Technologie",
+    "healthcare": "Santé",
+    "finance": "Services financiers",
+    "energy": "Énergie",
+    "consumerGoods": "Biens de consommation"
+  }
+}

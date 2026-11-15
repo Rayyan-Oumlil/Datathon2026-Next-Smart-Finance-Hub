@@ -7,8 +7,9 @@ const nextConfig: NextConfig = {
     devIndicators: false,
     // One self-contained server folder, so the container image carries only what the app needs
     output: 'standalone',
-    // Read at runtime by the watchlist pipeline and the stores; keep them in the standalone trace
-    outputFileTracingIncludes: { '/**': ['./rules/**', './data/**'] },
+    // Read at runtime by the watchlist pipeline, the stores and the translation loader (i18n/messages.ts);
+    // keep them in the standalone trace
+    outputFileTracingIncludes: { '/**': ['./rules/**', './data/**', './messages/**'] },
     async redirects() {
         return [{ source: '/dashboard', destination: '/overview', permanent: false }];
     },

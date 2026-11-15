@@ -1,0 +1,257 @@
+{
+  "notAvailable": "not available",
+  "factors": {
+    "long": {
+      "profile_fit": "Match with your profile choices",
+      "risk_fit": "Volatility against your risk band",
+      "fundamentals": "Fundamentals (P/E and growth)",
+      "diversification": "Diversification of your holdings"
+    },
+    "short": {
+      "profile_fit": "Profile match",
+      "risk_fit": "Risk band",
+      "fundamentals": "Fundamentals",
+      "diversification": "Diversification"
+    },
+    "sort": {
+      "rank": "Rank",
+      "total": "Total score"
+    }
+  },
+  "filters": {
+    "avoid_list": "Avoid list",
+    "markets": "Markets picked",
+    "volatility": "Volatility cap",
+    "market_cap_floor": "Market cap floor",
+    "liquidity": "Traded value per day",
+    "esg": "ESG tag (demo data)",
+    "novice": "Novice rule",
+    "low_risk_etf": "Low-risk ETF rule",
+    "crypto_risk": "Crypto rule",
+    "data": "Data needed by the filters"
+  },
+  "assetClass": {
+    "stock": "Stock",
+    "etf": "ETF",
+    "crypto": "Crypto",
+    "gold": "Gold",
+    "bond_yield": "Bond yield"
+  },
+  "kindLine": "{kind} · {sector}",
+  "market": {
+    "US": "US",
+    "Canada": "Canada"
+  },
+  "signals": {
+    "price": "Last price",
+    "changePercent": "Move today",
+    "pe": "P/E (trailing 12 months)",
+    "revenueGrowthPct": "Revenue growth, year over year",
+    "volatility1y": "Volatility, 1 year",
+    "beta": "Beta",
+    "marketCapUsd": "Market cap",
+    "avgDailyTradedValueUsd": "Traded value per day",
+    "sectorLabel": "Industry label from the provider (not GICS)",
+    "closes1m": "Daily closes, 1 month",
+    "newsCount7d": "Headlines, 7 days (shown, never scored)"
+  },
+  "signalValue": {
+    "closes": "{count, plural, one {# daily close} other {# daily closes}}",
+    "perDay": "{value} a day",
+    "headlines": "{count, plural, one {# headline} other {# headlines}}"
+  },
+  "compact": {
+    "T": "US${value}T",
+    "B": "US${value}B",
+    "M": "US${value}M",
+    "unit": "US${value}"
+  },
+  "ruleIds": {
+    "momentum": "momentum",
+    "news_flow": "news flow",
+    "adanos_sentiment": "Adanos sentiment"
+  },
+  "kept": {
+    "seed": "On your brands list, and it passed every filter",
+    "incumbent": "Already listed in the previous run",
+    "new": "New in this run"
+  },
+  "esg": {
+    "screened": "screened",
+    "not screened": "not screened",
+    "controversy": "controversy"
+  },
+  "esgChip": {
+    "label": "ESG: {tag} · demo data",
+    "title": "Hand-set tag, not from a data provider"
+  },
+  "source": {
+    "line": "{source} · fetched {time}{hasProvider, select, true { · provider time {providerTime}} other {}}",
+    "stale": " · stale",
+    "labelled": "{label}: "
+  },
+  "card": {
+    "rank": "Rank {rank}",
+    "moveNotAvailable": "move not available",
+    "factWithMove": "{kind}, moved {change} today",
+    "quote": "Quote",
+    "score": "Score",
+    "outOf": "/ 100",
+    "topDrivers": "Top drivers:",
+    "noData": " no data",
+    "sparklineLabel": "{symbol} daily closes over one month",
+    "oneMonth": "1 month · {source}",
+    "peVsSector": "P/E against the sector:",
+    "staleQuote": "Quote from {time}, not live",
+    "staleDaily": "Daily values from before today",
+    "why": "Why?",
+    "addToPortfolio": "Add to simulated portfolio",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "dismiss": "Dismiss",
+    "kindPinned": "{kind} · pinned"
+  },
+  "levelView": {
+    "Novice": "Novice view: facts only, no scores",
+    "Intermediate": "Intermediate view: rank, score, top drivers and a 1-month line",
+    "Expert": "Expert view: every factor, raw values and their sources"
+  },
+  "stage": {
+    "signals": "Collecting market data",
+    "ranking": "Applying the filters and scoring",
+    "logging": "Writing the run to the decision log"
+  },
+  "list": {
+    "title": "Smart watchlist",
+    "subResult": "Updated once a day · computed {time} · {listed} listed of {candidates, plural, one {# candidate} other {# candidates}} · {density}",
+    "subEmpty": "Ranked by fixed rules from your profile. Simulation only, not investment advice.",
+    "recompute": "Recompute",
+    "recomputing": "Recomputing…",
+    "searchLabel": "Search an asset by name or ticker",
+    "searchPlaceholder": "Search a ticker or a company, then ask why it is or is not listed",
+    "searchFailed": "The search did not answer. Try again.",
+    "searchEmpty": "No asset in the app’s list matches “{query}”.",
+    "quotePage": "Quote page",
+    "loadFailedTitle": "The watchlist could not be loaded",
+    "tryAgain": "Try again",
+    "loadFailedFallback": "The watchlist could not be loaded.",
+    "outOfDate": "The last check with the server did not go through ({error}). What is shown may be out of date.",
+    "loading": "Loading the watchlist…",
+    "noProfileTitle": "No profile yet",
+    "noProfileBody": "The watchlist is built from your profile answers. Nothing is listed until a profile exists.",
+    "setUpProfile": "Set up your profile",
+    "computeFailedTitle": "The watchlist could not be computed",
+    "buildingTitle": "Building today’s watchlist",
+    "progress": "{stage}{hasTotal, select, true {: {done, number} of {total, plural, one {# asset} other {# assets}}} other {}}{hasSymbol, select, true { (last: {symbol})} other {}}. Started {time}.",
+    "runStarted": "The run has started.",
+    "buildingNote": "The first run of a day collects every input once, with its source and time, and can take a few minutes. This page checks again every {seconds} seconds.",
+    "staleInputs": "The daily inputs are from {date}: today’s collection did not complete. Values are shown with their real fetch times.",
+    "earlierDay": "an earlier day",
+    "sortGroup": "Sort the cards",
+    "sortBy": "Sort by",
+    "emptyTitle": "Nothing is listed today",
+    "emptyBody": "{candidates, plural, one {# candidate was} other {# candidates were}} checked and {rejected} did not pass your profile’s filters{dismissed, plural, =0 {} other {; # dismissed}}. Search a ticker above and open “Why?” to see the check that left it out.",
+    "dismissedBy": "Dismissed by you:",
+    "restore": "{symbol} · restore",
+    "rankingNote": "The ranking is computed by fixed rules ({versions}), the same for every level; only the amount of detail changes. The AI does not pick or rank. Snapshot",
+    "howScoreWorks": "How the score works",
+    "referenceTitle": "Reference values, not ranked",
+    "referenceBody": "Gold and Government of Canada bond yields, shown for context. A yield is not a price, so these are never scored.",
+    "recomputeFailed": "The recompute could not be started.",
+    "recomputeSkipped": {
+      "already_current": "Nothing to recompute: today’s list already uses today’s inputs, your profile, your holdings and the current rules.",
+      "building": "A computation is already running. The list updates when it ends."
+    },
+    "actionFailed": "The action could not be recorded.",
+    "noSourceFor": "No source answered for: {list}. No placeholder is shown.",
+    "thisValue": "this value"
+  },
+  "explain": {
+    "title": "How the score works",
+    "intro": "Fixed rules ({version}), written in one rules file and run as plain code. Same inputs, same list. Not investment advice.",
+    "filtersHead": "1. Filters.",
+    "filtersBody": " An asset is left out when it fails a pass-or-fail check of your profile (avoid list, markets, volatility cap, market cap floor, traded value, ESG tag as demo data).",
+    "scoreHead": "2. Score.",
+    "scoreBody": " Each remaining asset gets four factors from 0 to 100, with fixed weights:",
+    "total": "Total = {formula}.",
+    "selectionHead": "3. Selection.",
+    "selectionBody": " Highest totals first: up to {topN}; at most {perSector} per sector and {maxCrypto, plural, one {# crypto asset} other {# crypto assets}}. The order is the same at every level; only the amount of detail changes.",
+    "topN": {
+      "Novice": "{n} for Novice",
+      "Intermediate": "{n} for Intermediate",
+      "Expert": "{n} for Expert"
+    },
+    "notScored": "Not part of the score: {removed}. Never an input at any stage: {never}. The AI assistant does not pick, rank or score."
+  },
+  "why": {
+    "title": "Why {name}?",
+    "description": "Read from the logged watchlist run. Computed by fixed rules; no AI picks, ranks or scores. Not investment advice.",
+    "loadFailed": "The explanation could not be loaded.",
+    "loadingRun": "Loading the logged run…",
+    "listedRank": "Listed · rank {rank}",
+    "notListed": "Not on the list",
+    "leftOut": "{count, plural, one {Left out by one filter} other {Left out by # filters}}",
+    "reasonTitle": "Reason sentence",
+    "reasonSub": "Filled from one of the {count} allowed fact templates ({version})",
+    "template": "Template: ",
+    "filledFrom": "Filled from:",
+    "noTemplate": "No template applied to this asset, so the card shows facts only (sector and move today).",
+    "scoreTitle": "Score",
+    "scoreSub": "Weighted sum of four factors, each 0 to 100 ({version})",
+    "outOf100": "out of 100",
+    "factorCalc": "{score} × {weight} =",
+    "noDataNeutral": " (no data: neutral value)",
+    "totalFormula": "Total = {formula}.",
+    "noScore": "No score: only assets that pass every filter are scored, and reference values are never scored.",
+    "filterTitle": "Filter checks",
+    "filterSub": "Pass or fail, with the actual values ({version})",
+    "pass": "pass",
+    "fail": "fail",
+    "loadingChecks": "Loading the checks…",
+    "missingChecks": "Filter checks for this symbol in the logged run",
+    "inputsTitle": "Input values",
+    "inputsSub": "Each value with its source, when we fetched it and the provider’s own time",
+    "source": "Source",
+    "endpoint": "Endpoint",
+    "fetched": "Fetched",
+    "providerTime": "Provider time",
+    "noProviderTime": "not given by the provider",
+    "note": "Note",
+    "stale": " · stale",
+    "missingInputs": "Not available from any source, and not replaced by a placeholder: {list}.",
+    "esgTag": "ESG tag: ",
+    "esgValue": "{tag} (demo data, set by hand)",
+    "niche": "Niche: ",
+    "listedFrom": "Listed in the asset universe from: ",
+    "loadingInputs": "Loading the inputs…",
+    "missingInputsFor": "Input values for this symbol in the logged run",
+    "missing": "{what}: not available.",
+    "traceTitle": "Traceability",
+    "computed": "Computed",
+    "snapshot": "Snapshot",
+    "ruleVersions": "Rule versions",
+    "decisionRows": "Decision log rows"
+  },
+  "trade": {
+    "title": "Add {symbol} to the simulated portfolio",
+    "description": "{name} · Simulation only: no real order is placed and no money moves. This is not investment advice.",
+    "recorded": "Simulated purchase recorded: <num>{quantity}</num> units of {symbol} at <num>{price}</num>, for <num>{value}</num>.",
+    "fill": "Fill at the last price. Source: {source}, fetched {time}{hasProvider, select, true {, provider time {providerTime}} other {}}.",
+    "cashLeft": "Simulated cash left: <num>{cash}</num>.",
+    "acknowledged": "The profile conflict and this simulated trade are both in the decision log.",
+    "traceId": "Trade id <mono>{id}</mono>. The watchlist is computed once a day; use Recompute to take this position into account.",
+    "close": "Close",
+    "amountLabel": "Amount in CAD (simulated cash)",
+    "conflictTitle": "{count, plural, one {This asset does not pass one of your profile filters} other {This asset does not pass # of your profile filters}}",
+    "conflictNote": "Nothing was simulated. You can still proceed in the simulation; the conflict and the trade are both written to the decision log.",
+    "cancel": "Cancel",
+    "proceeding": "Simulating…",
+    "proceed": "Proceed in simulation",
+    "checking": "Checking…",
+    "submit": "Add to simulated portfolio",
+    "toast": "Simulated: {symbol} added to the simulated portfolio",
+    "failed": "The simulated purchase could not be recorded.",
+    "noAnswer": "The server did not answer. Nothing was simulated."
+  },
+  "labelColon": "{label}:"
+}

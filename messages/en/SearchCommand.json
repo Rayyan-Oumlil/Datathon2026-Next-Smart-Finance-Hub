@@ -1,0 +1,17 @@
+{
+  "dialogTitle": "Command Palette",
+  "dialogDescription": "Search for a command to run...",
+  "placeholder": "Search by company or symbol",
+  "searching": "Searching",
+  "noMatch": "Nothing matches “{query}”",
+  "noStocks": "No stocks available",
+  "results": "Results",
+  "popular": "Popular",
+  "listPlaceholder": "Add a stock to “{list}”",
+  "addingTo": "Adding to <name>{list}</name>",
+  "addedToList": "{symbol} added to “{list}”",
+  "addFailed": "Couldn’t add the symbol",
+  "addTitle": "Add {symbol} to {list}",
+  "add": "Add",
+  "adding": "Adding"
+}

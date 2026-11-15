@@ -17,6 +17,7 @@ Request:
   "message": "why is ENB on my list?",
   "history": [{ "role": "user" | "assistant", "text": "…" }],   // last turns, at most 10
   "context": {
+    "locale": "en" | "fr",          // the reply language: the app's language for this request
     "level": "Novice" | "Intermediate" | "Expert",
     "risk": "Low" | "Medium" | "High",
     "agentStyle": "teach me" | "suggest" | "just the data",
@@ -30,6 +31,12 @@ Request:
 
 Only data we hold goes into `context`. Adanos sentiment and raw news text never do.
 
+`context.locale` is the language of the request, read by the web app with `getAppLocale()` (the saved language cookie, else the browser's `Accept-Language`, else English). The agent service answers in that language: every prompt carries the instruction (for French: Canadian French as used by Québec financial institutions, plain and factual, vouvoiement, figures written the French way such as `35,0 %` and `1 500,00 $`). Any other value is refused as `invalid_request`; a missing one means English. The fixed texts follow the locale on both sides: the agent service's safe refusal and its neutral proposal sentence, and on the web side the neutral sentence that replaces a withheld reply, the notices, the preview summaries, rows and facts, the confirm and undo messages, and the error and rate-limit messages.
+
+Word checks (agent service, then the web app's last check), on every reply whatever its language: the English never-words (`rules/v1.json` `reasons.never_words`), the French never-words (`reasons.never_words_fr`; until the file holds that key, the list in `agent/app/config.py` and `lib/agent/wording.ts`), and the English and French judgement and prediction words (`agent/app/checks.py`, mirrored in `lib/agent/wording.ts` and kept in step by a test). Whole words, any letter case, accents significant (`sur` is not `sûr`), text compared in Unicode NFC form. Quoted data that is exempt: the exact name of a company or asset (2 to 6 words, at most 60 characters) found in the request's tool results or the context (agent service) or in the app's asset list or the watchlist picks (web app); the user's message and history never count. A long "name" is still checked word by word. An exact sentence of the vetted glossary is exempt from the judgement words only (no glossary file holds a listed word today), and a few fixed phrases hold a listed word without advising: `best bid`, `best ask`, `meilleur cours acheteur`, `meilleur cours vendeur`, `bien sûr`, `bon(s) du Trésor`, `bon(s) de souscription`.
+
+The numbers check reads a French reply's figures the French way: `58,4 %`, `251,30 $ US` and `1 500,00 $` (regular, no-break or narrow no-break space) are the values 58.4, 251.30 and 1500; a decimal point is accepted too. Numbers inside the data's own strings are read in both ways.
+
 Response (`AgentReply` plus a trace):
 
 ```json
@@ -40,7 +47,7 @@ Response (`AgentReply` plus a trace):
   "proposed": { "type": "rule_create", "summary": "…", "params": { … }, "needsConfirm": true },   // optional
   "conflict": { "symbol": "TSLA", "checks": [ … FilterCheck … ] },                                 // optional
   "refused": false,
-  "promptVersion": "p2",
+  "promptVersion": "p3",
   "modelCalls": [{ "actor": "orchestrator", "modelId": "…", "awsRequestId": "…", "inputTokens": 0, "outputTokens": 0 }],
   "logComplete": true
 }
@@ -48,7 +55,7 @@ Response (`AgentReply` plus a trace):
 
 `logComplete` is `false` when a row of this request could not be written to the agent action log, even after one retry. The reply is still returned (the demo stays available) and the later rows are still tried; the errors are in `trace.logErrors`. The web app passes `logComplete` on in its `/api/agent` response and records it as `agentLogComplete` in its own `result` row.
 
-`/api/agent` (the web app's own route) accepts 10 requests a minute for the demo user, since each one costs several model calls. Over the limit it answers `429` with `{ "error": "Too many requests. Wait a minute and try again." }`.
+`/api/agent` (the web app's own route) accepts 10 requests a minute for the demo user, since each one costs several model calls. Over the limit it answers `429` with `{ "error": "Too many requests. Wait a minute and try again." }` (in French: `"Trop de demandes. Attendez une minute, puis réessayez."`).
 
 The agent service never applies anything. `proposed` is a request; the web app's action router checks it against the whitelist, shows a before/after preview, and applies it only after the user confirms.
 
@@ -78,7 +85,7 @@ Base URL `WEB_INTERNAL_URL` (default `http://localhost:3000`). Every call sends 
 | `/api/internal/tools/conflict-check` | `{ symbol }` | `{ symbol, conflicts: FilterCheck[], sources: { volatility1y?, marketCapUsd?, avgDailyTradedValueUsd?, fxUsdCad?: Sourced }, level, risk }` (only the values behind the conflicts; the full signal set stays in the decision log) | orchestrator |
 | `/api/internal/tools/validate-rule` | `{ rule: { text, symbol, trigger, action, once } }` | `{ ok: boolean, rule?: InvestmentRule, errors?: string[], currentPrice?: Sourced }` | Rules |
 | `/api/internal/tools/rules` | `{}` | `{ rules: InvestmentRule[] }` | Rules |
-| `/api/internal/tools/layout` | `{}` | `{ current: string[], library: [{ id, title, fixed: boolean, minLevel? }] }` | Layout |
+| `/api/internal/tools/layout` | `{ locale?: "en" \| "fr" }` | `{ current: string[], library: [{ id, title, fixed: boolean, minLevel? }] }`, titles in the given language as the Portfolio tab shows them | Layout |
 | `/api/internal/tools/profile-preview` | `{ changes }` | `{ before: { level, risk }, after: { level, risk }, levelResult, riskResult }` | Profile |
 
 The orchestrator holds no data tools. Its `check_profile_conflict` tool calls `conflict-check` and gives the model only `{ symbol, conflicts, level, risk }`; each conflict keeps its `detail` text, `value` and `limit`. The full response, `sources` included, is kept in plain code so the reply's `sources` list still cites the source and time of each conflict's value.
@@ -87,7 +94,7 @@ Only the tool results of the request and the `context` the web app built count a
 
 The layout library holds only the modules the Portfolio tab draws from the saved layout: `total_value` (fixed), `performance`, `holdings`, `sector_allocation`, `investment_rules`. A saved layout that still holds an id no longer in the library is cleaned on read.
 
-The glossary is read by the agent service itself: from the Bedrock Knowledge Base when `KNOWLEDGE_BASE_ID` is set, otherwise from the markdown files in `agent/glossary/`. Either way the answer quotes the document and cites its location.
+The glossary is read by the agent service itself, in the request's language. English: from the Bedrock Knowledge Base when `KNOWLEDGE_BASE_ID` is set, otherwise from the markdown files in `agent/glossary/`. French: always from `agent/glossary/fr/` (the same 13 file names and facts; the Knowledge Base holds the English files only). Either way the answer quotes the document and cites its location, for example `agent/glossary/fr/etf.md`, and the source label reads `Glossaire : …` in French. Source labels of figures follow the locale too (`TSLA volatilité sur 1 an`).
 
 ## 3. Agent action log
 
@@ -95,6 +102,8 @@ Both sides write rows of type `AgentActionLogEntry` to the `agent_action_log` ta
 
 - Web app writes: `chat_input`, `context_built`, `action_routed`, `preview_shown`, `confirmed`, `cancelled`, `applied`, `result`, `undo`.
 - Agent service writes: `prompt_built`, `orchestrator_call`, `subagent_call`, `tool_call`, `guardrail_check`, `error`.
+
+The `context_built` row (web) and the `prompt_built` row (agent service) record the locale. Log rows stay in English: they are for auditors, not shown to the user.
 
 Each model call row carries `modelId`, `awsRequestId`, token counts, and SHA-256 hashes of the prompt and of the reply. The same `actionId` is sent to Bedrock as request metadata, so the row can be matched to the CloudTrail event (by `awsRequestId`) and to the invocation log (by `awsRequestId` or `actionId`).
 

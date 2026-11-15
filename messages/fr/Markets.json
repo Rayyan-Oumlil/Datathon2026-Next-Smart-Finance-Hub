@@ -1,0 +1,38 @@
+{
+  "names": {
+    "us": "États-Unis",
+    "in": "Inde",
+    "de": "Allemagne",
+    "ca": "Canada",
+    "au": "Australie",
+    "sa": "Arabie saoudite",
+    "crypto": "Cryptomonnaies",
+    "fx": "Devises",
+    "pl": "Pologne"
+  },
+  "feed": {
+    "live": "En direct",
+    "delayed": "Différé",
+    "endOfDay": "Fin de journée"
+  },
+  "groups": {
+    "financial": "Services financiers",
+    "technology": "Technologie",
+    "consumer": "Consommation",
+    "banks": "Banques",
+    "industry": "Industrie",
+    "finance": "Secteur financier",
+    "energy": "Énergie",
+    "growth": "Croissance",
+    "resources": "Ressources",
+    "consumerHealth": "Consommation et santé",
+    "energyMaterials": "Énergie et matériaux",
+    "telecomConsumer": "Télécoms et consommation",
+    "majors": "Paires principales",
+    "more": "Autres",
+    "commodityFX": "Devises liées aux matières premières",
+    "banksInsurance": "Banques et assurances",
+    "energyIndustry": "Énergie et industrie",
+    "consumerTech": "Consommation et technologie"
+  }
+}

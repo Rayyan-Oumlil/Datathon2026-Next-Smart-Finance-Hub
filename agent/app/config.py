@@ -12,7 +12,18 @@ REPO_DIR = AGENT_DIR.parent
 load_dotenv(AGENT_DIR / ".env")
 load_dotenv(REPO_DIR / ".env")
 
-PROMPT_VERSION = "p2"
+PROMPT_VERSION = "p3"
+
+
+# The two languages of the app. The web app sends one as context.locale; anything else is refused.
+LOCALES = ("en", "fr")
+DEFAULT_LOCALE = "en"
+
+
+def locale_of(context: dict | None) -> str:
+    """The reply language of a request: "fr" when the context says so, otherwise English."""
+    value = (context or {}).get("locale") if isinstance(context, dict) else None
+    return value if value in LOCALES else DEFAULT_LOCALE
 
 
 def env(name: str, default: str = "") -> str:
@@ -50,4 +61,12 @@ def load_rules() -> dict:
 
 RULES = load_rules()
 NEVER_WORDS: list[str] = RULES["reasons"]["never_words"]
+
+# The French never-words. rules/v1.json holds them under reasons.never_words_fr; until it does, this list is used.
+NEVER_WORDS_FR_DEFAULT = [
+    "acheter", "achetez", "achat", "vendre", "vendez", "vente", "devriez", "devrait", "devez", "il faut", "bon",
+    "bonne", "sûr", "sûre", "sécuritaire", "sans risque", "va monter", "va augmenter", "vous convient",
+    "recommandé", "recommandée", "recommandons", "conseillé", "conseillons",
+]
+NEVER_WORDS_FR: list[str] = RULES["reasons"].get("never_words_fr") or NEVER_WORDS_FR_DEFAULT
 MAX_GUARDRAIL_FAILURES: int = RULES["agent"]["guardrail_failures_before_safe_refusal"]

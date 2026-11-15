@@ -1,7 +1,9 @@
-import { respond } from '@/lib/services/http';
+import type { NextRequest } from 'next/server';
+import { requestLocale, respond } from '@/lib/services/http';
 import { getWatchlist } from '@/lib/services/watchlist';
 
 export const dynamic = 'force-dynamic';
 
-// Never waits on a build: with no run for today it starts one and answers building: true
-export const GET = () => respond(getWatchlist);
+// Never waits on a build: with no run for today it starts one and answers building: true.
+// Every sentence is in the request's language, re-rendered from the logged run whatever language it was computed in.
+export const GET = (req: NextRequest) => respond(async () => getWatchlist(await requestLocale(req)), req);

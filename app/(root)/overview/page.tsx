@@ -53,7 +53,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     // Explicit choice, then the remembered one, then the default market
     const saved = (await cookies()).get(MARKET_COOKIE)?.value;
     const market = getMarket(requested ?? saved ?? marketForCountry(null));
-    const [t, tm, tw, locale] = await Promise.all([getTranslations('Dashboard'), getTranslations('Markets'), getTranslations('TradingViewWidget'), getLocale()]);
+    const [t, tm, tw, to, locale] = await Promise.all([getTranslations('Dashboard'), getTranslations('Markets'), getTranslations('TradingViewWidget'), getTranslations('Overview'), getLocale()]);
     const name = tm(`names.${market.id}`);
     const feed = toMessageKey(market.feed) as FeedKey;
     // Translated tab and group titles inside the TradingView widgets
@@ -72,8 +72,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <>
             <header className="page-head">
                 <div>
-                    <h1 className="page-title">Overview</h1>
-                    <p className="page-sub">Your smart watchlist, then the markets. Simulation only, not investment advice.</p>
+                    <h1 className="page-title">{to('title')}</h1>
+                    <p className="page-sub">{to('sub')}</p>
                 </div>
             </header>
 

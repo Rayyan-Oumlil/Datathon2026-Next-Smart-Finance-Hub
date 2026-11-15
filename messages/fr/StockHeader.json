@@ -1,0 +1,14 @@
+{
+  "quoteViaYahoo": "cours différé · source : Yahoo Chart (non officiel)",
+  "quoteViaTradingView": "cours · source : TradingView",
+  "alertsHint": "Les alertes de prix exigent une source de cours vérifiable toutes les 5 minutes",
+  "alertsScope": "Alertes : actions américaines et cryptomonnaies",
+  "setAlert": "Créer une alerte",
+  "open": "Ouverture",
+  "openHint": "Première transaction de la séance",
+  "dayRange": "Fourchette du jour",
+  "dayRangeHint": "Du plus bas au plus haut",
+  "prevClose": "Clôture préc.",
+  "prevCloseHint": "Dernière séance",
+  "marketCap": "Capitalisation boursière"
+}

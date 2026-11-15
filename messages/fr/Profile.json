@@ -1,0 +1,113 @@
+{
+  "title": "Profil",
+  "subtitle": "Votre niveau et votre profil de risque, les réponses qui les sous-tendent et l’usage que l’application en a fait. Simulation seulement.",
+  "level": "{level, select, Novice {Novice} Intermediate {Intermédiaire} Expert {Expert} other {{level}}}",
+  "risk": "{risk, select, Low {Faible} Medium {Moyen} High {Élevé} other {{risk}}}",
+  "answers": {
+    "title": "Vos réponses",
+    "subtitle": "Enregistrées telles quelles. Évaluées selon les règles {levelRule} et {riskRule}. Dernier enregistrement : {when} (heure de Toronto).",
+    "edit": "Modifier les réponses",
+    "startOver": "Recommencer",
+    "note": "La modification relance les deux règles sur le serveur et affiche le résultat avant et après. Recommencer repose toutes les questions; votre profil actuel reste en place jusqu’à l’enregistrement des nouvelles réponses."
+  },
+  "modules": {
+    "level": { "title": "Niveau", "note": "Modifie l’interface." },
+    "risk": { "title": "Risque", "note": "Modifie seulement la liste de suivi." },
+    "chosenByYou": "Choisi par vous",
+    "computedFromAnswers": "Calculé à partir de vos réponses",
+    "returnToComputed": "Revenir à la valeur calculée ({computed})",
+    "computedHint": "calculé",
+    "override": "Calculé : <strong>{computed}</strong>. Choisi : <strong>{chosen}</strong>. L’application utilise la valeur choisie; la valeur calculée est conservée à côté.",
+    "lastChange": "Dernière modification ici : avant <strong>{before}</strong>, après <strong>{after}</strong>. Enregistrée et consignée à {at}.",
+    "howComputed": "Comment {computed} a été calculé",
+    "toastLevel": "Niveau : {before} → {after}",
+    "toastRisk": "Profil de risque : {before} → {after}",
+    "changeFailed": "La modification n’a pas pu être enregistrée. Rien n’a été modifié."
+  },
+  "breakdown": {
+    "points": "{count, plural, =0 {0 point} one {# point} other {# points}}",
+    "notTraded": "Vous n’avez jamais effectué de transaction vous-même. Dans ce cas, la règle de niveau donne {level}, sans aucun point comptabilisé.",
+    "rule": "Règle {version}",
+    "experienceRow": "Expérience de transaction : {value}",
+    "toolRow": "Outil utilisé : {value}",
+    "levelTotal": "Total : {points} sur {max}. Tranches : {bands}.",
+    "riskTotal": "Total : {points} sur {max}. Tranches : {bands}.",
+    "band": "{min}–{max} {label}",
+    "goalRow": "Objectif de placement : {value}",
+    "echeanceRow": "Échéance pour voir progresser vos gains : {value}",
+    "dropRow": "Après un recul de {percent} : {value}",
+    "selfRow": "Votre propre évaluation : {value}",
+    "capped": "Plafond appliqué : le choix « {answer} » à la question sur le recul de {percent} limite le résultat à {risk} au maximum, quel que soit le nombre de points.",
+    "differs": "Votre propre évaluation : <strong>{selfRated}</strong>. La règle a calculé <strong>{risk}</strong> à partir des quatre réponses. Les deux sont conservés."
+  },
+  "history": {
+    "title": "Historique",
+    "subtitle": "Sélections passées et leurs motifs, transactions simulées et conflits de profil. Source : le journal des décisions (en ajout seulement).",
+    "reload": "Actualiser",
+    "show": "Afficher",
+    "kinds": {
+      "all": "Tout",
+      "pick": "Sélections de la liste de suivi",
+      "simulated_trade": "Transactions simulées",
+      "profile_conflict": "Conflits de profil"
+    },
+    "failedTitle": "Le journal des décisions n’a pas répondu",
+    "failedBody": "Aucun historique n’est affiché plutôt qu’un historique partiel. Utilisez Actualiser pour réessayer.",
+    "reading": "Lecture du journal des décisions…",
+    "emptyTitle": "Rien n’a encore été consigné",
+    "emptyBody": "Les sélections apparaissent après la première exécution de la liste de suivi; les transactions et les conflits, après la première transaction simulée.",
+    "notAvailable": "non disponible",
+    "tags": {
+      "pick": "Sélection",
+      "simulated_trade": "Transaction simulée",
+      "profile_conflict": "Conflit de profil"
+    },
+    "pick": {
+      "title": "{subject} inscrit au rang {rank}",
+      "noReason": "Aucune phrase d’explication n’a été rédigée pour cette sélection : faits seulement.",
+      "score": "Note de {score} sur 100",
+      "factors": "Facteurs principaux : {factors}",
+      "template": "Modèle de phrase : {id}",
+      "drivers": {
+        "profile_fit": "adéquation au profil",
+        "risk_fit": "adéquation au risque",
+        "fundamentals": "données fondamentales",
+        "diversification": "diversification du portefeuille"
+      }
+    },
+    "trade": {
+      "purchase": "Acquisition simulée",
+      "reduction": "Réduction de position simulée",
+      "unknown": "Transaction simulée (sens non disponible)",
+      "title": "{action} : {quantity} {symbol}, {value}",
+      "byRule": "Déclenchée par la règle d’investissement {ruleId}.",
+      "asked": "Demandée {origin}.",
+      "acknowledged": "Effectuée après la prise en compte d’un conflit de profil.",
+      "origins": {
+        "card": "depuis une fiche de la liste de suivi",
+        "rule": "par une règle d’investissement",
+        "agent": "par l’intermédiaire de l’agent",
+        "unknown": "(origine non disponible)"
+      },
+      "filled": "Exécutée au dernier cours de {price} {currency} · source : {source} · récupéré le {fetched}",
+      "asOfSuffix": " · en date du {asOf}",
+      "noPrice": "Cours d’exécution non disponible",
+      "converted": "Converti en CAD au taux de {rate} CAD pour 1 USD · source : {source} · récupéré le {fetched}",
+      "noRate": "Taux USD/CAD non disponible",
+      "reason": "Motif consigné : {reason}"
+    },
+    "conflict": {
+      "title": "{symbol} n’a pas satisfait à {count, plural, one {# filtre de profil} other {# filtres de profil}}",
+      "noDetails": "Détails des filtres non disponibles.",
+      "profileThen": "Profil à ce moment : niveau {level}, profil de risque {risk}",
+      "proceeded": "Pris en compte, puis simulé malgré tout",
+      "notProceeded": "Aucune simulation n’a été effectuée"
+    },
+    "meta": {
+      "rules": "règles {versions}",
+      "noRules": "versions des règles non disponibles pour cette ligne",
+      "snapshot": "instantané {id}",
+      "logId": "id du journal {id}"
+    }
+  }
+}

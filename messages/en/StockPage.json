@@ -1,0 +1,14 @@
+{
+  "sentimentTitle": "Sentiment",
+  "sentimentSub": "Reddit, X.com, news and Polymarket",
+  "dividendYieldTitle": "Dividend Yield",
+  "chartTitle": "Chart",
+  "chartUnavailableSub": "Only on TradingView for this exchange",
+  "chartUnavailableTitle": "Chart not available here",
+  "chartUnavailableBody": "TradingView doesn’t license {exchange} charts for other sites. Financials, technicals and the profile below still work.",
+  "openOnTradingView": "Open chart on TradingView",
+  "financialsTitle": "Financials",
+  "financialsSub": "Income statement, balance sheet and ratios",
+  "profileTitle": "Profile",
+  "profileSub": "What the company does"
+}

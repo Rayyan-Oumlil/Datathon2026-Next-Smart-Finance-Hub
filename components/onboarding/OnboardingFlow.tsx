@@ -2,16 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import type { Level, OnboardingAnswers, ProfileConfig, Risk } from '@/lib/domain/types';
+import { formatPercent } from '@/i18n/format';
 import { cn } from '@/lib/utils';
 import { LevelBreakdown, RiskBreakdown, type RuleBands } from '@/components/profile/RuleBreakdown';
 import Chips from './Chips';
 import TickerPicker from './TickerPicker';
-import {
-    AGENT_STYLE, DROP20, ECHEANCE, EXPERIENCE, GOAL, INVESTING_GOAL, MARKETS, SELF_RATING, TOOLS, TRADED,
-    themeLabel, type Option,
-} from './labels';
+import { nicheLabel, optionsOf, sectorLabel, themeLabel, type Option, type OptionGroup } from './labels';
 
 export type UniverseOptions = { sectors: Array<{ name: string; count: number }>; niches: Record<string, string[]>; themes: string[] };
 
@@ -20,24 +19,25 @@ type StepId =
     | 'goal' | 'traded' | 'experience' | 'tools' | 'investingGoal' | 'echeance' | 'drop20' | 'selfRating'
     | 'markets' | 'sectors' | 'niches' | 'themes' | 'brands' | 'avoid' | 'agentStyle';
 
-const PARTS = ['About you', 'Your comfort with risk', 'What interests you'];
+const PARTS = ['about', 'risk', 'interests'] as const;
 
-const STEPS: Record<StepId, { part: number; title: string; helper: string; options?: Option[]; multi?: boolean; skippable?: boolean }> = {
-    goal: { part: 0, title: 'What brings you here?', helper: 'This only sets the context. It does not change your level or your risk profile.', options: GOAL },
-    traded: { part: 0, title: 'Have you placed a trade yourself?', helper: 'On any platform, with your own money. If not, the next two questions are left out.', options: TRADED },
-    experience: { part: 0, title: 'How long have you traded?', helper: 'Counted from your first trade, even with breaks.', options: EXPERIENCE },
-    tools: { part: 0, title: 'Which tools do you use?', helper: 'Pick all that apply, or continue with none.', options: TOOLS, multi: true },
-    investingGoal: { part: 1, title: 'What is your investing goal?', helper: 'Income means regular payouts, growth means a rising value over time, trading means frequent moves.', options: INVESTING_GOAL },
-    echeance: { part: 1, title: 'When do you want to see profit progress?', helper: 'A longer horizon leaves more time to recover from a drop.', options: ECHEANCE },
-    drop20: { part: 1, title: 'If a position dropped 20%, you would…', helper: 'There is no right answer. Pick what you would really do.', options: DROP20 },
-    selfRating: { part: 1, title: 'How would you rate your own comfort with risk?', helper: 'Your own rating is one of four answers. If the result differs from it, you will see both.', options: SELF_RATING },
-    markets: { part: 2, title: 'Which markets interest you?', helper: 'The watchlist only lists assets from the markets picked here.', options: MARKETS },
-    sectors: { part: 2, title: 'Which sectors do you like?', helper: 'Pick any number. Skipping means no preference.', multi: true, skippable: true },
-    niches: { part: 2, title: 'Any niches inside those sectors?', helper: 'Only niches of the sectors you picked are shown. Skipping means no preference.', multi: true, skippable: true },
-    themes: { part: 2, title: 'Any themes you follow?', helper: 'Theme tags are set by hand in this demo. The ESG tag is demo data.', multi: true, skippable: true },
-    brands: { part: 2, title: 'Brands you know', helper: 'Companies you use or admire. They are looked at first when the watchlist is built.', skippable: true },
-    avoid: { part: 2, title: 'Anything to leave out?', helper: 'Sectors or companies on this list never appear in your watchlist.', skippable: true },
-    agentStyle: { part: 2, title: 'How do you want the agent to talk to you?', helper: 'This sets the tone of the answers. You can change it later.', options: AGENT_STYLE },
+// The question and helper texts are messages under steps.<id> in the Onboarding namespace
+const STEPS: Record<StepId, { part: number; group?: OptionGroup; multi?: boolean; skippable?: boolean }> = {
+    goal: { part: 0, group: 'goal' },
+    traded: { part: 0, group: 'traded' },
+    experience: { part: 0, group: 'experience' },
+    tools: { part: 0, group: 'tools', multi: true },
+    investingGoal: { part: 1, group: 'investingGoal' },
+    echeance: { part: 1, group: 'echeance' },
+    drop20: { part: 1, group: 'drop20' },
+    selfRating: { part: 1, group: 'selfRating' },
+    markets: { part: 2, group: 'markets' },
+    sectors: { part: 2, multi: true, skippable: true },
+    niches: { part: 2, multi: true, skippable: true },
+    themes: { part: 2, multi: true, skippable: true },
+    brands: { part: 2, skippable: true },
+    avoid: { part: 2, skippable: true },
+    agentStyle: { part: 2, group: 'agentStyle' },
 };
 
 function stepsFor(draft: Draft, options: UniverseOptions): StepId[] {
@@ -64,6 +64,10 @@ type Props = {
 };
 
 export default function OnboardingFlow({ options, bands, initial }: Props) {
+    const t = useTranslations('Onboarding');
+    const tp = useTranslations('Profile');
+    const locale = useLocale();
+    const percent = formatPercent(20, locale);
     const editing = Boolean(initial);
     // Once a profile exists, answers are saved as an edit of it
     const [saved, setSaved] = useState(editing);
@@ -119,12 +123,12 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
             setResult({ profile: body.profile, before: body.before });
             setSaved(true);
         } catch {
-            setError('Your answers could not be saved. Nothing was changed. Please try again.');
+            setError(t('saveError'));
         } finally {
             submitting.current = false;
             setSaving(false);
         }
-    }, [saved, options.niches]);
+    }, [saved, options.niches, t]);
 
     const next = useCallback((d: Draft) => {
         const order = stepsFor(d, options);
@@ -164,37 +168,44 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
         return (
             <div className="flex flex-col gap-5 p-5 sm:p-7">
                 <div>
-                    <p className="kicker">Your result</p>
+                    <p className="kicker">{t('result.kicker')}</p>
                     <h1 ref={headingRef} tabIndex={-1} className="mt-1 text-[24px] font-bold leading-tight tracking-[-0.03em] text-foreground outline-none">
-                        Your level: {profile.level}. Your risk profile: {profile.risk}.
+                        {t('result.heading', { level: tp('level', { level: profile.level }), risk: tp('risk', { risk: profile.risk }) })}
                     </h1>
                     <p className="mt-1.5 text-[13.5px] text-muted-foreground">
-                        Computed on the server from your answers by rules <span className="mono">{profile.ruleVersions.level}</span> and{' '}
-                        <span className="mono">{profile.ruleVersions.risk}</span>, then saved with the answers and logged. The level changes the interface.
-                        The risk profile changes the watchlist only. Both can be changed on the Profile tab.
+                        {t.rich('result.explain', {
+                            levelRule: profile.ruleVersions.level,
+                            riskRule: profile.ruleVersions.risk,
+                            mono: (chunks) => <span className="mono">{chunks}</span>,
+                        })}
                     </p>
                 </div>
 
                 {before && (
                     <p className="rounded-[10px] bg-hover px-3 py-2 text-[13px] text-foreground">
-                        Before: {before.level}, {before.risk} risk. After: {profile.level}, {profile.risk} risk.{' '}
-                        {changed ? '' : 'No change.'}
+                        {t('result.beforeAfter', {
+                            beforeLevel: tp('level', { level: before.level }),
+                            beforeRisk: tp('risk', { risk: before.risk }),
+                            afterLevel: tp('level', { level: profile.level }),
+                            afterRisk: tp('risk', { risk: profile.risk }),
+                        })}{' '}
+                        {changed ? '' : t('result.noChange')}
                     </p>
                 )}
 
                 <section aria-labelledby="result-level" className="flex flex-col gap-2">
-                    <h2 id="result-level" className="form-label">Why {profile.levelResult.level}</h2>
+                    <h2 id="result-level" className="form-label">{t('result.whyLevel', { level: tp('level', { level: profile.levelResult.level }) })}</h2>
                     <LevelBreakdown profile={profile} bands={bands} />
                     {profile.levelOverridden && (
-                        <p className="text-[13px] text-muted-foreground">You chose {profile.level} on the Profile tab; that choice is kept.</p>
+                        <p className="text-[13px] text-muted-foreground">{t('result.levelKept', { value: tp('level', { level: profile.level }) })}</p>
                     )}
                 </section>
 
                 <section aria-labelledby="result-risk" className="flex flex-col gap-2">
-                    <h2 id="result-risk" className="form-label">Why {profile.riskResult.risk} risk</h2>
+                    <h2 id="result-risk" className="form-label">{t('result.whyRisk', { risk: tp('risk', { risk: profile.riskResult.risk }) })}</h2>
                     <RiskBreakdown profile={profile} bands={bands} />
                     {profile.riskOverridden && (
-                        <p className="text-[13px] text-muted-foreground">You chose {profile.risk} on the Profile tab; that choice is kept.</p>
+                        <p className="text-[13px] text-muted-foreground">{t('result.riskKept', { value: tp('risk', { risk: profile.risk }) })}</p>
                     )}
                 </section>
 
@@ -207,10 +218,10 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
                             setStepId('goal');
                         }}
                     >
-                        Edit my answers
+                        {t('result.editAnswers')}
                     </button>
                     <Link href="/portfolio" className="btn btn-primary">
-                        Open my dashboard <ArrowRight aria-hidden />
+                        {t('result.openDashboard')} <ArrowRight aria-hidden />
                     </Link>
                 </div>
             </div>
@@ -218,7 +229,7 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
     }
 
     const titleId = `q-${stepId}`;
-    const listOptions = (values: string[], label: (v: string) => string = (v) => v): Option[] => values.map((value) => ({ value, label: label(value) }));
+    const listOptions = (values: string[], label: (v: string) => string): Option[] => values.map((value) => ({ value, label: label(value) }));
 
     return (
         <form
@@ -228,8 +239,9 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
                 if (canContinue && !saving) next(draft);
             }}
         >
-            <ol className="grid grid-cols-3 gap-2" aria-label="Progress">
-                {PARTS.map((name, part) => {
+            <ol className="grid grid-cols-3 gap-2" aria-label={t('progress')}>
+                {PARTS.map((partId, part) => {
+                    const name = t(`parts.${partId}`);
                     const inPart = ids.filter((id) => STEPS[id].part === part);
                     const done = inPart.filter((id) => ids.indexOf(id) < index).length;
                     const current = step.part === part;
@@ -246,29 +258,29 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
 
             <div className="flex min-h-[250px] flex-col gap-4">
                 <div>
-                    <p className="kicker">{PARTS[step.part]} · question {index + 1}{step.skippable ? ' · optional' : ''}</p>
+                    <p className="kicker">{t(step.skippable ? 'kickerOptional' : 'kicker', { part: t(`parts.${PARTS[step.part]}`), number: index + 1 })}</p>
                     <h1 id={titleId} ref={headingRef} tabIndex={-1} className="mt-1 text-[22px] font-bold leading-tight tracking-[-0.03em] text-foreground outline-none">
-                        {step.title}
+                        {t(`steps.${stepId}.title`, { percent })}
                     </h1>
-                    <p className="mt-1.5 text-[13.5px] text-muted-foreground">{step.helper}</p>
+                    <p className="mt-1.5 text-[13.5px] text-muted-foreground">{t(`steps.${stepId}.helper`, { percent })}</p>
                 </div>
 
-                {step.options && !step.multi && (
+                {step.group && !step.multi && (
                     <Chips
                         labelledBy={titleId}
-                        options={step.options}
+                        options={optionsOf(t, step.group)}
                         selected={stepId === 'traded' ? (draft.traded === undefined ? [] : [draft.traded ? 'yes' : 'no']) : [String(draft[stepId] ?? '')]}
                         disabled={saving}
                         onToggle={pick}
                     />
                 )}
                 {stepId === 'tools' && (
-                    <Chips labelledBy={titleId} options={TOOLS} selected={draft.tools} multi onToggle={(v) => setList('tools', toggle(draft.tools, v))} />
+                    <Chips labelledBy={titleId} options={optionsOf(t, 'tools')} selected={draft.tools} multi onToggle={(v) => setList('tools', toggle(draft.tools, v))} />
                 )}
                 {stepId === 'sectors' && (
                     <Chips
                         labelledBy={titleId}
-                        options={listOptions(options.sectors.map((s) => s.name))}
+                        options={listOptions(options.sectors.map((s) => s.name), (v) => sectorLabel(t, v))}
                         selected={draft.sectors}
                         multi
                         onToggle={(v) => setList('sectors', toggle(draft.sectors, v))}
@@ -276,10 +288,10 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
                 )}
                 {stepId === 'niches' && draft.sectors.filter((sector) => options.niches[sector]?.length).map((sector) => (
                     <div key={sector} className="flex flex-col gap-2">
-                        <span id={`niche-${sector}`} className="form-label">{sector}</span>
+                        <span id={`niche-${sector}`} className="form-label">{sectorLabel(t, sector)}</span>
                         <Chips
                             labelledBy={`niche-${sector}`}
-                            options={listOptions(options.niches[sector])}
+                            options={listOptions(options.niches[sector], (v) => nicheLabel(t, v))}
                             selected={draft.niches}
                             multi
                             onToggle={(v) => setList('niches', toggle(draft.niches, v))}
@@ -287,20 +299,20 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
                     </div>
                 ))}
                 {stepId === 'themes' && (
-                    <Chips labelledBy={titleId} options={listOptions(options.themes, themeLabel)} selected={draft.themes} multi onToggle={(v) => setList('themes', toggle(draft.themes, v))} />
+                    <Chips labelledBy={titleId} options={listOptions(options.themes, (v) => themeLabel(t, v))} selected={draft.themes} multi onToggle={(v) => setList('themes', toggle(draft.themes, v))} />
                 )}
                 {stepId === 'brands' && (
-                    <TickerPicker id="brands-search" label="Add a company" selected={draft.brands} onChange={(v) => setList('brands', v)} />
+                    <TickerPicker id="brands-search" label={t('fields.addCompany')} selected={draft.brands} onChange={(v) => setList('brands', v)} />
                 )}
                 {stepId === 'avoid' && (() => {
                     const sectorNames = options.sectors.map((s) => s.name);
                     return (
                         <>
                             <div className="flex flex-col gap-2">
-                                <span id="avoid-sectors" className="form-label">Sectors to leave out</span>
+                                <span id="avoid-sectors" className="form-label">{t('fields.sectorsToLeaveOut')}</span>
                                 <Chips
                                     labelledBy="avoid-sectors"
-                                    options={listOptions(sectorNames)}
+                                    options={listOptions(sectorNames, (v) => sectorLabel(t, v))}
                                     selected={draft.avoid}
                                     multi
                                     onToggle={(v) => setList('avoid', toggle(draft.avoid, v))}
@@ -308,7 +320,7 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
                             </div>
                             <TickerPicker
                                 id="avoid-search"
-                                label="Companies to leave out"
+                                label={t('fields.companiesToLeaveOut')}
                                 selected={draft.avoid.filter((v) => !sectorNames.includes(v))}
                                 onChange={(symbols) => setList('avoid', [...draft.avoid.filter((v) => sectorNames.includes(v)), ...symbols])}
                             />
@@ -321,17 +333,17 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
 
             <div className="flex items-center justify-between gap-3">
                 {index === 0 && editing ? (
-                    <Link href="/profile" className="btn btn-ghost"><ArrowLeft aria-hidden /> Back</Link>
+                    <Link href="/profile" className="btn btn-ghost"><ArrowLeft aria-hidden /> {t('actions.back')}</Link>
                 ) : (
                     <button type="button" className="btn btn-ghost" onClick={back} disabled={index === 0 || saving}>
-                        <ArrowLeft aria-hidden /> Back
+                        <ArrowLeft aria-hidden /> {t('actions.back')}
                     </button>
                 )}
                 <button type="submit" className="btn btn-primary" disabled={!canContinue || saving}>
                     {saving ? <Loader2 className="animate-spin" aria-hidden /> : null}
                     {index === ids.length - 1
-                        ? (saving ? 'Computing…' : 'See my result')
-                        : step.skippable && (draft[stepId] as string[]).length === 0 ? 'Skip' : 'Continue'}
+                        ? (saving ? t('actions.computing') : t('actions.seeResult'))
+                        : step.skippable && (draft[stepId] as string[]).length === 0 ? t('actions.skip') : t('actions.continue')}
                     {!saving && <ArrowRight aria-hidden />}
                 </button>
             </div>

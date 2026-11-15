@@ -24,6 +24,8 @@ def parse_request(payload) -> trace.RequestTrace:
         raise ValueError("context must be an object")
     if context.get("level") is not None and context["level"] not in LEVELS:
         raise ValueError("context.level must be Novice, Intermediate or Expert")
+    if context.get("locale") is not None and context["locale"] not in config.LOCALES:
+        raise ValueError("context.locale must be en or fr")
     if not isinstance(history, list) or not all(
             isinstance(t, dict) and isinstance(t.get("text"), str) and t.get("role") in ("user", "assistant")
             for t in history):
@@ -36,7 +38,8 @@ def response(current: trace.RequestTrace, text: str, refused: bool, guardrail: l
     body = {
         "actionId": current.action_id,
         "text": text,
-        "sources": [] if refused else sources.relevant(sources.collect(current.tool_results), text),
+        "sources": [] if refused else sources.relevant(sources.collect(current.tool_results, current.locale), text,
+                                                       current.locale),
         "refused": refused,
         "promptVersion": config.PROMPT_VERSION,
         "modelCalls": current.model_calls,
@@ -44,7 +47,9 @@ def response(current: trace.RequestTrace, text: str, refused: bool, guardrail: l
         "logComplete": not current.log_errors,
         # Not in the contract's example: what the checks found and whether the action log could be written.
         "trace": {"guardrail": guardrail, "toolCalls": len(current.tool_results),
-                  "logRows": current.log_rows, "logErrors": current.log_errors},
+                  "logRows": current.log_rows, "logErrors": current.log_errors,
+                  # True when writes stopped after repeated failures; logSkipped rows were then not attempted.
+                  "logStopped": current.log_stopped, "logSkipped": current.log_skipped},
     }
     if current.proposed and not refused:
         body["proposed"] = current.proposed
@@ -57,19 +62,37 @@ def response(current: trace.RequestTrace, text: str, refused: bool, guardrail: l
     return body
 
 
+# The fixed preview sentence per action type, in each language.
+ACTION_NAMES = {
+    "en": {"layout_change": "layout change", "rule_create": "new rule", "rule_pause": "rule pause or resume",
+           "profile_change": "profile change", "simulated_trade": "simulated trade", "explain_pick": "explanation",
+           "lookup": "lookup"},
+    "fr": {"layout_change": "modification de la disposition", "rule_create": "nouvelle règle",
+           "rule_pause": "suspension ou reprise d'une règle", "profile_change": "modification du profil",
+           "simulated_trade": "opération simulée", "explain_pick": "explication", "lookup": "consultation"},
+}
+
+
+def neutral_summary(action_type: str, locale: str) -> str:
+    name = ACTION_NAMES[locale].get(action_type, action_type.replace("_", " "))
+    return f"Proposition : {name} (simulation)." if locale == "fr" else f"Proposed {name} (simulation)."
+
+
 def check_reply(current: trace.RequestTrace, text: str, attempt: int) -> tuple[dict, str]:
     """Runs our own check and the Bedrock Guardrail on one reply, and logs both. Returns (result, text)."""
     conflicts = [c for result in current.conflict_checks.values() for c in (result.get("conflicts") or [])]
-    # Only what this request's tools returned and the context the web app built ground a figure; the
-    # client-supplied history and message do not.
-    data = [current.tool_results, current.context]
-    own = checks.own_check(text, data, conflicts)
+    # Only what this request's tools returned, the context the web app built and the params of the action
+    # proposed in this request (recorded by propose_action, so a reply may repeat its amount) ground a figure;
+    # the client-supplied history and message do not.
+    proposed_params = current.proposed["params"] if current.proposed else None
+    data = [current.tool_results, current.context, proposed_params]
+    own = checks.own_check(text, data, conflicts, current.locale)
     proposal_words = checks.find_never_words(current.proposed["summary"]) if current.proposed else []
     if proposal_words:
         # The summary is shown in the preview; a fixed neutral sentence replaces one that breaks the word rule.
-        current.proposed["summary"] = f"Proposed {current.proposed['type'].replace('_', ' ')} (simulation)."
+        current.proposed["summary"] = neutral_summary(current.proposed["type"], current.locale)
     try:
-        guardrail = checks.bedrock_check(text, checks.grounding_text(current.tool_results, current.context),
+        guardrail = checks.bedrock_check(text, checks.grounding_text(current.tool_results, current.context, proposed_params),
                                          current.message) if not own["empty"] else {"passed": False, "skipped": "empty"}
     except Exception as exc:  # a guardrail that cannot be reached is a failed check, not a pass
         guardrail = {"passed": False, "error": f"{type(exc).__name__}: {str(exc)[:200]}"}
@@ -90,7 +113,7 @@ def handle(payload) -> dict:
     try:
         system_prompt = prompts.render("orchestrator", current.context)
         current.log("prompt_built", "writer", promptSha256=trace.sha256(system_prompt), dataUsed={
-            "level": current.context.get("level"), "risk": current.context.get("risk"),
+            "level": current.context.get("level"), "risk": current.context.get("risk"), "locale": current.locale,
             "agentStyle": current.context.get("agentStyle"), "contextKeys": sorted(current.context),
             "historyTurns": len(current.history), "messageSha256": trace.sha256(current.message)})
         agent = orchestrator.build(current)
@@ -101,13 +124,14 @@ def handle(payload) -> dict:
             if result["passed"]:
                 return response(current, text, False, guardrail_results)
             if attempt < config.MAX_GUARDRAIL_FAILURES:
-                text = orchestrator.ask(agent, checks.corrective_instruction(result["own"], result["bedrock"]))
-        return response(current, checks.SAFE_REFUSAL, True, guardrail_results)
+                text = orchestrator.ask(agent, checks.corrective_instruction(result["own"], result["bedrock"],
+                                                                             current.locale))
+        return response(current, checks.safe_refusal(current.locale), True, guardrail_results)
     except Exception as exc:
         error = f"{type(exc).__name__}: {str(exc)[:300]}"
         print(f"request {current.action_id} failed: {error}", file=sys.stderr)
         current.log("error", "writer", result={"error": error})
-        return response(current, checks.SAFE_REFUSAL, True, guardrail_results, error)
+        return response(current, checks.safe_refusal(current.locale), True, guardrail_results, error)
     finally:
         trace._current.reset(token)
 
@@ -117,7 +141,9 @@ def invoke(payload):
     try:
         return handle(payload)
     except ValueError as exc:  # a malformed request: nothing was sent to a model
-        return {"error": "invalid_request", "detail": str(exc), "refused": True, "text": checks.SAFE_REFUSAL,
+        context = payload.get("context") if isinstance(payload, dict) else None
+        text = checks.safe_refusal(config.locale_of(context))
+        return {"error": "invalid_request", "detail": str(exc), "refused": True, "text": text,
                 "sources": [], "promptVersion": config.PROMPT_VERSION, "modelCalls": []}
 
 

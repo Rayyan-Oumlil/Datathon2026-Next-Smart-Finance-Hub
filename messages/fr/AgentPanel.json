@@ -1,0 +1,101 @@
+{
+  "title": "Agent conversationnel",
+  "kicker": "Simulation · explique les données · aucun conseil en placement",
+  "newConversation": "Commencer une nouvelle conversation",
+  "closePanel": "Fermer le panneau de l’agent",
+  "closeTitle": "Fermer",
+  "conversation": "Échanges avec l’agent",
+  "emptyTitle": "Posez une question sur vos données",
+  "emptyBody": "Chaque chiffre d’une réponse est accompagné de sa source et de son heure. Toute modification de votre disposition, de vos règles, de votre profil ou de votre portefeuille simulé est d’abord présentée en aperçu, et vous pouvez l’annuler.",
+  "youSaid": "Vous : ",
+  "agentSaid": "Agent : ",
+  "sources": "Sources citées",
+  "noSource": "Cette réponse ne cite aucune source de données.",
+  "working": "Traitement en cours. Une réponse peut prendre jusqu’à une minute : chaque chiffre est récupéré et vérifié.",
+  "quickActions": "Actions rapides",
+  "quick": {
+    "explain": {
+      "label": "Expliquer un titre de ma liste",
+      "message": "Expliquer un titre de ma liste"
+    },
+    "less": {
+      "label": "Afficher moins",
+      "message": "Afficher moins : masquer chaque composant dont minLevel est supérieur à Novice, conserver les autres dans leur ordre"
+    },
+    "etf": {
+      "label": "Qu’est-ce qu’un FNB?",
+      "message": "Qu’est-ce qu’un fonds négocié en bourse (FNB)?"
+    },
+    "rule": {
+      "label": "Créer une règle",
+      "message": "Créer une règle : lorsque "
+    }
+  },
+  "inputLabel": "Message à l’agent",
+  "placeholder": "Posez une question sur un terme, un titre, votre portefeuille simulé…",
+  "send": "Envoyer le message",
+  "errors": {
+    "request": "La requête n’a pas pu être traitée.",
+    "apply": "La modification n’a pas pu être appliquée.",
+    "undo": "Le retour en arrière n’a pas pu être effectué."
+  },
+  "trace": {
+    "summary": "Piste d’audit",
+    "actionId": "identifiant de l’action : {id}",
+    "unavailable": "Les lignes du journal ne sont pas disponibles pour le moment.",
+    "loading": "Chargement des lignes du journal…",
+    "empty": "Aucune ligne n’est lisible pour l’instant. L’index peut accuser un retard de quelques secondes.",
+    "tokens": "jetons{NB}: {input} en entrée / {output} en sortie",
+    "awsRequestId": "identifiant de requête AWS : {id}",
+    "reload": "Recharger les lignes",
+    "steps": {
+      "chat_input": "Message reçu",
+      "context_built": "Contexte constitué",
+      "prompt_built": "Instructions préparées",
+      "orchestrator_call": "Appel du modèle (orchestrateur)",
+      "subagent_call": "Appel du modèle (sous-agent)",
+      "tool_call": "Appel d’outil",
+      "guardrail_check": "Vérification des garde-fous",
+      "action_routed": "Action acheminée",
+      "preview_shown": "Aperçu présenté",
+      "confirmed": "Confirmée",
+      "cancelled": "Annulée",
+      "applied": "Appliquée",
+      "result": "Résultat",
+      "undo": "Retour en arrière",
+      "error": "Erreur"
+    },
+    "actors": {
+      "web": "Application Web",
+      "orchestrator": "Orchestrateur",
+      "writer": "Rédacteur",
+      "subagent": "Sous-agent : {name}"
+    }
+  },
+  "times": {
+    "asOf": "en date du {time}",
+    "fetched": "récupéré le {time}",
+    "none": "heure non disponible"
+  },
+  "conflict": {
+    "title": "Conflit avec le profil : {symbol}",
+    "note": "Les valeurs proviennent des filtres du profil. Vous pouvez tout de même poursuivre dans la simulation; le conflit est consigné."
+  },
+  "preview": {
+    "kicker": "Aperçu · rien n’est encore appliqué · simulé",
+    "factLabel": "{label} :",
+    "before": "Avant",
+    "after": "Après",
+    "confirm": "Confirmer",
+    "confirmSimulation": "Confirmer dans la simulation",
+    "cancel": "Annuler",
+    "applied": "Appliquée",
+    "undone": "Retour effectué",
+    "cancelled": "Annulée",
+    "undo": "Revenir en arrière"
+  },
+  "sourceNames": {
+    "demodata": "données de démonstration",
+    "derived": "dérivé"
+  }
+}

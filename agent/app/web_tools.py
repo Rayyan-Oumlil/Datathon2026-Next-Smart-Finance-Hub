@@ -119,8 +119,9 @@ def list_rules() -> dict:
 # ---- layout
 @tool
 def get_layout() -> dict:
-    """The current widget order and the widget library (id, title, fixed, minimum level)."""
-    return call_web("layout")
+    """The current widget order and the widget library (id, title, fixed, minimum level). The titles are in the
+    user's language, as the app shows them."""
+    return call_web("layout", {"locale": trace.current().locale})
 
 
 # ---- profile
@@ -138,8 +139,11 @@ def preview_profile_change(changes: dict) -> dict:
 # ---- glossary (read by this service itself, not the web app)
 @tool
 def search_glossary(query: str) -> dict:
-    """Looks a term up in the vetted glossary. Returns the matching documents with their location."""
+    """Looks a term up in the vetted glossary, in the user's language. Returns the matching documents with
+    their location."""
+    current = trace.current()
     started = time.monotonic()
-    result = glossary.search(query)
-    trace.current().record_tool("glossary", {"query": query}, result, None, int((time.monotonic() - started) * 1000))
+    result = glossary.search(query, locale=current.locale)
+    current.record_tool("glossary", {"query": query, "locale": current.locale}, result, None,
+                        int((time.monotonic() - started) * 1000))
     return result

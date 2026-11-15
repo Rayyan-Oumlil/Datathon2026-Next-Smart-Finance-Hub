@@ -1,0 +1,6 @@
+{
+  "changePercent": "Variation (%)",
+  "unavailable": "Cours non disponibles pour le moment.",
+  "source": "Cours en {currency}, différés d’environ 15 minutes. Source : Yahoo Chart (non officiel).",
+  "sourceNoCurrency": "Cours différés d’environ 15 minutes. Source : Yahoo Chart (non officiel)."
+}

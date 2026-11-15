@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import type { Level, ProfileConfig, Risk } from '@/lib/domain/types';
 import Panel from '@/components/Panel';
 import Chips from '@/components/onboarding/Chips';
+import { formatDateTime } from '@/i18n/format';
 import { LevelBreakdown, RiskBreakdown, type RuleBands } from './RuleBreakdown';
 
 const LEVELS: Level[] = ['Novice', 'Intermediate', 'Expert'];
@@ -15,8 +17,6 @@ type Edit = { field: 'level' | 'risk'; before: string; after: string; at: string
 
 type ModuleProps = {
     id: 'level' | 'risk';
-    title: string;
-    note: string;
     values: string[];
     chosen: string;
     computed: string;
@@ -27,24 +27,28 @@ type ModuleProps = {
     children: React.ReactNode;
 };
 
-function Module({ id, title, note, values, chosen, computed, overridden, busy, edit, onChoose, children }: ModuleProps) {
+function Module({ id, values, chosen, computed, overridden, busy, edit, onChoose, children }: ModuleProps) {
+    const t = useTranslations('Profile');
+    // The stored values are the English enum names; the screen shows them in the active language
+    const word = (value: string) => t(id, { [id]: value });
+    const strong = { strong: (chunks: React.ReactNode) => <strong>{chunks}</strong> };
     return (
-        <Panel title={title} sub={note} bodyClassName="flex flex-col gap-4 p-4">
+        <Panel title={t(`modules.${id}.title`)} sub={t(`modules.${id}.note`)} bodyClassName="flex flex-col gap-4 p-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <p id={`${id}-label`} className="form-label">{overridden ? 'Chosen by you' : 'Computed from your answers'}</p>
-                    <p className="text-[26px] font-bold tracking-[-0.03em] text-foreground">{chosen}</p>
+                    <p id={`${id}-label`} className="form-label">{overridden ? t('modules.chosenByYou') : t('modules.computedFromAnswers')}</p>
+                    <p className="text-[26px] font-bold tracking-[-0.03em] text-foreground">{word(chosen)}</p>
                 </div>
                 {overridden && (
                     <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => onChoose(null)}>
-                        Return to computed ({computed})
+                        {t('modules.returnToComputed', { computed: word(computed) })}
                     </button>
                 )}
             </div>
 
             <Chips
                 labelledBy={`${id}-label`}
-                options={values.map((value) => ({ value, label: value, hint: value === computed ? 'computed' : undefined }))}
+                options={values.map((value) => ({ value, label: word(value), hint: value === computed ? t('modules.computedHint') : undefined }))}
                 selected={[chosen]}
                 disabled={busy}
                 onToggle={(value) => value !== chosen && onChoose(value)}
@@ -52,18 +56,18 @@ function Module({ id, title, note, values, chosen, computed, overridden, busy, e
 
             {overridden && (
                 <p className="rounded-[10px] bg-brand-soft px-3 py-2 text-[13px] text-brand-ink">
-                    Computed: <strong>{computed}</strong>. Chosen: <strong>{chosen}</strong>. The app uses the chosen value; the computed one is kept beside it.
+                    {t.rich('modules.override', { computed: word(computed), chosen: word(chosen), ...strong })}
                 </p>
             )}
             {edit && (
                 <p role="status" className="rounded-[10px] bg-hover px-3 py-2 text-[13px] text-foreground">
-                    Last change here: before <strong>{edit.before}</strong>, after <strong>{edit.after}</strong>. Saved and logged at {edit.at}.
+                    {t.rich('modules.lastChange', { before: word(edit.before), after: word(edit.after), at: edit.at, ...strong })}
                 </p>
             )}
 
             <details className="group">
                 <summary className="cursor-pointer text-[13px] font-semibold text-brand-ink outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
-                    How {computed} was computed
+                    {t('modules.howComputed', { computed: word(computed) })}
                 </summary>
                 <div className="mt-2">{children}</div>
             </details>
@@ -74,6 +78,8 @@ function Module({ id, title, note, values, chosen, computed, overridden, busy, e
 // The Level and Risk modules. A choice is sent to PATCH /api/profile, which stores it as an override and logs it.
 export default function ProfileModules({ profile: initial, bands }: { profile: ProfileConfig; bands: RuleBands }) {
     const router = useRouter();
+    const t = useTranslations('Profile');
+    const locale = useLocale();
     const [profile, setProfile] = useState(initial);
     const [busy, setBusy] = useState(false);
     const [edits, setEdits] = useState<{ level: Edit | null; risk: Edit | null }>({ level: null, risk: null });
@@ -89,13 +95,14 @@ export default function ProfileModules({ profile: initial, bands }: { profile: P
             const body = await res.json().catch(() => null);
             if (!res.ok || !body?.profile) throw new Error(String(res.status));
             setProfile(body.profile);
-            const edit: Edit = { field, before: body.before[field], after: body.after[field], at: new Date().toLocaleTimeString() };
+            const edit: Edit = { field, before: body.before[field], after: body.after[field], at: formatDateTime(new Date().toISOString(), locale, { timeStyle: 'medium' }) };
             setEdits((e) => ({ ...e, [field]: edit }));
-            toast.success(`${field === 'level' ? 'Level' : 'Risk profile'}: ${edit.before} → ${edit.after}`);
+            const shown = (value: string) => t(field, { [field]: value });
+            toast.success(t(field === 'level' ? 'modules.toastLevel' : 'modules.toastRisk', { before: shown(edit.before), after: shown(edit.after) }));
             // The shell and the other tabs read the profile on the server
             router.refresh();
         } catch {
-            toast.error('The change could not be saved. Nothing was changed.');
+            toast.error(t('modules.changeFailed'));
         } finally {
             setBusy(false);
         }
@@ -105,8 +112,6 @@ export default function ProfileModules({ profile: initial, bands }: { profile: P
         <div className="grid gap-4 lg:grid-cols-2">
             <Module
                 id="level"
-                title="Level"
-                note="Changes the interface."
                 values={LEVELS}
                 chosen={profile.level}
                 computed={profile.levelResult.level}
@@ -119,8 +124,6 @@ export default function ProfileModules({ profile: initial, bands }: { profile: P
             </Module>
             <Module
                 id="risk"
-                title="Risk"
-                note="Changes the watchlist only."
                 values={RISKS}
                 chosen={profile.risk}
                 computed={profile.riskResult.risk}

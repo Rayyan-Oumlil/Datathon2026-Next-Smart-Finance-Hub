@@ -1,0 +1,29 @@
+{
+  "avgBuzz": "Avg. buzz",
+  "bullishAvg": "Bullish avg",
+  "coverage": "Coverage",
+  "coverageValue": "{count}/{total} sources",
+  "sourceAlignment": "Source alignment: <value>{alignment}</value>",
+  "alignment": {
+    "noSentimentMix": "No sentiment mix",
+    "singleSourceView": "Single-source view",
+    "bullishAlignment": "Bullish alignment",
+    "bearishAlignment": "Bearish alignment",
+    "tightAlignment": "Tight alignment",
+    "wideDivergence": "Wide divergence",
+    "mixed": "Mixed"
+  },
+  "metric": {
+    "mentions": "{value} mentions",
+    "trades": "{value} trades"
+  },
+  "newsSource": "News",
+  "buzz": "buzz",
+  "bullPct": "{pct}% bull",
+  "trend": {
+    "rising": "Rising",
+    "falling": "Falling",
+    "stable": "Stable"
+  },
+  "noTrend": "No trend"
+}

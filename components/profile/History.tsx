@@ -2,15 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import type { DecisionLogEntry, FilterCheck, Sourced } from '@/lib/domain/types';
 import Panel from '@/components/Panel';
+import { formatDateTime, formatMoney, formatNumber } from '@/i18n/format';
 import { cn } from '@/lib/utils';
 
-const KINDS = [
-    { kind: 'pick', label: 'Watchlist picks' },
-    { kind: 'simulated_trade', label: 'Simulated trades' },
-    { kind: 'profile_conflict', label: 'Profile conflicts' },
-] as const;
+const KINDS = [{ kind: 'pick' }, { kind: 'simulated_trade' }, { kind: 'profile_conflict' }] as const;
 type Kind = (typeof KINDS)[number]['kind'];
 
 // Only the parts of each logged payload this timeline reads; anything absent is shown as not available.
@@ -22,70 +20,91 @@ type TradePayload = {
 };
 type ConflictPayload = { conflicts?: FilterCheck[]; level?: string; risk?: string; proceeded?: boolean };
 
-const DRIVERS: Record<string, string> = { profile_fit: 'profile match', risk_fit: 'risk match', fundamentals: 'fundamentals', diversification: 'diversification' };
-const ORIGINS: Record<string, string> = { card: 'from a watchlist card', rule: 'by an investment rule', agent: 'through the agent' };
-const NA = 'not available';
+const DRIVERS = ['profile_fit', 'risk_fit', 'fundamentals', 'diversification'];
+const ORIGINS = ['card', 'rule', 'agent'];
+const LEVELS = ['Novice', 'Intermediate', 'Expert'];
+const RISKS = ['Low', 'Medium', 'High'];
 
-const num = (value: number | undefined, digits = 2) =>
-    value === undefined ? NA : value.toLocaleString('en-CA', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-const when = (iso: string | undefined) => (iso ? new Date(iso).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' }) : NA);
+type Translator = (key: string, values?: Record<string, string | number>) => string;
 
-function describe(entry: DecisionLogEntry): { tag: string; title: string; why: string; facts: string[] } {
+// Everything the timeline writes goes through the Profile namespace and the active locale's number and date formats.
+function describe(entry: DecisionLogEntry, t: Translator, locale: string): { tag: string; title: string; why: string; facts: string[] } {
+    const h = (key: string, values?: Record<string, string | number>) => t(`history.${key}`, values);
+    const NA = h('notAvailable');
+    const num = (value: number | undefined, digits = 2) =>
+        value === undefined ? NA : formatNumber(value, locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    const when = (iso: string | undefined) => (iso ? formatDateTime(iso, locale) : NA);
+    // A level or risk band from the log is shown in words; one this app does not know stays as logged
+    const level = (value: string | undefined) => (value === undefined ? NA : LEVELS.includes(value) ? t('level', { level: value }) : value);
+    const risk = (value: string | undefined) => (value === undefined ? NA : RISKS.includes(value) ? t('risk', { risk: value }) : value);
+
     if (entry.kind === 'pick') {
         const p = (entry.payload ?? {}) as PickPayload;
         return {
-            tag: 'Pick',
-            title: `${entry.symbol ?? NA}${p.name ? ` · ${p.name}` : ''} listed at rank ${p.rank ?? NA}`,
-            why: p.reason?.text ?? 'No reason sentence was written for this pick: facts only.',
+            tag: h('tags.pick'),
+            title: h('pick.title', { subject: `${entry.symbol ?? NA}${p.name ? ` · ${p.name}` : ''}`, rank: p.rank === undefined ? NA : formatNumber(p.rank, locale) }),
+            why: p.reason?.text ?? h('pick.noReason'),
             facts: [
-                `Score ${num(p.total, 1)} of 100`,
-                ...(p.topDrivers?.length ? [`Main factors: ${p.topDrivers.map((d) => DRIVERS[d] ?? d).join(', ')}`] : []),
-                ...(p.reason?.templateId ? [`Sentence template: ${p.reason.templateId}`] : []),
+                h('pick.score', { score: num(p.total, 1) }),
+                ...(p.topDrivers?.length
+                    ? [h('pick.factors', { factors: p.topDrivers.map((d) => (DRIVERS.includes(d) ? h(`pick.drivers.${d}`) : d)).join(', ') })]
+                    : []),
+                ...(p.reason?.templateId ? [h('pick.template', { id: p.reason.templateId })] : []),
             ],
         };
     }
     if (entry.kind === 'simulated_trade') {
         const p = (entry.payload ?? {}) as TradePayload;
-        const t = p.trade ?? {};
-        const price = t.price;
+        const tr = p.trade ?? {};
+        const price = tr.price;
         const fx = p.fxUsdCad;
-        const action = t.side === 'buy' ? 'Simulated purchase' : t.side === 'sell' ? 'Simulated position reduction' : `Simulated trade (side ${NA})`;
+        const action = tr.side === 'buy' ? h('trade.purchase') : tr.side === 'sell' ? h('trade.reduction') : h('trade.unknown');
         const failed = (p.conflicts ?? []).filter((c) => !c.pass);
+        const origin = ORIGINS.includes(tr.origin ?? '') ? h(`trade.origins.${tr.origin}`) : h('trade.origins.unknown');
         return {
-            tag: 'Simulated trade',
-            title: `${action} of ${num(t.quantity, 6)} ${entry.symbol ?? NA}, ${num(t.valueCad)} CAD`,
-            why: t.ruleId
-                ? `Triggered by investment rule ${t.ruleId}.`
-                : `Asked ${ORIGINS[t.origin ?? ''] ?? `(origin ${NA})`}.${failed.length ? ' Made after a profile conflict was acknowledged.' : ''}`,
+            tag: h('tags.simulated_trade'),
+            title: h('trade.title', {
+                action,
+                quantity: num(tr.quantity, 6),
+                symbol: entry.symbol ?? NA,
+                value: tr.valueCad === undefined ? NA : formatMoney(tr.valueCad, 'CAD', locale),
+            }),
+            why: tr.ruleId
+                ? h('trade.byRule', { ruleId: tr.ruleId })
+                : `${h('trade.asked', { origin })}${failed.length ? ` ${h('trade.acknowledged')}` : ''}`,
             facts: [
                 price
-                    ? `Filled at the last price ${num(price.value)} ${price.currency ?? ''} · source ${price.source} · fetched ${when(price.fetchedAt)}${price.asOf ? ` · as of ${when(price.asOf)}` : ''}`
-                    : `Fill price ${NA}`,
+                    ? `${h('trade.filled', { price: num(price.value), currency: price.currency ?? '', source: price.source, fetched: when(price.fetchedAt) })}${price.asOf ? h('trade.asOfSuffix', { asOf: when(price.asOf) }) : ''}`
+                    : h('trade.noPrice'),
                 // The CAD value of a USD fill depends on the day's rate, so the rate is shown with its source
                 ...(price?.currency === 'USD'
                     ? [fx
-                        ? `Converted to CAD at ${num(fx.value, 4)} CAD per USD · source ${fx.source} · fetched ${when(fx.fetchedAt)}${fx.asOf ? ` · as of ${fx.asOf}` : ''}`
-                        : `USD/CAD rate ${NA}`]
+                        ? `${h('trade.converted', { rate: num(fx.value, 4), source: fx.source, fetched: when(fx.fetchedAt) })}${fx.asOf ? h('trade.asOfSuffix', { asOf: fx.asOf }) : ''}`
+                        : h('trade.noRate')]
                     : []),
-                ...(t.reason ? [`Logged reason: ${t.reason}`] : []),
+                ...(tr.reason ? [h('trade.reason', { reason: tr.reason })] : []),
             ],
         };
     }
     const p = (entry.payload ?? {}) as ConflictPayload;
     const failed = (p.conflicts ?? []).filter((c) => !c.pass);
     return {
-        tag: 'Profile conflict',
-        title: `${entry.symbol ?? NA} did not pass ${failed.length} profile ${failed.length === 1 ? 'filter' : 'filters'}`,
-        why: failed.map((c) => c.detail).join('; ') || `Filter details ${NA}.`,
+        tag: h('tags.profile_conflict'),
+        title: h('conflict.title', { symbol: entry.symbol ?? NA, count: failed.length }),
+        // The filter sentences are written by the server in the active language; they are shown as received
+        why: failed.map((c) => c.detail).join('; ') || h('conflict.noDetails'),
         facts: [
-            `Profile at the time: ${p.level ?? NA}, ${p.risk ?? NA} risk`,
-            p.proceeded ? 'Acknowledged, then simulated anyway' : 'Nothing was simulated',
+            h('conflict.profileThen', { level: level(p.level), risk: risk(p.risk) }),
+            p.proceeded ? h('conflict.proceeded') : h('conflict.notProceeded'),
         ],
     };
 }
 
 // Past picks, simulated trades and profile conflicts, read from the append-only decision log.
 export default function History() {
+    const t = useTranslations('Profile');
+    const locale = useLocale();
+    const when = (iso: string) => formatDateTime(iso, locale);
     const [entries, setEntries] = useState<DecisionLogEntry[] | null>(null);
     const [failed, setFailed] = useState(false);
     const [shown, setShown] = useState<Kind | 'all'>('all');
@@ -112,17 +131,17 @@ export default function History() {
 
     return (
         <Panel
-            title="History"
-            sub="Past picks and why, simulated trades and profile conflicts. Source: the decision log (append-only)."
+            title={t('history.title')}
+            sub={t('history.subtitle')}
             action={(
                 <button type="button" className="btn btn-ghost" onClick={() => { setEntries(null); void load(); }}>
-                    <RefreshCw aria-hidden /> Reload
+                    <RefreshCw aria-hidden /> {t('history.reload')}
                 </button>
             )}
             bodyClassName="flex flex-col"
         >
-            <div role="group" aria-label="Show" className="flex flex-wrap gap-1.5 border-b border-line p-3">
-                {[{ kind: 'all' as const, label: 'All' }, ...KINDS].map(({ kind, label }) => (
+            <div role="group" aria-label={t('history.show')} className="flex flex-wrap gap-1.5 border-b border-line p-3">
+                {[{ kind: 'all' as const }, ...KINDS].map(({ kind }) => (
                     <button
                         key={kind}
                         type="button"
@@ -130,28 +149,28 @@ export default function History() {
                         onClick={() => setShown(kind)}
                         className={cn('btn btn-ghost h-8 px-3 text-[13px]', shown === kind && 'is-on')}
                     >
-                        {label}
+                        {t(`history.kinds.${kind}`)}
                     </button>
                 ))}
             </div>
 
             {failed && (
                 <div className="empty-state" role="alert">
-                    <h3>The decision log did not answer</h3>
-                    <p>No history is shown rather than a partial one. Use Reload to try again.</p>
+                    <h3>{t('history.failedTitle')}</h3>
+                    <p>{t('history.failedBody')}</p>
                 </div>
             )}
-            {!failed && entries === null && <p className="p-4 text-[13.5px] text-faint" aria-live="polite">Reading the decision log…</p>}
+            {!failed && entries === null && <p className="p-4 text-[13.5px] text-faint" aria-live="polite">{t('history.reading')}</p>}
             {!failed && entries !== null && visible.length === 0 && (
                 <div className="empty-state">
-                    <h3>Nothing logged yet</h3>
-                    <p>Picks appear after the first watchlist run; trades and conflicts after the first simulated trade.</p>
+                    <h3>{t('history.emptyTitle')}</h3>
+                    <p>{t('history.emptyBody')}</p>
                 </div>
             )}
 
             <ol className="flex flex-col divide-y divide-line">
                 {!failed && visible.map((entry) => {
-                    const { tag, title, why, facts } = describe(entry);
+                    const { tag, title, why, facts } = describe(entry, t, locale);
                     const versions = Object.entries(entry.ruleVersions ?? {});
                     return (
                         <li key={entry.id} className="flex flex-col gap-1.5 px-4 py-3">
@@ -165,8 +184,11 @@ export default function History() {
                                 {facts.map((fact) => <li key={fact}>{fact}</li>)}
                             </ul>
                             <p className="mono break-words text-[11.5px] text-faint">
-                                {versions.length ? `rules ${versions.map(([, version]) => version).join(' · ')}` : `rule versions ${NA} on this row`}
-                                {entry.snapshotId ? ` · snapshot ${entry.snapshotId}` : ''} · log id {entry.id}
+                                {[
+                                    versions.length ? t('history.meta.rules', { versions: versions.map(([, version]) => version).join(' · ') }) : t('history.meta.noRules'),
+                                    ...(entry.snapshotId ? [t('history.meta.snapshot', { id: entry.snapshotId })] : []),
+                                    t('history.meta.logId', { id: entry.id }),
+                                ].join(' · ')}
                             </p>
                         </li>
                     );

@@ -21,27 +21,4 @@ export function own<T>(record: Record<string, T>, key: string): T | undefined {
 
 export const round1 = (value: number): number => Math.round((value + Number.EPSILON) * 10) / 10;
 
-export const formatPercent = (fraction: number, decimals = 1): string => `${(fraction * 100).toFixed(decimals)}%`;
-
-/** US$ in billions or millions with 1 decimal; exact = true gives whole dollars. */
-export function formatUsd(value: number, exact = false): string {
-    if (!exact && Math.abs(value) >= 1e9) return 'US$' + (value / 1e9).toFixed(1) + 'B';
-    if (!exact && Math.abs(value) >= 1e6) return 'US$' + (value / 1e6).toFixed(1) + 'M';
-    return 'US$' + Math.round(value).toLocaleString('en-US');
-}
-
-// A sentence must never read "35.0% is above the 35.0% cap": when two different numbers round to the same text,
-// the pair is written with more precision.
-
-export function formatPercentPair(value: number, limit: number): [string, string] {
-    for (let decimals = 1; decimals < 6; decimals++) {
-        const pair: [string, string] = [formatPercent(value, decimals), formatPercent(limit, decimals)];
-        if (pair[0] !== pair[1] || value === limit) return pair;
-    }
-    return [formatPercent(value, 6), formatPercent(limit, 6)];
-}
-
-export function formatUsdPair(value: number, limit: number): [string, string] {
-    const pair: [string, string] = [formatUsd(value), formatUsd(limit)];
-    return pair[0] !== pair[1] || value === limit ? pair : [formatUsd(value, true), formatUsd(limit, true)];
-}
+// Numbers in sentences are formatted per language by the catalog (lib/watchlist/text.ts, fmt), not here.

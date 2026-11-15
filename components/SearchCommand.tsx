@@ -4,9 +4,10 @@ import { useEffect, useState } from "react"
 import { CommandDialog, CommandEmpty, CommandInput, CommandList } from "@/components/ui/command"
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
 import { useDebounce } from "@/hooks/useDebounce";
+import { formatNumber } from "@/i18n/format";
 
 const OPEN_SEARCH_EVENT = 'open-search';
 
@@ -19,6 +20,13 @@ export const SearchButton = ({ children, className }: { children: React.ReactNod
 
 export default function SearchCommand({ initialStocks }: { initialStocks: StockWithWatchlistStatus[] }) {
     const t = useTranslations('SearchCommand');
+    const te = useTranslations('StockExtra.searchType');
+    const locale = useLocale();
+    // Finnhub's instrument types ("Common Stock", "ETP") read in the active language; any other type is shown as given
+    const typeLabel = (type?: string) => {
+        const key = (type ?? '').toLowerCase().replace(/[^a-z]/g, '');
+        return key && te.has(key as 'stock') ? te(key as 'stock') : type;
+    };
     const [open, setOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
     const [loading, setLoading] = useState(false)
@@ -102,14 +110,14 @@ export default function SearchCommand({ initialStocks }: { initialStocks: StockW
                     <ul>
                         <li className="search-count">
                             {isSearchMode ? t('results') : t('popular')}
-                            <span className="num"> · {displayStocks?.length || 0}</span>
+                            <span className="num"> · {formatNumber(displayStocks?.length || 0, locale)}</span>
                         </li>
                         {displayStocks?.map((stock) => (
                             <li key={stock.symbol} className="search-item">
                                 <Link href={`/stocks/${stock.symbol}`} onClick={handleSelectStock} className="search-item-link group">
                                     <span className="mono w-20 shrink-0 text-[13px] font-semibold text-brand-ink truncate">{stock.symbol}</span>
                                     <span className="search-item-name flex-1">{stock.name}</span>
-                                    <span className="hidden sm:block text-xs text-faint truncate max-w-40">{[stock.exchange, stock.type].filter(Boolean).join(' · ')}</span>
+                                    <span className="hidden sm:block text-xs text-faint truncate max-w-40">{[stock.exchange, typeLabel(stock.type)].filter(Boolean).join(' · ')}</span>
                                     <ArrowUpRight className="size-4 text-faint opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </Link>
                             </li>

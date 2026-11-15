@@ -1,0 +1,39 @@
+{
+  "header": {
+    "industry": "Secteur selon Finnhub : {industry}",
+    "source": "Source : Finnhub · cours en date du {time} · profil de l’entreprise récupéré avec la page",
+    "sourceNoTime": "Source : Finnhub · heure du cours non fournie par le fournisseur · profil de l’entreprise récupéré avec la page"
+  },
+  "page": {
+    "sentimentSubFull": "{sub} · Adanos · affichage seulement, non utilisé dans un pointage",
+    "dividendSource": "Source : Finnhub (dividendYieldIndicatedAnnual)",
+    "referenceKind": {
+      "crypto": "un cryptoactif",
+      "gold": "la fiche de référence de l’or",
+      "bond_yield": "une fiche de référence sur un rendement obligataire"
+    },
+    "referenceBody": "Sa valeur figure dans l’onglet Aperçu, sous forme de fiche de référence ou de cryptoactif retenu, avec sa source.",
+    "yield": "Rendement",
+    "price": "Prix",
+    "notAvailable": "non disponible",
+    "sourceFetched": "Source : {source} · récupéré le {fetched}",
+    "sourceFetchedAsOf": "Source : {source} · récupéré le {fetched} · en date du {asOf}",
+    "backToOverview": "Retour à l’Aperçu",
+    "sourceNames": {
+      "demodata": "données de démonstration",
+      "derived": "dérivé"
+    }
+  },
+  "sentiment": {
+    "outOf100": "{value}/100",
+    "footer": "Source : Adanos. Méthode non divulguée par le fournisseur. Présenté à titre d’information seulement : ces données ne sont jamais utilisées par un filtre, un pointage ni l’agent."
+  },
+  "searchType": {
+    "commonstock": "Action ordinaire",
+    "stock": "Titre",
+    "etp": "Produit négocié en bourse",
+    "adr": "Certificat américain d’actions étrangères (ADR)",
+    "reit": "FPI",
+    "preferredstock": "Action privilégiée"
+  }
+}

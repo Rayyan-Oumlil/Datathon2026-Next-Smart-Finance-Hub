@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { DEMO_USER } from "@/lib/demo-user";
 import { getLiveQuotes } from "@/lib/actions/finnhub.actions";
 import { isRateLimited } from "@/lib/rate-limit";
+import { requestLocale } from "@/lib/services/http";
+import { renderText, serviceRef } from "@/lib/services/text";
 
 const MAX_SYMBOLS = 25;
 const SYMBOL_PATTERN = /^[A-Z0-9.:\-]{1,20}$/;
@@ -18,7 +20,7 @@ export async function GET(req: NextRequest) {
     // Counted per symbol: unseen tickers each cost a Finnhub call. A 25-symbol watchlist polled every 15 s uses
     // about 100 a minute; the cap stops a runaway page from draining the key.
     if (await isRateLimited(`quotes:user:${DEMO_USER.id}`, 300, 60, symbols.length)) {
-        return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+        return NextResponse.json({ error: renderText(serviceRef("svc.http.too_many", {}), await requestLocale(req)) }, { status: 429 });
     }
 
     return NextResponse.json(await getLiveQuotes(symbols), {

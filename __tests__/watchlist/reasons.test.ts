@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { HoldingsSummary, Pick as WatchlistPick, SignalSet } from '@/lib/domain/types';
 import { RULES } from '@/lib/rules';
-import { buildReason, containsNeverWord } from '@/lib/watchlist/reasons';
-import { EMPTY_HOLDINGS, profile, signals } from './fixtures';
+import { buildReason as build, containsNeverWord } from '@/lib/watchlist/reasons';
+import { EMPTY_HOLDINGS, profile, signals, withoutTextRefs } from './fixtures';
+
+const buildReason = (...args: Parameters<typeof build>) => withoutTextRefs(build(...args));
 
 function pick(set: SignalSet): WatchlistPick {
     const detail = { score: 50, detail: 'fixture' };

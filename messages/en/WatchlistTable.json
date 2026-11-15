@@ -1,0 +1,9 @@
+{
+  "headers": {
+    "company": "Company",
+    "price": "Price",
+    "change": "Change",
+    "marketCap": "Market cap",
+    "action": "Actions"
+  }
+}

@@ -5,7 +5,8 @@ import { RULE_VERSIONS } from '@/lib/rules';
 import { listDecisions, readState } from '@/lib/store';
 import { loadDailySignals } from '@/lib/sources/daily-signals';
 import { editProfile } from '@/lib/services/profile';
-import { buildStatus, buildWatchlist, explainSymbol, getWatchlist, profileHash, refreshWatchlist, userAction } from '@/lib/services/watchlist';
+import { buildStatus, buildWatchlist, explainSymbol, getWatchlist, inputsHash, profileHash, refreshWatchlist, userAction } from '@/lib/services/watchlist';
+import { simulateTrade } from '@/lib/services/portfolio';
 import { answers, freshWorld } from './helpers';
 
 vi.mock('@/lib/services/quotes', async (original) => (await import('./market-stub')).quotesMock(await original()));
@@ -112,7 +113,8 @@ describe('watchlist service', () => {
         await buildStatus().promise;
         const again = await refreshWatchlist();
         expect(again.started).toBe(false);
-        expect(again.reason).toContain('once a day');
+        expect(again).toMatchObject({ reasonCode: 'already_current' });
+        expect(again.started === false && again.reason).toContain('once a day');
         expect(buildStatus().building).toBe(false);
         expect(await runs()).toHaveLength(1);
 
@@ -120,6 +122,46 @@ describe('watchlist service', () => {
         expect(await refreshWatchlist()).toEqual({ started: true });
         await buildStatus().promise;
         expect(await runs()).toHaveLength(2);
+    });
+
+    it('refresh rebuilds the same day after a simulated trade changes the holdings', async () => {
+        await refreshWatchlist();
+        await buildStatus().promise;
+        expect(await refreshWatchlist()).toMatchObject({ started: false, reasonCode: 'already_current' });
+
+        await simulateTrade({ symbol: 'AAPL', side: 'buy', amountCad: 500, acknowledgeConflict: true });
+        expect(await refreshWatchlist()).toEqual({ started: true });
+        await buildStatus().promise;
+        expect(await runs()).toHaveLength(2);
+        expect(await refreshWatchlist()).toMatchObject({ started: false, reasonCode: 'already_current' });
+    });
+
+    it('refresh answers a reason code while a build is running', async () => {
+        await refreshWatchlist();
+        const during = await refreshWatchlist('fr');
+        expect(during).toMatchObject({ started: false, reasonCode: 'building', reason: 'Un calcul est déjà en cours.' });
+        await buildStatus().promise;
+    });
+
+    it('every refresh reason code has a translated note for the Recompute button', async () => {
+        const { readFileSync } = await import('node:fs');
+        const path = await import('node:path');
+        for (const locale of ['en', 'fr']) {
+            const list = JSON.parse(readFileSync(path.join(__dirname, '..', '..', 'messages', locale, 'Watchlist.json'), 'utf8')).list;
+            for (const code of ['already_current', 'building'] satisfies Array<Extract<Awaited<ReturnType<typeof refreshWatchlist>>, { started: false }>['reasonCode']>) {
+                expect(typeof list.recomputeSkipped[code]).toBe('string');
+            }
+        }
+    });
+
+    it('the inputs hash follows holdings and the rules-file version, not the position order', () => {
+        const a = inputsHash([{ symbol: 'AAPL', quantity: 2 }, { symbol: 'RY.TO', quantity: 5 }]);
+        expect(inputsHash([{ symbol: 'RY.TO', quantity: 5 }, { symbol: 'AAPL', quantity: 2 }])).toBe(a);
+        expect(inputsHash([{ symbol: 'AAPL', quantity: 3 }, { symbol: 'RY.TO', quantity: 5 }])).not.toBe(a);
+        expect(inputsHash([])).not.toBe(a);
+        const rules = { version: 'v1', versions: { score: 'score-v1' } };
+        expect(inputsHash([], rules)).not.toBe(inputsHash([], { ...rules, version: 'v2' }));
+        expect(inputsHash([], rules)).not.toBe(inputsHash([], { ...rules, versions: { score: 'score-v2' } }));
     });
 
     it('refresh refuses before onboarding', async () => {

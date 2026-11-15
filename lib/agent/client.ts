@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { ServiceError } from '@/lib/services/errors';
 import type { AgentContext } from './context';
+import { agentText } from './text';
 
 export type AgentPayload = {
     actionId: string;
@@ -15,7 +16,6 @@ export type AgentPayload = {
 };
 
 const TIMEOUT_MS = 120_000;     // one request can be several model calls and two guardrail passes
-const DOWN = 'The agent service is not reachable right now. Nothing was changed.';
 
 const replySchema = z.object({
     text: z.string(),
@@ -62,6 +62,7 @@ async function viaAgentCore(arn: string, payload: AgentPayload, conversationId: 
 /** Sends one request to the agent service and checks the shape of what comes back. */
 export async function callAgent(payload: AgentPayload, conversationId = 'default'): Promise<AgentServiceReply> {
     const arn = process.env.AGENT_RUNTIME_ARN;
+    const words = agentText(payload.context.locale);
     const signal = AbortSignal.timeout(TIMEOUT_MS);
     let raw: unknown;
     try {
@@ -69,10 +70,10 @@ export async function callAgent(payload: AgentPayload, conversationId = 'default
     } catch (error) {
         const name = error instanceof Error ? error.name : '';
         console.error('agent call failed:', error instanceof Error ? `${error.name}: ${error.message}` : error);
-        if (name === 'TimeoutError' || name === 'AbortError') throw new ServiceError(504, `The agent service did not answer within ${TIMEOUT_MS / 1000} seconds. Nothing was changed.`);
-        throw new ServiceError(503, DOWN);
+        if (name === 'TimeoutError' || name === 'AbortError') throw new ServiceError(504, words.agentTimeout(TIMEOUT_MS / 1000));
+        throw new ServiceError(503, words.agentDown);
     }
     const parsed = replySchema.safeParse(raw);
-    if (!parsed.success) throw new ServiceError(502, 'The agent service sent a reply the app could not read. Nothing was changed.');
+    if (!parsed.success) throw new ServiceError(502, words.agentUnreadable);
     return parsed.data;
 }

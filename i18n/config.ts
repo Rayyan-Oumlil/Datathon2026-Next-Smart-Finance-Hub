@@ -1,14 +1,12 @@
-// Languages the signed-in app and auth pages ship in. The marketing site stays English
-// (and static); only routes that already render per request read the locale cookie.
-export const LOCALES = ['en', 'pl', 'ar'] as const;
+// The app ships in exactly two languages. The saved choice lives in a cookie; without one, the
+// browser's Accept-Language decides, and anything else falls back to English.
+export const LOCALES = ['en', 'fr'] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = 'en';
 export const LOCALE_COOKIE = 'NEXT_LOCALE';
 
-export const LOCALE_NAMES: Record<Locale, string> = { en: 'English', pl: 'Polski', ar: 'العربية' };
-
-// Arabic reads right to left; the rest of the app is written with logical (start/end) spacing, so this is the only switch.
-export const localeDir = (locale: string): 'rtl' | 'ltr' => (locale === 'ar' ? 'rtl' : 'ltr');
+// Each language is named in its own language, so anyone can find theirs.
+export const LOCALE_NAMES: Record<Locale, string> = { en: 'English', fr: 'Français' };
 
 export const isLocale = (value: unknown): value is Locale => LOCALES.includes(value as Locale);
 

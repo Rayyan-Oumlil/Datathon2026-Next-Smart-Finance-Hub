@@ -54,8 +54,11 @@ def test_glossary_files_and_safe_refusal_pass_the_judgement_check():
         assert checks.find_judgement_words(path.read_text(encoding="utf-8")) == [], path.name
 
 
-def test_only_an_exact_glossary_quote_is_exempt():
+def test_only_an_exact_glossary_quote_is_exempt(monkeypatch, tmp_path):
+    # The shipped glossary holds no listed word; a file that did would be quotable word for word.
     quote = "A limit order is an instruction to trade only at a set price or better."
+    (tmp_path / "order-types.md").write_text(f"# Orders\n\n{quote}\n", encoding="utf-8")
+    monkeypatch.setenv("GLOSSARY_DIR", str(tmp_path))
     assert checks.find_judgement_words(f"From the glossary: {quote} (agent/glossary/order-types.md)") == []
     assert checks.find_judgement_words("This price is better.") == ["better"]
 

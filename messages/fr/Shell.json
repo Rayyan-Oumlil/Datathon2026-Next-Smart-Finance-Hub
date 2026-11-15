@@ -1,0 +1,10 @@
+{
+  "nav": {
+    "portfolio": "Portefeuille",
+    "overview": "Aperçu",
+    "profile": "Profil"
+  },
+  "logoLabel": "AlphaForge, portefeuille",
+  "disclaimer": "Simulation seulement. Aucune transaction réelle et aucun conseil en placement. Chaque chiffre indique sa source et son heure.",
+  "credit": "Fondé sur <link>OpenStock</link> d’Open Dev Society, licence AGPL-3.0."
+}

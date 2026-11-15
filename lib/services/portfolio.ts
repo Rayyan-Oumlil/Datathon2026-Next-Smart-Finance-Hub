@@ -2,15 +2,18 @@
 // 'simulated_trade' rows of the decision log, so the log is the single source of truth. No real trade exists.
 
 import { randomBytes } from 'node:crypto';
+import { getAppLocale } from '@/i18n/locale';
 import { DEMO_USER } from '@/lib/demo-user';
-import type { FilterCheck, HoldingsSummary, Portfolio, Position, SignalSet, SimulatedTrade, Sourced } from '@/lib/domain/types';
+import type { FilterCheck, HoldingsSummary, Portfolio, Position, SignalSet, SimulatedTrade, Sourced, TextRef } from '@/lib/domain/types';
 import { RULES, RULES_VERSION } from '@/lib/rules';
 import { marketDate } from '@/lib/sources/daily-signals';
 import type { DailyClose } from '@/lib/sources/types';
 import { appendDecision, getProfile, listDecisions } from '@/lib/store';
 import { getEntry } from '@/lib/universe';
 import { checkProfileConflict } from '@/lib/watchlist/conflict';
+import type { Locale } from '@/lib/watchlist/text';
 import { ServiceError, round2 } from './errors';
+import { renderOr, renderText, serviceRef } from './text';
 import { dailyClosesFor, fxUsdCad, isTradable, liveQuote, signalsFor, toCad } from './quotes';
 
 const STARTING_CASH = RULES.simulated_portfolio.starting_cash;
@@ -28,6 +31,7 @@ export type TradeInput = {
     origin?: SimulatedTrade['origin'];
     ruleId?: string;
     reason?: string;
+    reasonRef?: TextRef;          // the reason as a catalog reference (the rules engine), so it can be shown in either language
     acknowledgeConflict?: boolean;
 };
 
@@ -139,10 +143,10 @@ async function priced(portfolio: Portfolio): Promise<{ positions: PositionView[]
 // A daily close is placed at 21:00 UTC, the end of the Toronto and New York session in winter time
 const closeTime = (day: string) => `${day}T21:00:00.000Z`;
 
-async function valueHistory(portfolio: Portfolio, fx: Sourced | null, now: string, valueNow: number | null): Promise<{ history: PortfolioView['history']; note: string }> {
+async function valueHistory(portfolio: Portfolio, fx: Sourced | null, now: string, valueNow: number | null, locale: Locale): Promise<{ history: PortfolioView['history']; note: string }> {
     const { trades } = portfolio;
     if (trades.length === 0) {
-        return { history: [{ t: now, valueCad: portfolio.startingCashCad }], note: 'No simulated trade yet: the value is the starting amount.' };
+        return { history: [{ t: now, valueCad: portfolio.startingCashCad }], note: renderText(serviceRef('svc.portfolio.no_trade', {}), locale) };
     }
     const history = [{ t: trades[0].at, valueCad: portfolio.startingCashCad }];
     const today = marketDate(new Date(now));
@@ -178,16 +182,23 @@ async function valueHistory(portfolio: Portfolio, fx: Sourced | null, now: strin
     if (valueNow !== null) history.push({ t: now, valueCad: valueNow });
 
     const sources = [...new Set([...closes.values()].map((series) => series.source))].join(', ');
-    const note = [
-        'First point: the starting amount, at the time of the first simulated trade. Last point: the value now.',
-        days.length > 0 ? `Days in between: value at the daily close (${sources}), USD converted at today's Bank of Canada rate.` : 'No daily close exists yet between the first trade and now.',
-        withoutCloses.length > 0 ? `No daily closes available for ${withoutCloses.join(', ')}: days holding them are left out.` : '',
-    ].filter(Boolean).join(' ');
+    const note = renderText(serviceRef('svc.portfolio.history_note', { sources: days.length > 0 ? sources : null, withoutCloses }), locale);
     return { history, note };
 }
 
-export async function getPortfolio(): Promise<PortfolioView> {
-    const portfolio = await getPortfolioState();
+/** A logged trade with its reason in the language (a reason given as plain text stays as given). */
+export function renderTrade(trade: SimulatedTrade, locale: Locale): SimulatedTrade {
+    return trade.reasonRef ? { ...trade, reason: renderOr(trade.reasonRef, locale, trade.reason) } : trade;
+}
+
+/**
+ * The simulated portfolio, valued now. Its notes, the trades' reasons and the names of the groups in bySector
+ * (a sector, or ETF / Crypto / Other for a position with no sector) are in `locale` (default: the request's language).
+ */
+export async function getPortfolio(locale?: Locale): Promise<PortfolioView> {
+    const lang = locale ?? await getAppLocale();
+    const stored = await getPortfolioState();
+    const portfolio = { ...stored, trades: stored.trades.map((trade) => renderTrade(trade, lang)) };
     const now = new Date().toISOString();
     const { positions, fx } = await priced(portfolio);
     const unpriced = positions.filter((position) => position.valueCad === null).map((position) => position.symbol);
@@ -195,7 +206,8 @@ export async function getPortfolio(): Promise<PortfolioView> {
 
     const bySector: Record<string, number> = {};
     for (const position of positions) {
-        if (position.valueCad !== null) bySector[sectorKey(position)] = round2((bySector[sectorKey(position)] ?? 0) + position.valueCad);
+        const group = renderText(serviceRef('svc.portfolio.group', { group: sectorKey(position) }), lang);
+        if (position.valueCad !== null) bySector[group] = round2((bySector[group] ?? 0) + position.valueCad);
     }
 
     // Today's gain or loss: each position's value against its value at the previous close
@@ -215,14 +227,15 @@ export async function getPortfolio(): Promise<PortfolioView> {
         currency: 'CAD',
         source: 'derived',
         fetchedAt: now,
-        note: [
-            'simulated portfolio: cash + quantity x last price of each position',
-            priceSources.length > 0 ? `prices from ${priceSources.join(', ')}` : '',
-            fx && positions.some((position) => position.price?.currency === 'USD') ? `USD converted at ${fx.value} CAD per USD (${fx.source}, ${fx.asOf ?? fx.fetchedAt})` : '',
-            unpriced.length > 0 ? `not included, no price available: ${unpriced.join(', ')}` : '',
-        ].filter(Boolean).join('; '),
+        note: renderText(serviceRef('svc.portfolio.value_note', {
+            priceSources,
+            ...(fx && positions.some((position) => position.price?.currency === 'USD')
+                ? { fxValue: fx.value, fxSource: fx.source, fxAsOf: fx.asOf ?? fx.fetchedAt }
+                : { fxValue: null, fxSource: null, fxAsOf: null }),
+            unpriced,
+        }), lang),
     };
-    const { history, note } = await valueHistory(portfolio, fx, now, unpriced.length === 0 ? total : null);
+    const { history, note } = await valueHistory(portfolio, fx, now, unpriced.length === 0 ? total : null, lang);
     return {
         portfolio,
         valueCad,
@@ -280,28 +293,29 @@ export async function holdingsSummary(): Promise<HoldingsSummary> {
 
 // ---------------------------------------------------------------- trades
 
-const money = (value: number) => value.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/** A filter check as a catalog reference, or its detail as written when it has none. */
+const refOf = (check: FilterCheck): TextRef | string => check.textRef ?? check.detail;
 
-async function fill(input: TradeInput): Promise<TradeOutcome> {
+async function fill(input: TradeInput, locale: Locale): Promise<TradeOutcome> {
     const entry = getEntry(input.symbol);
-    if (!entry) throw new ServiceError(404, `${input.symbol} is not in the app's list of assets, so it cannot be simulated.`);
-    if (!isTradable(entry)) throw new ServiceError(400, `${entry.name} is a reference value here and cannot be traded in the simulation.`);
+    if (!entry) throw new ServiceError(404, serviceRef('svc.trade.not_in_universe', { symbol: input.symbol }));
+    if (!isTradable(entry)) throw new ServiceError(400, serviceRef('svc.reference_value', { name: entry.name }));
     const hasAmount = input.amountCad !== undefined;
     const given = hasAmount ? input.amountCad : input.quantity;
     if (hasAmount === (input.quantity !== undefined) || !(typeof given === 'number' && Number.isFinite(given) && given > 0)) {
-        throw new ServiceError(400, 'Give either an amount in CAD or a quantity, above zero.');
+        throw new ServiceError(400, serviceRef('svc.trade.amount_or_quantity', {}));
     }
     const profile = await getProfile(DEMO_USER.id);
-    if (!profile) throw new ServiceError(409, 'No profile exists yet. Complete onboarding first.');
+    if (!profile) throw new ServiceError(409, serviceRef('svc.no_profile', {}));
     const origin = input.origin ?? 'card';
 
     // No price with a source, no trade
     const quote = await liveQuote(entry).catch(() => null);
-    if (!quote) throw new ServiceError(502, `No price with a source is available for ${entry.symbol} right now, so nothing was simulated.`);
+    if (!quote) throw new ServiceError(502, serviceRef('svc.trade.no_price', { symbol: entry.symbol }));
     const { price } = quote;
     const fx = price.currency === 'CAD' ? undefined : await fxUsdCad().catch(() => undefined);
     const unitCad = toCad(price.value, price.currency, fx);
-    if (unitCad === null) throw new ServiceError(502, `The ${price.currency ?? 'unknown currency'} price of ${entry.symbol} cannot be converted to CAD right now, so nothing was simulated.`);
+    if (unitCad === null) throw new ServiceError(502, serviceRef('svc.trade.no_conversion', { symbol: entry.symbol, currency: price.currency ?? null }));
 
     // The amounts are checked before the conflict is logged, so the log holds no conflict for a trade that could not happen
     const before = await getPortfolioState();
@@ -309,13 +323,13 @@ async function fill(input: TradeInput): Promise<TradeOutcome> {
     let quantity = hasAmount ? floorQuantity(given / unitCad) : roundQuantity(given);
     // An amount equal to the value of the whole position removes all of it, leaving no remainder from rounding
     if (input.side === 'sell' && hasAmount && held > 0 && Math.abs(given - round2(held * unitCad)) < 0.005) quantity = held;
-    if (!(quantity > 0)) throw new ServiceError(400, `${money(given)} CAD is too small for one unit at ${money(unitCad)} CAD.`);
+    if (!(quantity > 0)) throw new ServiceError(400, serviceRef('svc.trade.too_small', { amount: given, unit: unitCad }));
     const valueCad = round2(quantity * unitCad);
     if (input.side === 'buy' && valueCad > before.cashCad + EPSILON) {
-        throw new ServiceError(400, `Simulated cash is ${money(before.cashCad)} CAD; this purchase needs ${money(valueCad)} CAD.`);
+        throw new ServiceError(400, serviceRef('svc.trade.cash_short', { cash: before.cashCad, need: valueCad }));
     }
     if (input.side === 'sell' && quantity > held + EPSILON) {
-        throw new ServiceError(400, `The simulated position in ${entry.symbol} is ${held} units; ${quantity} cannot be removed.`);
+        throw new ServiceError(400, serviceRef('svc.trade.position_short', { symbol: entry.symbol, held, quantity }));
     }
 
     // Profile-conflict check on purchases: name the conflict with the actual values, then let the user proceed
@@ -323,7 +337,7 @@ async function fill(input: TradeInput): Promise<TradeOutcome> {
     let conflictDecisionId: string | undefined;
     if (input.side === 'buy') {
         const { signals, fxUsdCad: signalFx } = await signalsFor(entry);
-        conflicts = checkProfileConflict(signals, profile, RULES, signalFx ?? fx).conflicts;
+        conflicts = checkProfileConflict(signals, profile, RULES, signalFx ?? fx, locale).conflicts;
         if (conflicts.length > 0) {
             const proceeds = origin === 'rule' || input.acknowledgeConflict === true;
             const logged = await appendDecision({
@@ -335,8 +349,9 @@ async function fill(input: TradeInput): Promise<TradeOutcome> {
             });
             conflictDecisionId = logged.id;
             if (!proceeds) {
-                const message = `${entry.symbol} does not pass ${conflicts.length} of your profile's filters (${profile.level}, ${profile.risk} risk): `
-                    + `${conflicts.map((check) => check.detail).join('; ')}. Nothing was simulated. You can still proceed in the simulation.`;
+                const message = renderText(serviceRef('svc.trade.conflict', {
+                    symbol: entry.symbol, level: profile.level, risk: profile.risk, conflicts: conflicts.map(refOf),
+                }), locale);
                 return { status: 'conflict', conflicts, signals, message };
             }
         }
@@ -344,7 +359,9 @@ async function fill(input: TradeInput): Promise<TradeOutcome> {
 
     // The replay follows the log's time order, so each trade is at least 1 ms after the one before it
     const lastAt = before.trades.length > 0 ? Date.parse(before.trades[before.trades.length - 1].at) : 0;
-    const defaultReason = input.side === 'buy' ? `simulated purchase from the ${origin}` : `simulated position reduction from the ${origin}`;
+    // A reason given as plain text (the agent) is kept as given; the app's own reasons keep their catalog reference
+    const base: TextRef | string = input.reasonRef ?? input.reason ?? serviceRef('svc.trade.reason_default', { side: input.side, origin });
+    const reasonRef = serviceRef('svc.trade.reason', { base, conflicts: conflicts.map(refOf) });
     const trade: SimulatedTrade = {
         id: `trade_${randomBytes(6).toString('hex')}`,
         at: new Date(Math.max(Date.now(), lastAt + 1)).toISOString(),
@@ -356,7 +373,8 @@ async function fill(input: TradeInput): Promise<TradeOutcome> {
         valueCad,
         origin,
         ...(input.ruleId ? { ruleId: input.ruleId } : {}),
-        reason: (input.reason ?? defaultReason) + (conflicts.length > 0 ? `; profile conflict logged: ${conflicts.map((check) => check.detail).join('; ')}` : ''),
+        reason: renderText(reasonRef, locale),
+        reasonRef,
         simulated: true,
     };
     await appendDecision({
@@ -376,9 +394,11 @@ async function fill(input: TradeInput): Promise<TradeOutcome> {
  * Simulates one fill at the last price. Trades run one at a time, so two requests cannot both spend the same cash.
  * A purchase of an asset that fails the profile's filters comes back as a conflict unless acknowledged (a rule
  * always proceeds); the conflict is logged either way.
+ * Its messages, conflict details and reason are written in `locale` (default: the request's language); the trade
+ * keeps its reason's catalog reference, so the log can show it in either language.
  */
-export function simulateTrade(input: TradeInput): Promise<TradeOutcome> {
-    const run = () => fill(input);
+export function simulateTrade(input: TradeInput, locale?: Locale): Promise<TradeOutcome> {
+    const run = async () => fill(input, locale ?? await getAppLocale());
     const result = (holder.__tradeQueue ?? Promise.resolve()).then(run, run);
     holder.__tradeQueue = result.catch(() => undefined);
     return result;

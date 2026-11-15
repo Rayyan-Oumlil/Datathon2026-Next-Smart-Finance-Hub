@@ -1,0 +1,38 @@
+{
+  "names": {
+    "us": "United States",
+    "in": "India",
+    "de": "Germany",
+    "ca": "Canada",
+    "au": "Australia",
+    "sa": "Saudi Arabia",
+    "crypto": "Crypto",
+    "fx": "Forex",
+    "pl": "Poland"
+  },
+  "feed": {
+    "live": "Live",
+    "delayed": "Delayed",
+    "endOfDay": "End of day"
+  },
+  "groups": {
+    "financial": "Financial",
+    "technology": "Technology",
+    "consumer": "Consumer",
+    "banks": "Banks",
+    "industry": "Industry",
+    "finance": "Finance",
+    "energy": "Energy",
+    "growth": "Growth",
+    "resources": "Resources",
+    "consumerHealth": "Consumer & health",
+    "energyMaterials": "Energy & materials",
+    "telecomConsumer": "Telecom & consumer",
+    "majors": "Majors",
+    "more": "More",
+    "commodityFX": "Commodity FX",
+    "banksInsurance": "Banks & insurance",
+    "energyIndustry": "Energy & industry",
+    "consumerTech": "Consumer & tech"
+  }
+}

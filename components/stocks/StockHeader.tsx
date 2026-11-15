@@ -2,7 +2,8 @@ import { CalendarClock, Gauge, Landmark, MoveVertical } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import StockLivePrice from "@/components/stocks/StockLivePrice";
 import { getCompanyProfile, getLiveQuotes } from "@/lib/actions/finnhub.actions";
-import { formatNumber, formatPrice, formatSymbolForTradingView, isChartEmbeddable } from "@/lib/utils";
+import { formatSymbolForTradingView, isChartEmbeddable } from "@/lib/utils";
+import { formatDateTime, formatMoney, formatNumber } from "@/i18n/format";
 import { hasFinnhubQuotes } from "@/lib/markets";
 import { symbolInfoConfig } from "@/lib/constants";
 import TradingViewWidget from "@/components/TradingViewWidget";
@@ -35,7 +36,7 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
                 </div>
                 {quote && (
                     <div className="flex items-center gap-3">
-                        <p className="num text-2xl font-bold tracking-[-0.03em]">{formatPrice(quote.price, quote.currency)}</p>
+                        <p className="num text-2xl font-bold tracking-[-0.03em]">{formatMoney(quote.price, quote.currency, locale)}</p>
                         <ChangePill value={quote.changePercent} />
                     </div>
                 )}
@@ -52,28 +53,28 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
 export default async function StockHeader({ symbol }: { symbol: string }) {
     if (!hasFinnhubQuotes(symbol)) return <TradingViewHeader symbol={symbol} />;
 
-    const [quotes, profile, t, locale] = await Promise.all([
+    const [quotes, profile, t, te, locale] = await Promise.all([
         getLiveQuotes([symbol]),
         getCompanyProfile(symbol),
         getTranslations('StockHeader'),
+        getTranslations('StockExtra.header'),
         getLocale(),
     ]);
     const quote = quotes[symbol];
 
     const currency = profile?.currency || 'USD';
     const company = profile?.name || symbol;
-    const money = (value?: number) => (value ? formatPrice(value, currency) : '—');
+    const money = (value?: number) => (value ? formatMoney(value, currency, locale) : '—');
 
     // Finnhub's t is the last trade in unix seconds; without it the page says so rather than showing a time
-    const quoteTime = quote?.t
-        ? new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(quote.t * 1000))
-        : 'time not given by the provider';
+    const quoteTime = quote?.t ? formatDateTime(new Date(quote.t * 1000).toISOString(), locale) : null;
 
     const stats = [
         { label: t('open'), icon: CalendarClock, value: money(quote?.o), hint: t('openHint') },
         { label: t('dayRange'), icon: MoveVertical, value: quote?.l && quote?.h ? `${money(quote.l)} – ${money(quote.h)}` : '—', hint: t('dayRangeHint') },
         { label: t('prevClose'), icon: Gauge, value: money(quote?.pc), hint: t('prevCloseHint') },
-        { label: t('marketCap'), icon: Landmark, value: profile?.marketCapitalization ? formatNumber(profile.marketCapitalization) : '—', hint: currency },
+        // Finnhub gives the market cap in millions of the listing currency
+        { label: t('marketCap'), icon: Landmark, value: profile?.marketCapitalization && Number.isFinite(profile.marketCapitalization) ? formatNumber(profile.marketCapitalization * 1_000_000, locale, { notation: 'compact', maximumFractionDigits: 2 }) : '—', hint: currency },
     ];
 
     return (
@@ -88,7 +89,7 @@ export default async function StockHeader({ symbol }: { symbol: string }) {
                     <div className="min-w-0">
                         <h1 className="truncate text-xl font-bold tracking-[-0.03em]">{company}</h1>
                         <p className="mono truncate text-[12.5px] text-faint">
-                            {[symbol, profile?.exchange, profile?.finnhubIndustry && `Finnhub industry: ${profile.finnhubIndustry}`].filter(Boolean).join(' · ')}
+                            {[symbol, profile?.exchange, profile?.finnhubIndustry && te('industry', { industry: profile.finnhubIndustry })].filter(Boolean).join(' · ')}
                         </p>
                     </div>
                 </div>
@@ -107,7 +108,7 @@ export default async function StockHeader({ symbol }: { symbol: string }) {
                 ))}
             </div>
             <p className="mt-2 text-[12px] text-faint">
-                Source: Finnhub · quote as of {quoteTime} · company profile fetched with the page
+                {quoteTime ? te('source', { time: quoteTime }) : te('sourceNoTime')}
             </p>
         </section>
     );

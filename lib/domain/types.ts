@@ -123,6 +123,17 @@ export type Snapshot = {
     signals: SignalSet[];
 };
 
+// ---------------------------------------------------------------- display text
+
+/**
+ * The structured form of a sentence shown to the user: a catalog key and the values it is filled with. The
+ * sentence itself is a pure function of this pair and the language (lib/watchlist/text.ts, lib/services/text.ts),
+ * so a logged run can be read again in English or French. Names in params stay the stable English identifiers
+ * ('Medium', 'etf', 'Information Technology'); the catalog turns them into display names.
+ */
+export type TextParam = string | number | boolean | null | TextRef | Array<string | TextRef>;
+export type TextRef = { key: string; params?: Record<string, TextParam> };
+
 // ---------------------------------------------------------------- pipeline results
 
 export type FilterCheck = {
@@ -131,10 +142,11 @@ export type FilterCheck = {
     detail: string;           // plain fact with the actual values: 'volatility 41.2% vs cap 35.0% (Medium)'
     value?: number;
     limit?: number;
+    textRef?: TextRef;        // the detail's catalog key and values, to render it in another language
 };
 
 export type FactorScores = { profile_fit: number; risk_fit: number; fundamentals: number; diversification: number };
-export type FactorDetail = { score: number; detail: string; noData?: boolean };
+export type FactorDetail = { score: number; detail: string; noData?: boolean; textRef?: TextRef };
 
 export type Candidate = {
     symbol: string;
@@ -145,7 +157,7 @@ export type Candidate = {
     total?: number;           // 0-100
 };
 
-export type ReasonSentence = { templateId: string; text: string; sources: string[] };
+export type ReasonSentence = { templateId: string; text: string; sources: string[]; textRef?: TextRef };
 
 export type Pick = {
     rank: number;
@@ -174,6 +186,7 @@ export type WatchlistResult = {
     referenceCards: SignalSet[];        // gold and bond yields: shown beside the list, not ranked
     rejected: Array<{ symbol: string; failed: FilterCheck[] }>;
     candidates: number;
+    locale?: 'en' | 'fr';               // the language the sentences were written in (absent: English)
 };
 
 // ---------------------------------------------------------------- logs (append-only)
@@ -230,6 +243,7 @@ export type SimulatedTrade = {
     origin: 'card' | 'rule' | 'agent';
     ruleId?: string;
     reason: string;
+    reasonRef?: TextRef;      // the reason's catalog key and values, when the app wrote it (not for a reason given as text)
     simulated: true;
 };
 

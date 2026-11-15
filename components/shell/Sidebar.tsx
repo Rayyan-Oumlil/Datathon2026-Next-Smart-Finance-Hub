@@ -14,18 +14,19 @@ type SidebarProps = {
 
 // The three tabs of the dashboard (spec section 10). Portfolio is home.
 const NAV = [
-    { href: '/portfolio', label: 'Portfolio', icon: Wallet },
-    { href: '/overview', label: 'Overview', icon: LayoutDashboard },
-    { href: '/profile', label: 'Profile', icon: UserRound },
+    { href: '/portfolio', label: 'portfolio', icon: Wallet },
+    { href: '/overview', label: 'overview', icon: LayoutDashboard },
+    { href: '/profile', label: 'profile', icon: UserRound },
 ] as const;
 
 const Sidebar = ({ user }: SidebarProps) => {
     const t = useTranslations('Sidebar');
+    const ts = useTranslations('Shell');
     const pathname = usePathname();
 
     return (
         <aside className="sidebar">
-            <Link href="/portfolio" className="px-2 pt-1 pb-2 text-[19px] font-bold tracking-[-0.03em] text-foreground" aria-label="AlphaForge portfolio">
+            <Link href="/portfolio" className="px-2 pt-1 pb-2 text-[19px] font-bold tracking-[-0.03em] text-foreground" aria-label={ts('logoLabel')}>
                 Alpha<span className="text-brand-ink">Forge</span>
             </Link>
 
@@ -38,20 +39,20 @@ const Sidebar = ({ user }: SidebarProps) => {
             <nav className="flex flex-col gap-0.5">
                 {NAV.map(({ href, label, icon: Icon }) => (
                     <Link key={href} href={href} className={cn('side-item', pathname === href && 'is-active')}>
-                        <Icon /> {label}
+                        <Icon /> {ts(`nav.${label}`)}
                     </Link>
                 ))}
             </nav>
 
             <div className="mt-auto flex flex-col gap-2">
                 <p className="rounded-[11px] px-3 py-2.5 text-[12px] leading-snug text-faint shadow-[inset_0_0_0_1px_var(--line)]">
-                    Simulation only. No real trades and no investment advice. Every number shows its source and time.
+                    {ts('disclaimer')}
                 </p>
                 <LanguageSwitcher />
                 <p className="px-2.5 text-[11.5px] text-faint">
-                    Built on{' '}
-                    <a href="https://github.com/Open-Dev-Society/OpenStock" target="_blank" rel="noreferrer" className="underline">OpenStock</a>
-                    {' '}by Open Dev Society, AGPL-3.0.
+                    {ts.rich('credit', {
+                        link: (chunks) => <a href="https://github.com/Open-Dev-Society/OpenStock" target="_blank" rel="noreferrer" className="underline">{chunks}</a>,
+                    })}
                 </p>
             </div>
 

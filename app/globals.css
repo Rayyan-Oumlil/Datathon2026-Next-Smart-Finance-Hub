@@ -850,20 +850,3 @@
     --tweet-body-line-height: 1.5;
     max-width: none;
 }
-
-/* ---------------------------------------------------------------------------
-   Arabic (right to left)
-   The Latin display face has no Arabic glyphs, so Arabic switches to Plex Sans
-   Arabic and drops the negative tracking. Unlayered on purpose: `body` carries
-   Tailwind's `font-sans` utility, and the utilities layer beats @layer base.
---------------------------------------------------------------------------- */
-html[lang="ar"] body {
-    font-family: var(--font-arabic), var(--font-jakarta), system-ui, sans-serif;
-    letter-spacing: 0;
-}
-
-/* Numbers keep their own order in a right-to-left line: "-0.08" must not render as "0.08-". */
-html[dir="rtl"] .num,
-html[dir="rtl"] .mono {
-    unicode-bidi: plaintext;
-}

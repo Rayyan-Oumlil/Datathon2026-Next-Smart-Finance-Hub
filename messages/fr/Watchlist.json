@@ -1,0 +1,257 @@
+{
+  "notAvailable": "non disponible",
+  "factors": {
+    "long": {
+      "profile_fit": "Correspondance avec les choix de votre profil",
+      "risk_fit": "Volatilité par rapport à votre profil de risque",
+      "fundamentals": "Fondamentaux (C/B et croissance)",
+      "diversification": "Diversification de vos avoirs"
+    },
+    "short": {
+      "profile_fit": "Correspondance au profil",
+      "risk_fit": "Profil de risque",
+      "fundamentals": "Fondamentaux",
+      "diversification": "Répartition"
+    },
+    "sort": {
+      "rank": "Rang",
+      "total": "Pointage total"
+    }
+  },
+  "filters": {
+    "avoid_list": "Liste d’exclusion",
+    "markets": "Marchés choisis",
+    "volatility": "Plafond de volatilité",
+    "market_cap_floor": "Seuil de capitalisation boursière",
+    "liquidity": "Valeur négociée par jour",
+    "esg": "Étiquette ESG (données de démonstration)",
+    "novice": "Règle pour le niveau Novice",
+    "low_risk_etf": "Règle pour les FNB à faible risque",
+    "crypto_risk": "Règle pour les cryptomonnaies",
+    "data": "Données requises par les filtres"
+  },
+  "assetClass": {
+    "stock": "Action",
+    "etf": "FNB",
+    "crypto": "Cryptomonnaie",
+    "gold": "Or",
+    "bond_yield": "Rendement obligataire"
+  },
+  "kindLine": "{kind} · {sector}",
+  "market": {
+    "US": "É.-U.",
+    "Canada": "Canada"
+  },
+  "signals": {
+    "price": "Dernier cours",
+    "changePercent": "Variation du jour",
+    "pe": "C/B (12 derniers mois)",
+    "revenueGrowthPct": "Croissance des revenus, d’une année à l’autre",
+    "volatility1y": "Volatilité sur 1 an",
+    "beta": "Bêta",
+    "marketCapUsd": "Capitalisation boursière",
+    "avgDailyTradedValueUsd": "Valeur négociée par jour",
+    "sectorLabel": "Étiquette sectorielle du fournisseur (hors GICS)",
+    "closes1m": "Clôtures quotidiennes sur 1 mois",
+    "newsCount7d": "Manchettes des 7 derniers jours (affichées, jamais notées)"
+  },
+  "signalValue": {
+    "closes": "{count, plural, one {# clôture quotidienne} other {# clôtures quotidiennes}}",
+    "perDay": "{value} par jour",
+    "headlines": "{count, plural, one {# manchette} other {# manchettes}}"
+  },
+  "compact": {
+    "T": "{value} billions $ US",
+    "B": "{value} milliards $ US",
+    "M": "{value} millions $ US",
+    "unit": "{value} $ US"
+  },
+  "ruleIds": {
+    "momentum": "élan du cours",
+    "news_flow": "flux de nouvelles",
+    "adanos_sentiment": "indice de sentiment Adanos"
+  },
+  "kept": {
+    "seed": "Sur votre liste de marques, et conforme à tous les filtres",
+    "incumbent": "Déjà inscrit lors du calcul précédent",
+    "new": "Nouveau dans ce calcul"
+  },
+  "esg": {
+    "screened": "évalué",
+    "not screened": "non évalué",
+    "controversy": "controverse"
+  },
+  "esgChip": {
+    "label": "ESG : {tag} · données de démonstration",
+    "title": "Étiquette saisie à la main, qui ne provient pas d’un fournisseur de données"
+  },
+  "source": {
+    "line": "{source} · récupéré le {time}{hasProvider, select, true { · heure du fournisseur : {providerTime}} other {}}",
+    "stale": " · périmé",
+    "labelled": "{label} : "
+  },
+  "card": {
+    "rank": "Rang {rank}",
+    "kindPinned": "{kind} · épinglé",
+    "moveNotAvailable": "variation non disponible",
+    "factWithMove": "{kind}, variation de {change} aujourd’hui",
+    "quote": "Cours",
+    "score": "Pointage",
+    "outOf": "/ 100",
+    "topDrivers": "Principaux facteurs :",
+    "noData": " aucune donnée",
+    "sparklineLabel": "Clôtures quotidiennes de {symbol} sur un mois",
+    "oneMonth": "1 mois · {source}",
+    "peVsSector": "C/B par rapport au secteur :",
+    "staleQuote": "Cours du {time}, non en direct",
+    "staleDaily": "Valeurs quotidiennes datant d’avant aujourd’hui",
+    "why": "Pourquoi?",
+    "addToPortfolio": "Ajouter au portefeuille simulé",
+    "pin": "Épingler",
+    "unpin": "Désépingler",
+    "dismiss": "Écarter"
+  },
+  "levelView": {
+    "Novice": "Affichage Novice : faits seulement, sans pointage",
+    "Intermediate": "Affichage Intermédiaire : rang, pointage, principaux facteurs et courbe sur 1 mois",
+    "Expert": "Affichage Expert : tous les facteurs, valeurs brutes et leurs sources"
+  },
+  "stage": {
+    "signals": "Collecte des données de marché",
+    "ranking": "Application des filtres et calcul du pointage",
+    "logging": "Écriture du calcul dans le journal des décisions"
+  },
+  "list": {
+    "title": "Liste de suivi intelligente",
+    "subResult": "Mise à jour une fois par jour · calculée le {time} · {listed} inscrits sur {candidates, plural, one {# candidat} other {# candidats}} · {density}",
+    "subEmpty": "Classement selon des règles fixes à partir de votre profil. Simulation seulement, il ne s’agit pas de conseils en placement.",
+    "recompute": "Recalculer",
+    "recomputing": "Recalcul en cours…",
+    "searchLabel": "Rechercher un actif par nom ou symbole boursier",
+    "searchPlaceholder": "Rechercher un symbole ou une entreprise, puis demander pourquoi elle figure ou non sur la liste",
+    "searchFailed": "La recherche n’a pas répondu. Veuillez réessayer.",
+    "searchEmpty": "Aucun actif de la liste de l’application ne correspond à « {query} ».",
+    "quotePage": "Page du cours",
+    "loadFailedTitle": "Impossible de charger la liste de suivi",
+    "tryAgain": "Réessayer",
+    "loadFailedFallback": "Impossible de charger la liste de suivi.",
+    "outOfDate": "La dernière vérification auprès du serveur n’a pas abouti ({error}). Les données affichées peuvent être périmées.",
+    "loading": "Chargement de la liste de suivi…",
+    "noProfileTitle": "Aucun profil pour le moment",
+    "noProfileBody": "La liste de suivi est établie à partir des réponses de votre profil. Rien n’est inscrit tant qu’aucun profil n’existe.",
+    "setUpProfile": "Configurer votre profil",
+    "computeFailedTitle": "Impossible de calculer la liste de suivi",
+    "buildingTitle": "Préparation de la liste de suivi du jour",
+    "progress": "{stage}{hasTotal, select, true { : {done, number} sur {total, plural, one {# actif} other {# actifs}}} other {}}{hasSymbol, select, true { (dernier : {symbol})} other {}}. Démarré le {time}.",
+    "runStarted": "Le calcul a démarré.",
+    "buildingNote": "Le premier calcul de la journée recueille chaque donnée une fois, avec sa source et son heure, et peut prendre quelques minutes. Cette page vérifie de nouveau toutes les {seconds} secondes.",
+    "staleInputs": "Les données quotidiennes datent du {date} : la collecte d’aujourd’hui n’a pas été menée à terme. Les valeurs sont affichées avec leur heure de récupération réelle.",
+    "earlierDay": "un jour précédent",
+    "sortGroup": "Trier les cartes",
+    "sortBy": "Trier par",
+    "emptyTitle": "Aucun titre n’est inscrit aujourd’hui",
+    "emptyBody": "{candidates, plural, one {# candidat a été vérifié} other {# candidats ont été vérifiés}} et {rejected} {rejected, plural, one {n’a pas respecté} other {n’ont pas respecté}} les filtres de votre profil{dismissed, plural, =0 {} other {; # écartés}}. Recherchez un symbole ci-dessus et ouvrez « Pourquoi? » pour voir la vérification qui l’a exclu.",
+    "dismissedBy": "Écartés par vous :",
+    "restore": "{symbol} · rétablir",
+    "rankingNote": "Le classement est calculé selon des règles fixes ({versions}), les mêmes pour tous les niveaux; seule la quantité de détails change. L’IA ne choisit ni ne classe. Instantané",
+    "howScoreWorks": "Comment fonctionne le pointage",
+    "referenceTitle": "Valeurs de référence, non classées",
+    "referenceBody": "L’or et les rendements des obligations du gouvernement du Canada, affichés à titre de contexte. Un rendement n’est pas un prix : ces valeurs ne sont donc jamais notées.",
+    "recomputeFailed": "Impossible de lancer le recalcul.",
+    "recomputeSkipped": {
+      "already_current": "Rien à recalculer : la liste d’aujourd’hui utilise déjà les données du jour, votre profil, vos positions et les règles actuelles.",
+      "building": "Un calcul est déjà en cours. La liste se met à jour à la fin."
+    },
+    "actionFailed": "Impossible d’enregistrer l’action.",
+    "noSourceFor": "Aucune source n’a répondu pour : {list}. Aucune valeur de remplacement n’est affichée.",
+    "thisValue": "cette valeur"
+  },
+  "explain": {
+    "title": "Comment fonctionne le pointage",
+    "intro": "Règles fixes ({version}), consignées dans un seul fichier de règles et exécutées comme du code ordinaire. Mêmes données, même liste. Il ne s’agit pas de conseils en placement.",
+    "filtersHead": "1. Filtres.",
+    "filtersBody": " Un actif est exclu lorsqu’il échoue à une vérification de votre profil (liste d’exclusion, marchés, plafond de volatilité, seuil de capitalisation boursière, valeur négociée, étiquette ESG en données de démonstration).",
+    "scoreHead": "2. Pointage.",
+    "scoreBody": " Chaque actif retenu reçoit quatre facteurs de 0 à 100, selon des pondérations fixes :",
+    "total": "Le total correspond à {formula}.",
+    "selectionHead": "3. Sélection.",
+    "selectionBody": " Les totaux les plus élevés d’abord : jusqu’à {topN}; au plus {perSector} par secteur et {maxCrypto, plural, one {# cryptomonnaie} other {# cryptomonnaies}}. L’ordre est le même à tous les niveaux; seule la quantité de détails change.",
+    "topN": {
+      "Novice": "{n} au niveau Novice",
+      "Intermediate": "{n} au niveau Intermédiaire",
+      "Expert": "{n} au niveau Expert"
+    },
+    "notScored": "Exclus du pointage : {removed}. Jamais utilisés à aucune étape : {never}. L’assistant d’IA ne choisit, ne classe ni ne note."
+  },
+  "why": {
+    "title": "Pourquoi {name}?",
+    "description": "Données tirées du calcul consigné de la liste de suivi. Calculées selon des règles fixes; aucun choix, classement ni pointage par l’IA. Il ne s’agit pas de conseils en placement.",
+    "loadFailed": "Impossible de charger l’explication.",
+    "loadingRun": "Chargement du calcul consigné…",
+    "listedRank": "Inscrit · rang {rank}",
+    "notListed": "Absent de la liste",
+    "leftOut": "{count, plural, one {Exclu par un filtre} other {Exclu par # filtres}}",
+    "reasonTitle": "Phrase de justification",
+    "reasonSub": "Remplie à partir de l’un des {count} modèles de faits autorisés ({version})",
+    "template": "Modèle : ",
+    "filledFrom": "Remplie à partir de :",
+    "noTemplate": "Aucun modèle ne s’applique à ce titre; la carte présente donc seulement des faits (secteur et variation du jour).",
+    "scoreTitle": "Pointage",
+    "scoreSub": "Somme pondérée de quatre facteurs, chacun de 0 à 100 ({version})",
+    "outOf100": "sur 100",
+    "factorCalc": "{score} × {weight} =",
+    "noDataNeutral": " (aucune donnée : valeur neutre)",
+    "totalFormula": "Le total correspond à {formula}.",
+    "noScore": "Aucun pointage : seuls les actifs conformes à tous les filtres sont notés, et les valeurs de référence ne le sont jamais.",
+    "filterTitle": "Vérifications des filtres",
+    "filterSub": "Réussite ou échec, avec les valeurs réelles ({version})",
+    "pass": "réussi",
+    "fail": "échoué",
+    "loadingChecks": "Chargement des vérifications…",
+    "missingChecks": "Vérifications des filtres pour ce symbole dans le calcul consigné",
+    "inputsTitle": "Valeurs d’entrée",
+    "inputsSub": "Chaque valeur avec sa provenance, son heure de récupération et l’heure du fournisseur",
+    "source": "Provenance",
+    "endpoint": "Point d’accès",
+    "fetched": "Récupéré",
+    "providerTime": "Heure du fournisseur",
+    "noProviderTime": "non fournie par le fournisseur",
+    "note": "Remarque",
+    "stale": " · périmé",
+    "missingInputs": "Non disponible auprès d’aucune source, et non remplacé par une valeur fictive : {list}.",
+    "esgTag": "Étiquette ESG : ",
+    "esgValue": "{tag} (données de démonstration, saisies à la main)",
+    "niche": "Créneau : ",
+    "listedFrom": "Inscrit à l’univers d’actifs depuis : ",
+    "loadingInputs": "Chargement des valeurs d’entrée…",
+    "missingInputsFor": "Valeurs d’entrée pour ce symbole dans le calcul consigné",
+    "missing": "{what} : non disponible.",
+    "traceTitle": "Traçabilité",
+    "computed": "Calculé",
+    "snapshot": "Instantané",
+    "ruleVersions": "Versions des règles",
+    "decisionRows": "Lignes du journal des décisions"
+  },
+  "trade": {
+    "title": "Ajouter {symbol} au portefeuille simulé",
+    "description": "{name} · Simulation seulement : aucun ordre réel n’est passé et aucun argent n’est déplacé. Il ne s’agit pas de conseils en placement.",
+    "recorded": "Acquisition simulée enregistrée : <num>{quantity}</num> unités de {symbol} à <num>{price}</num>, pour <num>{value}</num>.",
+    "fill": "Exécution au dernier cours. Source : {source}, récupéré le {time}{hasProvider, select, true {, heure du fournisseur : {providerTime}} other {}}.",
+    "cashLeft": "Encaisse simulée restante : <num>{cash}</num>.",
+    "acknowledged": "Le conflit avec le profil et cette opération simulée figurent tous deux dans le journal des décisions.",
+    "traceId": "Identifiant de l’opération : <mono>{id}</mono>. La liste de suivi est calculée une fois par jour; utilisez Recalculer pour tenir compte de cette position.",
+    "close": "Fermer",
+    "amountLabel": "Montant en CAD (encaisse simulée)",
+    "conflictTitle": "{count, plural, one {Ce titre ne respecte pas l’un des filtres de votre profil} other {Ce titre ne respecte pas # des filtres de votre profil}}",
+    "conflictNote": "Aucune opération n’a été simulée. Vous pouvez tout de même poursuivre la simulation; le conflit et l’opération sont tous deux consignés dans le journal des décisions.",
+    "cancel": "Annuler",
+    "proceeding": "Simulation en cours…",
+    "proceed": "Poursuivre la simulation",
+    "checking": "Vérification en cours…",
+    "submit": "Ajouter au portefeuille simulé",
+    "toast": "Simulation : {symbol} ajouté au portefeuille simulé",
+    "failed": "Impossible d’enregistrer l’acquisition simulée.",
+    "noAnswer": "Le serveur n’a pas répondu. Aucune opération n’a été simulée."
+  },
+  "labelColon": "{label} :"
+}

@@ -22,15 +22,34 @@ STYLE_TONE = {
     "just the data": "Data style: figures and sources only, no commentary.",
 }
 
-# The slice of the context each subagent receives.
+# The reply language, from context.locale. Every prompt carries it, in rule 7 of _rules.md.
+LANGUAGE = {
+    "en": "Write in English.",
+    "fr": "Write in French: Canadian French as used by Québec financial institutions, plain and factual, natural "
+          "rather than word for word, and always address the user as \"vous\". Use these terms: portefeuille "
+          "simulé, liste de suivi intelligente, fonds négocié en bourse (FNB), titre, secteur, volatilité, "
+          "capitalisation boursière, rendement, profil de risque (Faible, Moyen, Élevé), niveau (Novice, "
+          "Intermédiaire, Expert), données de démonstration, simulé, échéance, the Pourquoi? panel. Write each "
+          "figure with the same digits as the tool gave, in French form: decimal comma, a space before % and "
+          "the $ after the amount (35,0 %, 1 500,00 $). Put a space before a colon (Source : Finnhub) and none "
+          "before ? or !. Symbols (AAPL), source names and document locations stay as they are. Tool results "
+          "and specialist reports may be in English: write your own text in French.",
+}
+# The neutral words for a trade, in rule 2 of _rules.md.
+TRADE_WORDS = {
+    "en": '"purchase", "sale" or "simulated trade"',
+    "fr": '"acquisition simulée", "réduire la position", "ajouter au portefeuille simulé" or "opération simulée"',
+}
+
+# The slice of the context each subagent receives. Every slice holds the locale.
 CONTEXT_SLICE = {
-    "market_data": ["level"],
-    "watchlist_explainer": ["level", "risk", "watchlist"],
-    "portfolio": ["level", "holdings"],
-    "rules": ["level", "holdings"],
-    "layout": ["level", "layout"],
-    "profile": ["level", "risk", "profile"],
-    "glossary": ["level"],
+    "market_data": ["level", "locale"],
+    "watchlist_explainer": ["level", "risk", "watchlist", "locale"],
+    "portfolio": ["level", "holdings", "locale"],
+    "rules": ["level", "holdings", "locale"],
+    "layout": ["level", "layout", "locale"],
+    "profile": ["level", "risk", "profile", "locale"],
+    "glossary": ["level", "locale"],
 }
 
 
@@ -48,8 +67,17 @@ def tone(context: dict) -> str:
 def render(agent: str, context: dict) -> str:
     """The system prompt of one agent for one request."""
     visible = context if agent == "orchestrator" else {k: context[k] for k in CONTEXT_SLICE[agent] if k in context}
-    rules = (_template("_rules").replace("{{never_words}}", ", ".join(config.NEVER_WORDS))
-             .replace("{{judgement_words}}", ", ".join(checks.JUDGEMENT_WORDS)))
+    locale = config.locale_of(context)
+    never = ", ".join(config.NEVER_WORDS)
+    judgement = ", ".join(checks.JUDGEMENT_WORDS)
+    if locale == "fr":
+        # A French reply is checked against both lists; the French ones are named first.
+        never = f"{', '.join(config.NEVER_WORDS_FR)}; in English: {never}"
+        judgement = f"{', '.join(checks.JUDGEMENT_WORDS_FR)}; in English: {judgement}"
+    rules = (_template("_rules").replace("{{never_words}}", never)
+             .replace("{{judgement_words}}", judgement)
+             .replace("{{trade_words}}", TRADE_WORDS[locale])
+             .replace("{{language}}", LANGUAGE[locale]))
     return (_template(agent)
             .replace("{{rules}}", rules)
             .replace("{{tone}}", tone(context))

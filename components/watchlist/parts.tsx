@@ -1,6 +1,7 @@
 import { Clock } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import type { EsgTag, Sourced } from "@/lib/domain/types";
-import { formatTime } from "./format";
+import { esgLabel, formatTime } from "./format";
 
 /** 1-month closes as a line. Rendered only when there are closes; the caller omits it otherwise. */
 export function Sparkline({ closes, label }: { closes: number[]; label: string }) {
@@ -19,7 +20,8 @@ export function Sparkline({ closes, label }: { closes: number[]; label: string }
 
 // The ESG tag is hand-set mock data: it never appears without its "demo data" label.
 export function EsgChip({ tag }: { tag: EsgTag }) {
-    return <span className="pill" title="Hand-set tag, not from a data provider">ESG: {tag} · demo data</span>;
+    const t = useTranslations('Watchlist');
+    return <span className="pill" title={t('esgChip.title')}>{t('esgChip.label', { tag: esgLabel(t, tag) })}</span>;
 }
 
 export function StaleChip({ children }: { children: React.ReactNode }) {
@@ -28,11 +30,18 @@ export function StaleChip({ children }: { children: React.ReactNode }) {
 
 /** Where and when a value came from. Shown next to every figure on the Expert card and in the "Why?" panel. */
 export function SourceLine({ sourced, stale, label }: { sourced: Sourced<unknown>; stale?: boolean; label?: string }) {
+    const t = useTranslations('Watchlist');
+    const locale = useLocale();
     return (
         <span className="text-[11.5px] leading-snug text-faint">
-            {label && `${label}: `}{sourced.source} · fetched {formatTime(sourced.fetchedAt)}
-            {sourced.asOf && <> · provider time {formatTime(sourced.asOf)}</>}
-            {stale && <span className="font-bold text-warn"> · stale</span>}
+            {label && t('source.labelled', { label })}
+            {t('source.line', {
+                source: sourced.source,
+                time: formatTime(sourced.fetchedAt, t, locale),
+                hasProvider: String(Boolean(sourced.asOf)),
+                providerTime: sourced.asOf ? formatTime(sourced.asOf, t, locale) : '',
+            })}
+            {stale && <span className="font-bold text-warn">{t('source.stale')}</span>}
         </span>
     );
 }

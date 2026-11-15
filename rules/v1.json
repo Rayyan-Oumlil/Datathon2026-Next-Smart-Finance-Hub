@@ -38,7 +38,7 @@
       { "min": 6, "max": 8, "risk": "High" }
     ],
     "caps": [
-      { "when": { "drop_20pct": "sell" }, "max_risk": "Medium", "board_text": "\"Sell\" on the drop question can never give High", "answer_shown": "you answered \"reduce my position\" to the 20% drop question" }
+      { "when": { "drop_20pct": "sell" }, "max_risk": "Medium", "board_text": "\"Sell\" on the drop question can never give High", "answer_shown": "you answered \"reduce my position\" to the 20% drop question", "board_text_fr": "«\u00a0Réduire ma position\u00a0» à la question sur une baisse de 20\u00a0% ne donne jamais un profil de risque Élevé", "answer_shown_fr": "vous avez répondu «\u00a0réduire ma position\u00a0» à la question sur une baisse de 20\u00a0%" }
     ],
     "caps_apply_to_overrides": "a risk chosen by hand on the Profile tab above a cap's max_risk is refused, with the answer that limits it named (owner review, 2026-11-14)",
     "if_self_rating_differs_from_result": "show both"
@@ -154,14 +154,17 @@
     "version": "reasons-v1",
     "origin": "board",
     "allowed_templates": [
-      { "id": "same_sector_as_holding", "text": "Same sector as {ticker}, which you hold", "source": "holdings + sector source" },
-      { "id": "picked_sector", "text": "In {sector}, a sector you picked", "source": "Profile config" },
-      { "id": "brands_list", "text": "On your brands list", "source": "Profile config" },
-      { "id": "etf_tracks", "text": "ETF that tracks {index} / holds {n} companies", "source": "fund profile" },
-      { "id": "moved", "text": "Moved {x}% today / over {window}", "source": "quote source" }
+      { "id": "same_sector_as_holding", "text": "Same sector as {ticker}, which you hold", "text_fr": "Même secteur que {ticker}, que vous détenez", "source": "holdings + sector source" },
+      { "id": "picked_sector", "text": "In {sector}, a sector you picked", "text_fr": "Dans le secteur {sector}, que vous avez choisi", "source": "Profile config" },
+      { "id": "brands_list", "text": "On your brands list", "text_fr": "Figure dans votre liste de marques", "source": "Profile config" },
+      { "id": "etf_tracks", "text": "ETF that tracks {index} / holds {n} companies", "text_fr": "FNB qui suit l’indice {index} / qui détient {n} sociétés", "source": "fund profile" },
+      { "id": "moved", "text": "Moved {x}% today / over {window}", "text_fr": "Variation de {x}\u00a0% aujourd’hui / sur {window}", "source": "quote source" }
     ],
     "if_none_applies": "the card shows facts only (sector, % move)",
+    "text_fr_note": "French wording of each template (Québec usage), same placeholders. In French an index is shown without a trailing 'Index' (\"l’indice S&P 500\"), a sector by its French GICS name, and {window} as '1 mois'.",
     "never_words": ["buy", "sell", "should", "good", "safe", "will rise", "fits you", "recommended"],
+    "never_words_fr": ["acheter", "achetez", "achat", "vendre", "vendez", "vente", "devriez", "devrait", "devez", "il faut", "bon", "bonne", "sûr", "sûre", "sécuritaire", "sans risque", "va monter", "va augmenter", "vous convient", "recommandé", "recommandée", "recommandons", "conseillé", "conseillons"],
+    "never_words_fr_matching": "whole word, any case, accents significant ('sûr' is listed, 'sur' is not); plural and feminine forms (+e, +es, +s) count. Both lists are checked on every sentence, English or French.",
     "never_words_apply_to": ["reason sentences", "agent replies"]
   },
 

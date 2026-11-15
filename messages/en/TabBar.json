@@ -1,0 +1,11 @@
+{
+  "pages": {
+    "overview": "Overview",
+    "watchlist": "Watchlist",
+    "profile": "Profile"
+  },
+  "openMenu": "Open menu",
+  "closeTab": "Close {label}",
+  "openStock": "Open a stock",
+  "openStockHint": "Open a stock (⌘K)"
+}

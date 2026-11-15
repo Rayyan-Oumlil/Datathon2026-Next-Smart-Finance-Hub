@@ -9,6 +9,9 @@ from . import action_log, config
 _current: contextvars.ContextVar["RequestTrace"] = contextvars.ContextVar("request_trace")
 _actor: contextvars.ContextVar[str] = contextvars.ContextVar("actor", default="orchestrator")
 
+# Failed rows (each after its one retry) after which a request stops writing to the action log.
+MAX_FAILED_LOG_ROWS = 2
+
 
 def sha256(value) -> str:
     text = value if isinstance(value, str) else json.dumps(value, sort_keys=True, default=str)
@@ -29,11 +32,22 @@ class RequestTrace:
     proposed: dict | None = None
     log_rows: int = 0
     log_errors: list = field(default_factory=list)
+    log_skipped: int = 0                                 # rows not attempted once the log was given up on
     log_table = None                                     # tests pass a fake table
+
+    @property
+    def locale(self) -> str:
+        """The reply language: "en" or "fr", from the context the web app built."""
+        return config.locale_of(self.context)
 
     def log(self, step: str, actor: str | None = None, **fields) -> None:
         """Writes one action-log row, retrying a failed write once. A row that still fails is recorded in
-        log_errors (the response then says logComplete: false) and the next rows are still tried."""
+        log_errors (the response then says logComplete: false). Once MAX_FAILED_LOG_ROWS rows of this request
+        have failed, the table is taken as unreachable: later rows are counted in log_skipped, not attempted,
+        so a request does not spend two timeouts on every row."""
+        if self.log_stopped:
+            self.log_skipped += 1
+            return
         row = action_log.build_row(self.user_id, self.action_id, step, actor or current_actor(),
                                    promptVersion=config.PROMPT_VERSION, **fields)
         first = action_log.write(row, self.log_table)
@@ -47,6 +61,11 @@ class RequestTrace:
             self.log_errors.append(error)
         else:
             self.log_rows += 1
+
+    @property
+    def log_stopped(self) -> bool:
+        """True once enough rows have failed that further writes for this request are not attempted."""
+        return len(self.log_errors) >= MAX_FAILED_LOG_ROWS
 
     def record_tool(self, endpoint: str, body: dict, result, status: int | None, ms: int) -> None:
         ok = not (isinstance(result, dict) and "error" in result)

@@ -1,6 +1,6 @@
 {
   "name": "datathon-no-advice",
-  "description": "Blocks recommendation wording and ungrounded replies; masks personal data; detects (logs) the investment-advice topic and low relevance without blocking.",
+  "description": "Blocks recommendation wording (English and French) and ungrounded replies; masks personal data; detects the advice topic and low relevance without blocking.",
   "topicPolicyConfig": {
     "topicsConfig": [
       {
@@ -74,6 +74,90 @@
       },
       {
         "text": "recommended",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "achetez",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "vendez",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "devriez",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "recommandé",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "recommandée",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "recommandons",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "conseillé",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "conseillons",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "va monter",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "vous convient",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "sans risque",
+        "inputAction": "NONE",
+        "inputEnabled": false,
+        "outputAction": "BLOCK",
+        "outputEnabled": true
+      },
+      {
+        "text": "sécuritaire",
         "inputAction": "NONE",
         "inputEnabled": false,
         "outputAction": "BLOCK",

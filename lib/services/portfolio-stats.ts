@@ -5,6 +5,7 @@ import type { Sourced } from '@/lib/domain/types';
 import type { DailyClose } from '@/lib/sources/types';
 import { getEntry } from '@/lib/universe';
 import { ServiceError } from './errors';
+import { serviceRef } from './text';
 import { dailyClosesFor } from './quotes';
 
 export type StatPeriod = '1m' | '3m' | '1y';
@@ -117,12 +118,12 @@ export function correlation(a: Series, b: Series, period: StatPeriod): StatResul
 /** Fetches the daily closes and runs one calculator. Return and drawdown take one symbol, correlation two. */
 export async function computeStat(input: { metric: StatMetric; symbols: string[]; period: StatPeriod }): Promise<StatResult> {
     const wanted = input.metric === 'correlation' ? 2 : 1;
-    if (input.symbols.length !== wanted) throw new ServiceError(400, `${input.metric} needs ${wanted} symbol${wanted > 1 ? 's' : ''}.`);
+    if (input.symbols.length !== wanted) throw new ServiceError(400, serviceRef('svc.stats.symbols_needed', { metric: input.metric, count: wanted }));
     const series = await Promise.all(input.symbols.map(async (symbol): Promise<Series> => {
         const entry = getEntry(symbol);
-        if (!entry) throw new ServiceError(404, `${symbol} is not in the app's list of assets.`);
+        if (!entry) throw new ServiceError(404, serviceRef('svc.not_in_universe', { symbol }));
         const closes = await dailyClosesFor(entry).catch(() => null);
-        if (!closes) throw new ServiceError(502, `Daily closes for ${entry.symbol} are not available right now.`);
+        if (!closes) throw new ServiceError(502, serviceRef('svc.stats.no_closes', { symbol: entry.symbol }));
         return { symbol: entry.symbol, closes };
     }));
     if (input.metric === 'return') return periodReturn(series[0], input.period);

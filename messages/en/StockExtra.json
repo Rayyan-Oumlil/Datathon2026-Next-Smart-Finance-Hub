@@ -1,0 +1,39 @@
+{
+  "header": {
+    "industry": "Finnhub industry: {industry}",
+    "source": "Source: Finnhub · quote as of {time} · company profile fetched with the page",
+    "sourceNoTime": "Source: Finnhub · quote time not given by the provider · company profile fetched with the page"
+  },
+  "page": {
+    "sentimentSubFull": "{sub} · Adanos · display only, not used in any score",
+    "dividendSource": "Source: Finnhub (dividendYieldIndicatedAnnual)",
+    "referenceKind": {
+      "crypto": "a crypto asset",
+      "gold": "the gold reference card",
+      "bond_yield": "a bond yield reference card"
+    },
+    "referenceBody": "Its value is shown on the Overview tab as a reference card or crypto pick, with its source.",
+    "yield": "Yield",
+    "price": "Price",
+    "notAvailable": "not available",
+    "sourceFetched": "Source: {source} · fetched {fetched}",
+    "sourceFetchedAsOf": "Source: {source} · fetched {fetched} · as of {asOf}",
+    "backToOverview": "Back to Overview",
+    "sourceNames": {
+      "demodata": "demo data",
+      "derived": "derived"
+    }
+  },
+  "sentiment": {
+    "outOf100": "{value}/100",
+    "footer": "Source: Adanos. Method not disclosed by the provider. Shown for information; it never enters a filter, a score or the agent."
+  },
+  "searchType": {
+    "commonstock": "Common stock",
+    "stock": "Stock",
+    "etp": "Exchange-traded product",
+    "adr": "ADR",
+    "reit": "REIT",
+    "preferredstock": "Preferred stock"
+  }
+}

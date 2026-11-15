@@ -1,14 +1,15 @@
 import Link from 'next/link';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import type { Messages } from 'next-intl';
 import ChangePill from '@/components/ChangePill';
 import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
 import { yahooAppSymbol } from '@/lib/yahoo';
 import type { Market } from '@/lib/markets';
 import { toMessageKey } from '@/i18n/config';
+import { formatNumber } from '@/i18n/format';
 
-const fmt = (v: number) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const TWO_DECIMALS: Intl.NumberFormatOptions = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
 
 type GroupKey = keyof Messages['Markets']['groups'];
 
@@ -17,12 +18,14 @@ const symbolsOf = (market: Market) => [...new Set(market.groups.flatMap((g) => g
 // Our own quotes table for Yahoo-priced markets: TradingView's market-quotes widget shows no TADAWUL values in free embeds,
 // and only end-of-day GPW values.
 export default async function YahooQuotesTable({ market }: { market: Market }) {
-    const [quotes, t, th, tm] = await Promise.all([
+    const [quotes, t, th, tm, locale] = await Promise.all([
         getYahooDailyQuotes(symbolsOf(market)),
         getTranslations('YahooQuotes'),
         getTranslations('WatchlistTable.headers'),
         getTranslations('Markets'),
+        getLocale(),
     ]);
+    const fmt = (value: number, options: Intl.NumberFormatOptions = {}) => formatNumber(value, locale, { ...TWO_DECIMALS, ...options });
     const currency = Object.values(quotes)[0]?.currency;
 
     return (
@@ -53,7 +56,7 @@ export default async function YahooQuotesTable({ market }: { market: Market }) {
                                     </td>
                                     <td className="num px-3 py-2 text-end font-semibold">{q ? fmt(q.price) : '—'}</td>
                                     <td className={`num px-3 py-2 text-end ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
-                                        {q ? `${q.change > 0 ? '+' : ''}${fmt(q.change)}` : '—'}
+                                        {q ? fmt(q.change, { signDisplay: 'exceptZero' }) : '—'}
                                     </td>
                                     <td className="px-3 py-2 text-end"><ChangePill value={q?.changePercent} /></td>
                                 </tr>

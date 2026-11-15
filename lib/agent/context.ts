@@ -1,6 +1,9 @@
-// Step 2 of an agent request: the context. Only data the app itself holds goes in: the profile, the simulated
-// holdings, today's watchlist picks and the layout. Adanos sentiment and news text are never read here.
+// Step 2 of an agent request: the context. Only data the app itself holds goes in: the request's language, the
+// profile, the simulated holdings, today's watchlist picks and the layout. Adanos sentiment and news text are
+// never read here.
 
+import type { Locale } from '@/i18n/config';
+import { getAppLocale } from '@/i18n/locale';
 import type { Level, OnboardingAnswers, Risk } from '@/lib/domain/types';
 import { getLayout } from '@/lib/services/layout';
 import { getPortfolioState } from '@/lib/services/portfolio';
@@ -8,6 +11,7 @@ import { getProfile } from '@/lib/services/profile';
 import { getWatchlist } from '@/lib/services/watchlist';
 
 export type AgentContext = {
+    locale: Locale;                 // the reply language: the agent service answers in it
     level?: Level;
     risk?: Risk;
     agentStyle?: OnboardingAnswers['agentStyle'];
@@ -18,8 +22,9 @@ export type AgentContext = {
 };
 
 export async function buildContext(): Promise<{ context: AgentContext; snapshotId: string | null }> {
-    const [profile, portfolio, watchlist, layout] = await Promise.all([getProfile(), getPortfolioState(), getWatchlist(), getLayout()]);
+    const [profile, portfolio, watchlist, layout, locale] = await Promise.all([getProfile(), getPortfolioState(), getWatchlist(), getLayout(), getAppLocale()]);
     const context: AgentContext = {
+        locale,
         ...(profile ? { level: profile.level, risk: profile.risk, agentStyle: profile.answers.agentStyle, profile: profile.answers } : {}),
         holdings: portfolio.positions.map(({ symbol, quantity, sector }) => ({ symbol, quantity, ...(sector ? { sector } : {}) })),
         watchlist: (watchlist.result?.picks ?? []).map(({ rank, symbol, name, total }) => ({ rank, symbol, name, total })),

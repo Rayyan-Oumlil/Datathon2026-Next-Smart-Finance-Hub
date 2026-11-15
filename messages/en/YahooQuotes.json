@@ -1,0 +1,6 @@
+{
+  "changePercent": "Change %",
+  "unavailable": "Quotes unavailable right now.",
+  "source": "Prices in {currency} via Yahoo chart (unofficial), delayed about 15 minutes.",
+  "sourceNoCurrency": "Prices via Yahoo chart (unofficial), delayed about 15 minutes."
+}

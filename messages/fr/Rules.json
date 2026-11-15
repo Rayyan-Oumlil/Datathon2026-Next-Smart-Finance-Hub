@@ -1,0 +1,91 @@
+{
+  "describe": {
+    "conditionPrice": "{symbol} est {relation, select, below {sous} other {au-dessus de}} {value} {currency}",
+    "conditionChange": "la variation du jour de {symbol} est {relation, select, below {inférieure à} other {supérieure à}} {value}",
+    "sizeUnits": "{count, plural, one {{quantity} unité} other {{quantity} unités}}",
+    "sentence": "Quand {condition}, {side, select, add {simuler l’acquisition de} other {simuler la réduction de la position de}} {size}, {frequency, select, once {une seule fois} other {au plus une fois par jour de bourse tant que la condition demeure vraie}}."
+  },
+  "triggers": {
+    "price_below": "Cours sous le seuil",
+    "price_above": "Cours au-dessus du seuil",
+    "change_pct_below": "Variation du jour inférieure à",
+    "change_pct_above": "Variation du jour supérieure à"
+  },
+  "origin": {
+    "card": "Fiche",
+    "rule": "Règle",
+    "agent": "Assistant"
+  },
+  "status": {
+    "active": "en vigueur",
+    "paused": "en pause"
+  },
+  "side": {
+    "buy": "Acquisition",
+    "sell": "Réduction"
+  },
+  "assetClass": {
+    "stock": "Titre",
+    "etf": "FNB",
+    "crypto": "Cryptoactif",
+    "gold": "Or",
+    "bond_yield": "Rendement obligataire"
+  },
+  "module": {
+    "title": "Règles de placement (simulées)",
+    "lastChecked": "Dernière vérification le {when} d’après les dernières cotes; nouvelle vérification toutes les 60 secondes tant que cet onglet est ouvert",
+    "checking": "Vérification des règles d’après les dernières cotes…",
+    "add": "Ajouter une règle",
+    "rules": "Règles",
+    "noRules": "Aucune règle pour le moment. Une règle surveille un actif et, lorsque son déclencheur est atteint, simule une opération au dernier cours.",
+    "asWritten": "Texte d’origine : « {text} »",
+    "created": "créée le {when}",
+    "lastActed": "dernière action le {when}",
+    "neverActed": "n’a pas encore agi",
+    "lastCheck": "Dernière vérification : {note}",
+    "lastCheckWithPrice": "Dernière vérification : {note} ({source})",
+    "pause": "Mettre en pause",
+    "resume": "Reprendre",
+    "trades": "Opérations simulées",
+    "noTrades": "Aucune opération simulée pour le moment. Chacune est présentée ici avec la fiche ou la règle qui l’a produite et son motif, et est inscrite au journal des décisions.",
+    "tradeDetail": "{units} à {price} {currency}",
+    "tradeUnits": "{count, plural, one {{quantity} unité} other {{quantity} unités}}",
+    "simulated": "simulée",
+    "reason": "Motif : {reason}",
+    "ruleRef": "Règle : {rule}",
+    "fillPrice": "cours d’exécution : {line}"
+  },
+  "form": {
+    "asset": "Actif",
+    "change": "Changer",
+    "searchPlaceholder": "Rechercher par symbole ou par nom, par exemple AAPL",
+    "noMatch": "Aucun actif de la liste de l’application ne correspond à « {query} ».",
+    "matching": "Actifs correspondants",
+    "trigger": "Déclencheur",
+    "priceWithCurrency": "Cours ({currency})",
+    "changeToday": "Variation du jour (%)",
+    "action": "Opération (simulée)",
+    "simulatePurchase": "Simuler une acquisition",
+    "reducePosition": "Réduire la position",
+    "sizeGivenAs": "Taille exprimée en",
+    "amountInCad": "Montant en CAD",
+    "quantity": "Quantité",
+    "amountCad": "Montant (CAD)",
+    "units": "Unités",
+    "howOften": "Fréquence",
+    "once": "Une fois",
+    "repeating": "Répétée",
+    "preview": "Aperçu",
+    "previewNote": "Vérifiée toutes les 60 secondes tant que cet onglet est ouvert. Lorsque la condition est remplie, l’opération s’exécute au dernier cours, en simulation seulement.",
+    "cancel": "Annuler",
+    "save": "Enregistrer la règle",
+    "busy": "Vérification…",
+    "saved": "Règle enregistrée. Elle n’agit qu’en simulation.",
+    "problemAsset": "Choisissez un actif.",
+    "problemTriggerValue": "Indiquez la valeur du déclencheur.",
+    "problemPrice": "Un déclencheur de cours exige un cours supérieur à zéro.",
+    "problemChange": "Un déclencheur de variation du jour exige une valeur entre -100 et 100, autre que 0.",
+    "problemSize": "Indiquez la taille de l’opération simulée, supérieure à zéro.",
+    "price": "Cours"
+  }
+}

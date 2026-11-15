@@ -1,0 +1,17 @@
+{
+  "dialogTitle": "Palette de commandes",
+  "dialogDescription": "Recherchez une commande à exécuter…",
+  "placeholder": "Rechercher par société ou par symbole",
+  "searching": "Recherche en cours",
+  "noMatch": "Aucun résultat pour « {query} »",
+  "noStocks": "Aucun titre disponible",
+  "results": "Résultats",
+  "popular": "Populaires",
+  "listPlaceholder": "Ajouter un titre à « {list} »",
+  "addingTo": "Ajout à <name>{list}</name>",
+  "addedToList": "{symbol} ajouté à « {list} »",
+  "addFailed": "Impossible d’ajouter le symbole",
+  "addTitle": "Ajouter {symbol} à {list}",
+  "add": "Ajouter",
+  "adding": "Ajout en cours"
+}

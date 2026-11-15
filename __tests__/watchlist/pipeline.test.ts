@@ -3,7 +3,8 @@ import type { SignalSet, Snapshot, UniverseEntry } from '@/lib/domain/types';
 import { RULES } from '@/lib/rules';
 import { runPipeline } from '@/lib/watchlist/pipeline';
 import { containsNeverWord } from '@/lib/watchlist/reasons';
-import { EMPTY_HOLDINGS, NOW, answers, shuffled, signals, sourced } from './fixtures';
+import { renderCandidate, renderRun } from '@/lib/watchlist/render';
+import { EMPTY_HOLDINGS, NOW, answers, shuffled, signals, sourced, withoutTextRefs } from './fixtures';
 
 // A hand-built snapshot of 26 universe rows. Profile: Intermediate (10 picks), Medium risk, both markets,
 // sectors Information Technology + Health Care, niche Semiconductors, theme dividends, brand KO, avoid AAE.
@@ -238,7 +239,7 @@ describe('pipeline: other profiles on the same snapshot', () => {
 
     it('a brand outside the picked markets is a candidate and is rejected by the market filter', () => {
         const { result } = run(withProfile({}, { markets: 'Canada', brands: ['KO'] }));
-        expect(result.rejected.find((r) => r.symbol === 'KO')!.failed).toEqual([{ filter: 'markets', pass: false, detail: 'KO is listed in US; markets picked: Canada' }]);
+        expect(withoutTextRefs(result.rejected.find((r) => r.symbol === 'KO')!.failed)).toEqual([{ filter: 'markets', pass: false, detail: 'KO is listed in US; markets picked: Canada' }]);
         // FNB.TO is now alone in its sector (P/E at the median: 66.7): 8 + 23.75 + 13.34 + 15 = 60.1. ETB.TO stays at 58.0.
         expect(result.picks.map((pick) => [pick.symbol, pick.total])).toEqual([['FNB.TO', 60.1], ['ETB.TO', 58.0]]);
     });
@@ -247,7 +248,7 @@ describe('pipeline: other profiles on the same snapshot', () => {
         const holdings = { totalValueCad: 10000, bySector: { [HC]: 1000 }, byAssetClass: { stock: 1000 }, symbols: ['HCC'] };
         const { result } = run({ ...SNAPSHOT, holdings });
         const hca = result.picks.find((pick) => pick.symbol === 'HCA')!;
-        expect(hca.reason).toEqual({ templateId: 'same_sector_as_holding', text: 'Same sector as HCC, which you hold', sources: ['simulated holdings', 'hand-built test list'] });
+        expect(withoutTextRefs(hca.reason)).toEqual({ templateId: 'same_sector_as_holding', text: 'Same sector as HCC, which you hold', sources: ['simulated holdings', 'hand-built test list'] });
         expect(hca.factors.diversification.score).toBe(50);   // Health Care held at 10%
     });
 });
@@ -329,5 +330,61 @@ describe('pipeline: determinism', () => {
         run();
         expect(SNAPSHOT).toEqual(snapshotCopy);
         expect(UNIVERSE).toEqual(universeCopy);
+    });
+});
+
+describe('pipeline: English and French', () => {
+    const inEnglish = runPipeline({ snapshot: SNAPSHOT, universe: UNIVERSE, rules: RULES, now: NOW, locale: 'en' });
+    const inFrench = runPipeline({ snapshot: SNAPSHOT, universe: UNIVERSE, rules: RULES, now: NOW, locale: 'fr' });
+
+    it('the language changes no result: same picks, totals, factors scores, rejections and next state', () => {
+        expect(inFrench.result.picks.map((pick) => [pick.rank, pick.symbol, pick.total, pick.kept, pick.topDrivers, pick.reason?.templateId ?? null]))
+            .toEqual(inEnglish.result.picks.map((pick) => [pick.rank, pick.symbol, pick.total, pick.kept, pick.topDrivers, pick.reason?.templateId ?? null]));
+        expect(inFrench.result.rejected.map((r) => [r.symbol, r.failed.map((check) => [check.filter, check.pass, check.value, check.limit])]))
+            .toEqual(inEnglish.result.rejected.map((r) => [r.symbol, r.failed.map((check) => [check.filter, check.pass, check.value, check.limit])]));
+        expect(inFrench.next).toEqual(inEnglish.next);
+        expect(inEnglish.result.locale).toBe('en');
+        expect(inFrench.result.locale).toBe('fr');
+    });
+
+    it('a run stored in English, rendered in French, gives the same sentences as a run computed in French (and back)', () => {
+        expect(renderRun(inEnglish.result, 'fr')).toEqual(inFrench.result);
+        expect(renderRun(inFrench.result, 'en')).toEqual(inEnglish.result);
+        expect(inEnglish.candidates.map((c) => renderCandidate(c, 'fr'))).toEqual(inFrench.candidates);
+    });
+
+    it('a stored run survives the decision log (JSON) and still renders in the other language', () => {
+        const stored = JSON.parse(JSON.stringify(inEnglish.result));
+        expect(renderRun(stored, 'fr')).toEqual(JSON.parse(JSON.stringify(inFrench.result)));
+    });
+
+    it('is deterministic in each language', () => {
+        expect(runPipeline({ snapshot: SNAPSHOT, universe: UNIVERSE, rules: RULES, now: NOW, locale: 'fr' })).toEqual(inFrench);
+        expect(runPipeline({ snapshot: { ...SNAPSHOT, signals: shuffled(SIGNALS) }, universe: shuffled(UNIVERSE), rules: RULES, now: NOW, locale: 'fr' })).toEqual(inFrench);
+        expect(run()).toEqual(inEnglish);   // English stays the default
+    });
+
+    it('writes every French sentence in French, with no never-word', () => {
+        const sentences = [
+            ...inFrench.result.picks.flatMap((pick) => [pick.reason?.text ?? '', ...Object.values(pick.factors).map((factor) => factor.detail)]),
+            ...inFrench.candidates.flatMap((c) => c.filters.map((check) => check.detail)),
+        ].filter(Boolean);
+        expect(sentences.length).toBeGreaterThan(100);
+        for (const sentence of sentences) {
+            expect(containsNeverWord(sentence), sentence).toBe(false);
+            expect(sentence, sentence).not.toMatch(/\b(is above|is below|was picked|not on the|a day|risk)\b/);
+        }
+        expect(inFrench.result.rejected.find((r) => r.symbol === 'AAB')).toBeUndefined();
+        expect(inFrench.candidates.find((c) => c.symbol === 'AAD')!.filters.find((check) => check.filter === 'volatility')!.detail)
+            .toBe('volatilité de 41,0 %, au-dessus du plafond de 35,0 % pour un profil de risque Moyen');
+        expect(inFrench.candidates.find((c) => c.symbol === 'AAI')!.filters[0].detail).toBe('aucun signal n’a été recueilli pour AAI dans cet instantané');
+    });
+
+    it('a run logged before the catalog (no textRef) is shown as it was written', () => {
+        const legacy = withoutTextRefs(inEnglish.result);
+        delete legacy.locale;
+        const shown = renderRun(legacy, 'fr');
+        expect(shown.picks.map((pick) => pick.reason?.text)).toEqual(inEnglish.result.picks.map((pick) => pick.reason?.text));
+        expect(shown.locale).toBe('fr');
     });
 });

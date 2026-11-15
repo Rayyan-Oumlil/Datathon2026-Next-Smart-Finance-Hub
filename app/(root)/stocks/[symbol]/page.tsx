@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { CandlestickChart } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import TradingViewWidget from "@/components/TradingViewWidget";
@@ -13,21 +12,23 @@ import {
     COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
 import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
-import { getLiveQuotes, getStockMetrics } from '@/lib/actions/finnhub.actions';
-import { hasFinnhubCompanyData, hasFinnhubQuotes } from '@/lib/markets';
+import { getStockMetrics } from '@/lib/actions/finnhub.actions';
+import { hasFinnhubCompanyData } from '@/lib/markets';
 import { getEntry } from '@/lib/universe';
 import { signalsFor } from '@/lib/services/quotes';
 import type { UniverseEntry } from '@/lib/domain/types';
 import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
+import { formatNumber, formatPercent } from '@/i18n/format';
+import { formatMoment, sourceLabel } from '@/components/agent/time';
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
 async function Sentiment({ symbol }: { symbol: string }) {
-    const [insight, t] = await Promise.all([getStockSentimentInsights(symbol), getTranslations('StockPage')]);
+    const [insight, t, te] = await Promise.all([getStockSentimentInsights(symbol), getTranslations('StockPage'), getTranslations('StockExtra.page')]);
     if (!insight) return null;
     return (
         // Display only: this card never feeds a filter, a score or the agent
-        <Panel title={t('sentimentTitle')} sub={`${t('sentimentSub')} · Adanos · display only, not used in any score`}>
+        <Panel title={t('sentimentTitle')} sub={te('sentimentSubFull', { sub: t('sentimentSub') })}>
             <StockSentimentCard insight={insight} />
         </Panel>
     );
@@ -36,25 +37,20 @@ async function Sentiment({ symbol }: { symbol: string }) {
 async function DividendYield({ symbol }: { symbol: string }) {
     // Outside the US we can't tell "no dividend" from "no data", so show nothing rather than a misleading dash
     if (!hasFinnhubCompanyData(symbol)) return null;
-    const [dividendYield, t] = await Promise.all([getStockMetrics(symbol), getTranslations('StockPage')]);
+    const [dividendYield, t, te, locale] = await Promise.all([getStockMetrics(symbol), getTranslations('StockPage'), getTranslations('StockExtra.page'), getLocale()]);
     return (
         <Panel title={t('dividendYieldTitle')}>
             <p className="text-2xl font-semibold text-foreground">
-                {dividendYield !== null ? `${dividendYield.toFixed(2)}%` : "—"}
+                {dividendYield !== null ? formatPercent(dividendYield, locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
             </p>
-            <p className="mt-2 text-[12px] text-faint">Source: Finnhub (dividendYieldIndicatedAnnual)</p>
+            <p className="mt-2 text-[12px] text-faint">{te('dividendSource')}</p>
         </Panel>
     );
 }
 
-const REFERENCE_KIND: Record<string, string> = {
-    crypto: 'a crypto asset',
-    gold: 'the gold reference card',
-    bond_yield: 'a bond yield reference card',
-};
-
 // Crypto, gold and bond yields are not Finnhub company tickers: a bare "GOLD" or "BTC" there is an unrelated listing.
 async function ReferencePage({ entry }: { entry: UniverseEntry }) {
+    const [te, locale] = await Promise.all([getTranslations('StockExtra.page'), getLocale()]);
     let price: Awaited<ReturnType<typeof signalsFor>>['signals']['price'];
     try {
         price = (await signalsFor(entry)).signals.price;
@@ -67,27 +63,31 @@ async function ReferencePage({ entry }: { entry: UniverseEntry }) {
             <div className="card flex flex-col gap-3 p-4">
                 <div className="min-w-0">
                     <h1 className="text-xl font-bold tracking-[-0.03em]">{entry.name}</h1>
-                    <p className="mono text-[12.5px] text-faint">{entry.symbol} · {REFERENCE_KIND[entry.assetClass]}</p>
+                    <p className="mono text-[12.5px] text-faint">{entry.symbol} · {te(`referenceKind.${entry.assetClass as 'crypto' | 'gold' | 'bond_yield'}`)}</p>
                 </div>
                 <p className="text-[13.5px] text-muted-foreground">
-                    Its value is shown on the Overview tab as a reference card or crypto pick, with its source.
+                    {te('referenceBody')}
                 </p>
                 <div>
-                    <p className="kicker">{isYield ? 'Yield' : 'Price'}</p>
+                    <p className="kicker">{isYield ? te('yield') : te('price')}</p>
                     {price ? (
                         <>
                             <p className="num mt-1 text-2xl font-bold tracking-[-0.03em]">
-                                {price.value}{price.unit === '%' ? '%' : ` ${price.currency ?? price.unit ?? ''}`.trimEnd()}
+                                {price.unit === '%'
+                                    ? formatPercent(price.value, locale, { maximumFractionDigits: 6 })
+                                    : `${formatNumber(price.value, locale, { maximumFractionDigits: 6 })} ${price.currency ?? price.unit ?? ''}`.trimEnd()}
                             </p>
                             <p className="mt-1 text-[12px] text-faint">
-                                Source: {price.source} · fetched {price.fetchedAt}{price.asOf ? ` · as of ${price.asOf}` : ''}
+                                {price.asOf
+                                    ? te('sourceFetchedAsOf', { source: sourceLabel(te, price.source), fetched: formatMoment(price.fetchedAt, locale) || price.fetchedAt, asOf: formatMoment(price.asOf, locale) || price.asOf })
+                                    : te('sourceFetched', { source: sourceLabel(te, price.source), fetched: formatMoment(price.fetchedAt, locale) || price.fetchedAt })}
                             </p>
                         </>
                     ) : (
-                        <p className="mt-1 text-[15px] text-faint">not available</p>
+                        <p className="mt-1 text-[15px] text-faint">{te('notAvailable')}</p>
                     )}
                 </div>
-                <Link href="/overview" className="btn btn-ghost self-start">Back to Overview</Link>
+                <Link href="/overview" className="btn btn-ghost self-start">{te('backToOverview')}</Link>
             </div>
         </section>
     );
@@ -101,8 +101,8 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
     if (entry && (entry.assetClass === 'crypto' || entry.assetClass === 'gold' || entry.assetClass === 'bond_yield')) {
         return <ReferencePage entry={entry} />;
     }
-    // Not in the universe: only a symbol Finnhub can really quote gets a page (other exchanges keep their TradingView page)
-    if (!entry && hasFinnhubQuotes(symbol) && !(await getLiveQuotes([symbol]))[symbol]) notFound();
+    // A symbol outside the universe still gets its page (TradingView chart and whatever data answers): a quote
+    // failure (rate limit, network) cannot tell an unknown ticker from a provider hiccup, so it never means 404.
     const tvSymbol = formatSymbolForTradingView(symbol);
     const [t, locale] = await Promise.all([getTranslations('StockPage'), getLocale()]);
 

@@ -2,14 +2,16 @@
 // check, the action router, and later confirm / cancel / undo. Every step leaves a row in the agent action log.
 
 import { createHash, randomBytes } from 'node:crypto';
+import { getAppLocale } from '@/i18n/locale';
 import { DEMO_USER } from '@/lib/demo-user';
 import type { AgentReply, FilterCheck } from '@/lib/domain/types';
-import { containsNeverWord } from '@/lib/watchlist/reasons';
 import { callAgent, type AgentServiceReply } from './client';
 import { buildContext } from './context';
 import { logStep } from './log';
 import { ServiceError } from '@/lib/services/errors';
 import { apply, cancel, getAction, route, undo, type Preview } from './router';
+import { agentText } from './text';
+import { failsWordCheck } from './wording';
 
 export type Turn = { role: 'user' | 'assistant'; text: string };
 export type ChatInput = { message: string; history?: Turn[]; conversationId?: string };
@@ -25,8 +27,9 @@ const MAX_TURNS = 10;
 const MAX_TURN_CHARS = 4000;
 const sha256 = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
 
-/** Shown in place of a reply that holds a word from the never-list of the rules file. */
-export const NEUTRAL_REPLY = 'The app withheld this reply because of its wording. I can explain a term from the glossary, show data with its source, or explain why an asset is on your list. This app is a simulation and does not give investment advice.';
+/** Shown in place of a reply that holds a never-word or judgement word, in the request's language. */
+export const NEUTRAL_REPLY = agentText('en').neutralReply;
+export const NEUTRAL_REPLY_FR = agentText('fr').neutralReply;
 
 export async function chat(input: ChatInput): Promise<ChatReply> {
     const actionId = `act_${randomBytes(8).toString('hex')}`;
@@ -34,9 +37,11 @@ export async function chat(input: ChatInput): Promise<ChatReply> {
     await logStep(actionId, 'chat_input', { dataUsed: { message: input.message, messageSha256: sha256(input.message), historyTurns: history.length } });
 
     const { context, snapshotId } = await buildContext();
+    const { locale } = context;
+    const words = agentText(locale);
     await logStep(actionId, 'context_built', {
         dataUsed: {
-            level: context.level ?? null, risk: context.risk ?? null, agentStyle: context.agentStyle ?? null,
+            locale, level: context.level ?? null, risk: context.risk ?? null, agentStyle: context.agentStyle ?? null,
             holdings: context.holdings, watchlist: context.watchlist, layout: context.layout, watchlistSnapshotId: snapshotId,
             contextSha256: sha256(JSON.stringify(context)),
         },
@@ -51,16 +56,17 @@ export async function chat(input: ChatInput): Promise<ChatReply> {
         throw error;
     }
 
-    // Last wording check, after the agent service's own: a reply with a never-word is not shown at all
-    const withheld = containsNeverWord(reply.text);
+    // Last wording check, after the agent service's own: a reply with a never-word or a judgement word (English or
+    // French) is not shown at all. Names of the app's own assets and of the watchlist picks may be quoted.
+    const withheld = failsWordCheck(reply.text, context.watchlist.map((pick) => pick.name));
     const refused = reply.refused || withheld;
-    const text = withheld ? NEUTRAL_REPLY : reply.text;
+    const text = withheld ? words.neutralReply : reply.text;
 
-    const routed = await route(actionId, refused ? undefined : reply.proposed);
+    const routed = await route(actionId, refused ? undefined : reply.proposed, locale);
     await logStep(actionId, 'action_routed', {
         dataUsed: { proposed: reply.proposed ?? null },
         result: routed.outcome === 'dropped' ? { outcome: 'dropped', type: routed.type } : { outcome: routed.outcome, type: 'proposed' in routed ? routed.proposed.type : null },
-        statedReason: routed.outcome === 'dropped' ? routed.reason : refused && reply.proposed ? 'The reply was refused, so its proposal was not routed.' : undefined,
+        statedReason: routed.outcome === 'dropped' ? (routed.detail ? `${routed.reason} (${routed.detail})` : routed.reason) : refused && reply.proposed ? 'The reply was refused, so its proposal was not routed.' : undefined,
     });
     if (routed.outcome === 'preview') {
         await logStep(actionId, 'preview_shown', { before: routed.preview.before, after: routed.preview.after, dataUsed: { type: routed.proposed.type, params: routed.proposed.params, facts: routed.preview.facts, conflicts: routed.conflicts }, statedReason: routed.preview.summary });
@@ -79,7 +85,7 @@ export async function chat(input: ChatInput): Promise<ChatReply> {
         ...('proposed' in routed ? { proposed: routed.proposed } : {}),
         ...(routed.outcome === 'preview' ? { preview: routed.preview } : {}),
         // The full reason stays in the log; a reason that quotes a never-word (a schema's own value names) is not shown
-        ...(routed.outcome === 'dropped' ? { notice: `A proposed change was not shown: ${containsNeverWord(routed.reason) ? 'its parameters are not valid.' : routed.reason}` } : {}),
+        ...(routed.outcome === 'dropped' ? { notice: words.notShown(failsWordCheck(routed.reason) ? words.paramsInvalidShort : routed.reason) } : {}),
         ...(conflict ? { conflict } : {}),
         promptVersion: reply.promptVersion,
         modelCalls: reply.modelCalls,
@@ -93,24 +99,26 @@ export async function chat(input: ChatInput): Promise<ChatReply> {
             pendingConfirm: routed.outcome === 'preview', conflict: Boolean(conflict), modelCalls: reply.modelCalls.length,
             agentLogComplete: reply.logComplete ?? null,
         },
-        statedReason: withheld ? 'The reply held a word from the never-list and was replaced by the fixed neutral sentence.' : undefined,
+        statedReason: withheld ? 'The reply held a word from the never-lists or judgement lists and was replaced by the fixed neutral sentence.' : undefined,
     });
     return out;
 }
 
 export async function confirm(actionId: string, accept: boolean): Promise<{ applied: boolean; undoable: boolean; result?: unknown; message: string }> {
+    const locale = await getAppLocale();
+    const words = agentText(locale);
     if (!accept) {
-        const action = await cancel(actionId);
+        const action = await cancel(actionId, locale);
         await logStep(actionId, 'cancelled', { dataUsed: { type: action.proposed.type }, before: action.preview.before });
-        return { applied: false, undoable: false, message: 'Cancelled. Nothing was changed.' };
+        return { applied: false, undoable: false, message: words.cancelled };
     }
     // A change that is not waiting for an answer is refused before anything is logged as confirmed
     const waiting = await getAction(actionId);
-    if (!waiting) throw new ServiceError(404, 'No proposed change has this id.');
-    if (waiting.status !== 'pending') throw new ServiceError(409, `This change is ${waiting.status}; only a pending change can be applied.`);
+    if (!waiting) throw new ServiceError(404, words.noSuchChange);
+    if (waiting.status !== 'pending') throw new ServiceError(409, words.onlyPending(waiting.status));
     await logStep(actionId, 'confirmed', { statedReason: 'The user confirmed the preview.' });
     try {
-        const { before, after, ...outcome } = await apply(actionId);
+        const { before, after, ...outcome } = await apply(actionId, locale);
         if (outcome.applied) await logStep(actionId, 'applied', { before, after, result: outcome.result });
         await logStep(actionId, 'result', { result: { applied: outcome.applied, undoable: outcome.undoable, message: outcome.message } });
         return outcome;
@@ -121,7 +129,7 @@ export async function confirm(actionId: string, accept: boolean): Promise<{ appl
 }
 
 export async function undoAction(actionId: string): Promise<{ restored: boolean; result?: unknown; message: string }> {
-    const outcome = await undo(actionId);
+    const outcome = await undo(actionId, await getAppLocale());
     await logStep(actionId, 'undo', { result: outcome });
     return outcome;
 }

@@ -5,6 +5,7 @@ import type { ProfileView } from '@/lib/watchlist/format';
 import { buildReason } from '@/lib/watchlist/reasons';
 import { scoreCandidate, sectorMedianPe } from '@/lib/watchlist/score';
 import { selectPicks, type PreviousList } from '@/lib/watchlist/selection';
+import { say, type Locale } from '@/lib/watchlist/text';
 import { selectCandidates } from '@/lib/watchlist/universe-select';
 
 export type PipelineInput = {
@@ -13,6 +14,7 @@ export type PipelineInput = {
     rules: Rules;
     previous?: PreviousList;   // the last run's list; leave out on the first run
     now: string;
+    locale?: Locale;           // the language of every sentence of the run (default English); never changes a result
 };
 
 export type PipelineOutput = {
@@ -24,8 +26,11 @@ export type PipelineOutput = {
 /**
  * The whole smart-watchlist run: universe -> filters -> score -> selection -> reason sentences.
  * Pure: the result depends only on the input, never on the order of the universe or of the snapshot's signals.
+ *
+ * Every detail and reason sentence is written in `locale` and keeps its catalog key and values (textRef), so
+ * renderRun can write the run again in the other language; the result records the language it was written in.
  */
-export function runPipeline({ snapshot, universe, rules, previous, now }: PipelineInput): PipelineOutput {
+export function runPipeline({ snapshot, universe, rules, previous, now, locale = 'en' }: PipelineInput): PipelineOutput {
     const profile: ProfileView = snapshot.profile;
     const signalsBySymbol = new Map<string, SignalSet>();
     for (const signals of snapshot.signals) {
@@ -37,17 +42,18 @@ export function runPipeline({ snapshot, universe, rules, previous, now }: Pipeli
         if (!collected) {
             // In the universe but absent from the snapshot: rejected as missing data, never filled in.
             const signals: SignalSet = { symbol: entry.symbol, entry, missing: ['all signals'] };
-            const filters = [{ filter: 'data' as const, pass: false, detail: `no signals were collected for ${entry.symbol} in this snapshot` }];
+            const { text, textRef } = say('filter.data.no_signals', { symbol: entry.symbol }, locale);
+            const filters = [{ filter: 'data' as const, pass: false, detail: text, textRef }];
             return { symbol: entry.symbol, signals, filters, passed: false };
         }
-        const filters = runFilters(collected, profile, rules, snapshot.fxUsdCad);
+        const filters = runFilters(collected, profile, rules, snapshot.fxUsdCad, locale);
         return { symbol: entry.symbol, signals: collected, filters, passed: filters.every((check) => check.pass) };
     });
 
     // Gold and bond yields are shown beside the list and never scored or ranked.
     const isReference = (c: Candidate) => c.signals.entry.assetClass === 'gold' || c.signals.entry.assetClass === 'bond_yield';
     const ranked = candidates.filter((c) => c.passed && !isReference(c));
-    const context = { sectorMedianPe: sectorMedianPe(ranked.map((c) => c.signals)), holdings: snapshot.holdings };
+    const context = { sectorMedianPe: sectorMedianPe(ranked.map((c) => c.signals)), holdings: snapshot.holdings, locale };
     for (const candidate of ranked) {
         const { factors, total } = scoreCandidate(candidate.signals, profile, rules, context);
         candidate.factors = factors;
@@ -59,7 +65,7 @@ export function runPipeline({ snapshot, universe, rules, previous, now }: Pipeli
     for (const entry of universe) {
         if (entry.sector !== undefined && !(entry.symbol in sectorOf)) sectorOf[entry.symbol] = entry.sector;
     }
-    const picks = selection.picks.map((pick) => ({ ...pick, reason: buildReason(pick, profile, snapshot.holdings, { sectorOf, rules }) }));
+    const picks = selection.picks.map((pick) => ({ ...pick, reason: buildReason(pick, profile, snapshot.holdings, { sectorOf, rules, locale }) }));
 
     const result: WatchlistResult = {
         snapshotId: snapshot.id,
@@ -76,6 +82,7 @@ export function runPipeline({ snapshot, universe, rules, previous, now }: Pipeli
         referenceCards: candidates.filter((c) => c.passed && isReference(c)).map((c) => c.signals),
         rejected: candidates.filter((c) => !c.passed).map((c) => ({ symbol: c.symbol, failed: c.filters.filter((check) => !check.pass) })),
         candidates: candidates.length,
+        locale,
     };
     return { result, candidates, next: { listedSince: selection.listedSince, previousPicks: picks.map((pick) => pick.symbol) } };
 }
