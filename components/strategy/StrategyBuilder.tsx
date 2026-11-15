@@ -19,7 +19,7 @@ import { byPriority, defaultRule, newRuleId, PRIORITY, ruleIndexOf, sameDraft, t
 import { KIND_ICON, RuleCard } from './RuleCard';
 import { RuleFlow } from './RuleFlow';
 import { StrategySuggestions, type SuggestionsResponse } from './Suggestions';
-import { ViewToggle, type RuleView } from './ViewToggle';
+import { ViewToggle, useRuleView } from './ViewToggle';
 import { OrderNote } from './StrategySummary';
 import { FIELD } from './Chip';
 
@@ -284,7 +284,7 @@ function StrategyEditor({ stored, portfolio, suggested, onBack, onSaved }: { sto
     const [issues, setIssues] = useState<ServerIssue[]>([]);
     const [failure, setFailure] = useState<string | null>(null);
     const [adding, setAdding] = useState(false);
-    const [view, setView] = useState<RuleView>('sentences');
+    const [view, setView] = useRuleView();
     const suggestedRule = (kind: RuleKind): StrategyRule | undefined => suggested?.rules.find((r) => r.kind === kind)?.rule;
 
     const dirty = !sameDraft(draft, baseline);

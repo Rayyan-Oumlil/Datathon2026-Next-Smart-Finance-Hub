@@ -10,7 +10,7 @@ import HistoryPreview from './HistoryPreview';
 import { byPriority, type StoredStrategy } from './model';
 import { KIND_ICON, RuleSentence } from './RuleCard';
 import { RuleFlow } from './RuleFlow';
-import { ViewToggle, type RuleView } from './ViewToggle';
+import { ViewToggle, useRuleView } from './ViewToggle';
 
 /** What GET /api/strategy/suggestions answers (lib/services/strategy-suggestions.ts, SuggestionsView). */
 export type SuggestionWhy = { code: string; values: Record<string, string | number> };
@@ -53,7 +53,7 @@ const uniqueName = (name: string, taken: string[]) => {
 export function StrategySuggestions({ data, existingNames, capitalCad, onAdopted }: { data: SuggestionsResponse; existingNames: string[]; capitalCad: number | null; onAdopted: (saved: StoredStrategy) => void }) {
     const t = useTranslations('Strategy');
     const fmt = useFmt();
-    const [view, setView] = useState<RuleView>('sentences');
+    const [view, setView] = useRuleView();
     const [previewId, setPreviewId] = useState<string | null>(null);
     const [busyId, setBusyId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);

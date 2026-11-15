@@ -4,4 +4,4 @@ export { StrategySummary, OrderNote, type StrategySummaryProps } from './Strateg
 export { TwoLineChart } from './HistoryPreview';
 export { byPriority, PRIORITY, type StoredStrategy, type StrategyDraft } from './model';
 export { RuleFlow, type RuleFlowProps } from './RuleFlow';
-export { ViewToggle, type RuleView } from './ViewToggle';
+export { ViewToggle, useRuleView, type RuleView } from './ViewToggle';

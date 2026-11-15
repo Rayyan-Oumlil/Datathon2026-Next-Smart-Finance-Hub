@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useEffect, useState } from 'react';
 import { AlignLeft, Workflow } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -18,6 +19,21 @@ export function ViewToggle({ value, onChange }: { value: RuleView; onChange: (vi
             ))}
         </div>
     );
+}
+
+const VIEW_KEY = 'strategy.ruleView';
+
+/** The chosen view, remembered in this browser so every page that shows rules opens the same way. */
+export function useRuleView(): [RuleView, (view: RuleView) => void] {
+    const [view, setView] = useState<RuleView>('sentences');
+    useEffect(() => {
+        try { if (window.localStorage.getItem(VIEW_KEY) === 'flow') setView('flow'); } catch { /* storage blocked: default view */ }
+    }, []);
+    const choose = useCallback((next: RuleView) => {
+        setView(next);
+        try { window.localStorage.setItem(VIEW_KEY, next); } catch { /* storage blocked: kept for this visit */ }
+    }, []);
+    return [view, choose];
 }
 
 export default ViewToggle;

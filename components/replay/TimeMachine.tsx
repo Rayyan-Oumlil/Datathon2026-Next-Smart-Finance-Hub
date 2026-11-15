@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GitCompareArrows, History, Info, MessageSquareText, Rewind, TriangleAlert } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Panel from '@/components/Panel';
-import { StrategySummary } from '@/components/strategy';
+import { RuleFlow, StrategySummary, ViewToggle, useRuleView } from '@/components/strategy';
 import { askAgent } from '@/lib/agent/page-detail';
 import { PERSONAS, isPersonaName } from '@/lib/personas/presets';
 import type { ReplayOrder, ReplayResult } from '@/lib/replay/engine/types';
@@ -55,6 +55,7 @@ export default function TimeMachine({ initialStrategyId, replayId, initialMode }
     const t = useTranslations('Replay');
     const f = useReplayFmt();
     const player = usePlayer();
+    const [ruleView, setRuleView] = useRuleView();
     const [controls, setControls] = useState<ControlsValue>({ ...DEFAULTS, strategy: initialStrategyId ?? '' });
     const [strategies, setStrategies] = useState<StrategyOption[] | null>(null);
     const [models, setModels] = useState<ModelOption[]>([]);
@@ -293,11 +294,17 @@ export default function TimeMachine({ initialStrategyId, replayId, initialMode }
 
                     <Panel title={t('summary.title')} sub={t('summary.sub')} bodyClassName="p-4">
                         {result.params.strategy.rules.length > 0 && (
-                            <StrategySummary
-                                className="mb-4"
-                                strategy={{ name: strategyName, rules: result.params.strategy.rules }}
-                                firings={Object.fromEntries(result.ruleStats.map((stat) => [stat.ruleId, stat.fired]))}
-                            />
+                            <div className="mb-4 grid gap-2">
+                                <div className="flex justify-end"><ViewToggle value={ruleView} onChange={setRuleView} /></div>
+                                {ruleView === 'flow' ? (
+                                    <RuleFlow rules={result.params.strategy.rules} firings={Object.fromEntries(result.ruleStats.map((stat) => [stat.ruleId, stat.fired]))} />
+                                ) : (
+                                    <StrategySummary
+                                        strategy={{ name: strategyName, rules: result.params.strategy.rules }}
+                                        firings={Object.fromEntries(result.ruleStats.map((stat) => [stat.ruleId, stat.fired]))}
+                                    />
+                                )}
+                            </div>
                         )}
                         <SummaryText result={result} />
                     </Panel>
