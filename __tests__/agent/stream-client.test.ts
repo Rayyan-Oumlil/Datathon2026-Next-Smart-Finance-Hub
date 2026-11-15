@@ -54,4 +54,29 @@ describe('streamChat', () => {
         fetchReturns(new Response(new ReadableStream<Uint8Array>({ start(c) { c.enqueue(encoder.encode('data: nope\n\n')); c.close(); } }), { headers: { 'content-type': 'text/event-stream' } }));
         await expect(streamChat(body, vi.fn(), FALLBACK)).rejects.toThrow(FALLBACK);
     });
+
+    it('passes the abort signal to the request', async () => {
+        const spy = fetchReturns(events(stage, { type: 'final', reply: { text: 'done' } }));
+        const controller = new AbortController();
+        await streamChat(body, vi.fn(), FALLBACK, controller.signal);
+        expect((spy.mock.calls[0][1] as RequestInit).signal).toBe(controller.signal);
+    });
+
+    it('stops reading and throws an AbortError when the caller aborts mid-stream', async () => {
+        const controller = new AbortController();
+        let fail!: (reason: unknown) => void;
+        // The stream stays open until the request is aborted, like a reply that is still being worked on; a real
+        // fetch then fails the body with an AbortError
+        const never = new ReadableStream<Uint8Array>({
+            start(c) { c.enqueue(encoder.encode(encodeEvent(stage))); fail = (reason) => c.error(reason); },
+        });
+        vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+            (init as RequestInit).signal!.addEventListener('abort', () => fail(new DOMException('aborted', 'AbortError')));
+            return new Response(never, { headers: { 'content-type': 'text/event-stream' } });
+        });
+        const seen: unknown[] = [];
+        const run = streamChat(body, (e) => { seen.push(e); controller.abort(); }, FALLBACK, controller.signal);
+        await expect(run).rejects.toMatchObject({ name: 'AbortError' });
+        expect(seen).toHaveLength(1);
+    });
 });

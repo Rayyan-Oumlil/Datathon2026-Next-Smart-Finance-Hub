@@ -1,6 +1,6 @@
 // What the panel shows while the agent works: one line per stage of the request. Pure, so it is tested alone.
 
-export type StageName = 'orchestrator' | 'subagent' | 'tool' | 'guardrail' | 'retry';
+export type StageName = 'orchestrator' | 'subagent' | 'tool' | 'guardrail' | 'retry' | 'cache';
 export type StageEvent = {
     type: 'stage';
     stage: StageName;
@@ -13,7 +13,7 @@ export type StageEvent = {
 };
 export type StageLine = { key: string; stage: StageName; name?: string; state: 'running' | 'done'; ok: boolean; passed?: boolean; ms?: number };
 
-const STAGES: readonly string[] = ['orchestrator', 'subagent', 'tool', 'guardrail', 'retry'];
+const STAGES: readonly string[] = ['orchestrator', 'subagent', 'tool', 'guardrail', 'retry', 'cache'];
 
 export const isStageEvent = (value: unknown): value is StageEvent => {
     const v = value as Partial<StageEvent> | null;

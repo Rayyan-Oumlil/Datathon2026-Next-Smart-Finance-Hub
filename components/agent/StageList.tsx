@@ -2,8 +2,10 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { AlertTriangle, Check, Loader2 } from 'lucide-react';
+import { AlertTriangle, Check, Loader2, Square } from 'lucide-react';
 import type { StageLine } from '@/lib/agent/stages';
+
+type Translator = ReturnType<typeof useTranslations<'AgentPanel'>>;
 
 const labelKey = (line: StageLine): string => {
     if (line.stage === 'subagent') return `stages.subagent.${line.name}`;
@@ -12,30 +14,40 @@ const labelKey = (line: StageLine): string => {
     return `stages.${line.stage}`;
 };
 
+/** The words for one step; a name the panel has no text for is shown as it is. */
+export const stageText = (t: Translator, line: StageLine): string => {
+    const key = labelKey(line);
+    return t.has(key as never) ? t(key as never) : line.name ?? line.stage;
+};
+
+export const stageFailed = (line: StageLine): boolean => line.state === 'done' && (!line.ok || line.passed === false);
+
 /** The steps the agent has taken for the request in progress: the orchestration, as it happens. */
-const StageList = ({ stages }: { stages: StageLine[] }) => {
+const StageList = ({ stages, onStop }: { stages: StageLine[]; onStop: () => void }) => {
     const t = useTranslations('AgentPanel');
-    if (stages.length === 0) return <p className="mt-3 text-[13px] text-faint">{t('working')}</p>;
     return (
         <div className="mt-3">
-            <p className="kicker">{t('stages.title')}</p>
-            <ol className="mt-1 flex flex-col gap-1 text-[13px]" aria-label={t('stages.title')}>
-                {stages.map((line) => {
-                    const key = labelKey(line);
-                    const failed = line.state === 'done' && (!line.ok || line.passed === false);
-                    return (
-                        <li key={line.key} className="flex items-center gap-2 text-muted-foreground">
-                            {line.state === 'running'
-                                ? <Loader2 className="h-3.5 w-3.5 flex-none animate-spin motion-reduce:animate-none" aria-hidden />
-                                : failed
-                                    ? <AlertTriangle className="h-3.5 w-3.5 flex-none text-down" aria-hidden />
-                                    : <Check className="h-3.5 w-3.5 flex-none text-up" aria-hidden />}
-                            <span className={line.state === 'running' ? 'text-foreground' : undefined}>{t.has(key) ? t(key) : line.name ?? line.stage}</span>
-                            {line.state === 'done' && line.ms !== undefined && <span className="num ms-auto text-[11px] text-faint">{t('stages.took', { ms: line.ms })}</span>}
-                        </li>
-                    );
-                })}
-            </ol>
+            {stages.length === 0 ? <p className="text-[13px] text-faint">{t('working')}</p> : (
+                <>
+                    <p className="kicker">{t('stages.title')}</p>
+                    <ol className="mt-1 flex flex-col gap-1 text-[13px]" aria-label={t('stages.title')}>
+                        {stages.map((line) => (
+                            <li key={line.key} className="flex items-center gap-2 text-muted-foreground">
+                                {line.state === 'running'
+                                    ? <Loader2 className="h-3.5 w-3.5 flex-none animate-spin motion-reduce:animate-none" aria-hidden />
+                                    : stageFailed(line)
+                                        ? <AlertTriangle className="h-3.5 w-3.5 flex-none text-down" aria-hidden />
+                                        : <Check className="h-3.5 w-3.5 flex-none text-up" aria-hidden />}
+                                <span className={line.state === 'running' ? 'text-foreground' : undefined}>{stageText(t, line)}</span>
+                                {line.state === 'done' && line.ms !== undefined && <span className="num ms-auto text-[11px] text-faint">{t('stages.took', { ms: line.ms })}</span>}
+                            </li>
+                        ))}
+                    </ol>
+                </>
+            )}
+            <button type="button" className="btn btn-ghost mt-2 h-8 px-2.5 text-xs" onClick={onStop}>
+                <Square className="h-3 w-3" aria-hidden /> {t('stop')}
+            </button>
         </div>
     );
 };

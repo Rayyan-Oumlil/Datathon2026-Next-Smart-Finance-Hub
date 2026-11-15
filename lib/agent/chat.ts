@@ -8,6 +8,7 @@ import type { AgentReply, FilterCheck } from '@/lib/domain/types';
 import { callAgent, type AgentProgress, type AgentServiceReply } from './client';
 import { buildContext } from './context';
 import { logStep } from './log';
+import { ReplyCache, cacheKey, isCacheable } from './reply-cache';
 import { ServiceError } from '@/lib/services/errors';
 import { apply, cancel, getAction, route, undo, type Preview } from './router';
 import { agentText } from './text';
@@ -22,6 +23,11 @@ export type ChatReply = AgentReply & {
     modelCalls: AgentServiceReply['modelCalls'];
     logComplete?: boolean;          // false when the agent service could not write every row of its action log
 };
+
+// Glossary answers only (reply-cache.ts); AGENT_REPLY_CACHE=off turns it off
+const replyCache = new ReplyCache<AgentServiceReply>();
+export const resetReplyCache = (): void => replyCache.clear();
+const cacheOn = () => process.env.AGENT_REPLY_CACHE !== 'off';
 
 const MAX_TURNS = 10;
 const MAX_TURN_CHARS = 4000;
@@ -49,12 +55,24 @@ export async function chat(input: ChatInput, onProgress?: (event: AgentProgress)
         statedReason: 'Only data the app holds: profile, simulated holdings, watchlist picks, layout. No sentiment data and no news text.',
     });
 
+    // A question asked on its own, answered before in the same language and settings, needs no new model call.
+    // Mid-conversation questions depend on the turns before them, so they never use the cache.
+    const key = cacheOn() && history.length === 0
+        ? cacheKey({ message: input.message, locale, level: context.level, risk: context.risk, agentStyle: context.agentStyle })
+        : null;
+    const cached = key ? replyCache.get(key) : undefined;
+
     let reply: AgentServiceReply;
-    try {
-        reply = await callAgent({ actionId, userId: DEMO_USER.id, message: input.message, history, context }, input.conversationId, onProgress);
-    } catch (error) {
-        await logStep(actionId, 'result', { result: { error: error instanceof Error ? error.message : 'agent call failed' } });
-        throw error;
+    if (cached) {
+        onProgress?.({ type: 'stage', stage: 'cache', state: 'done', ok: true, ms: 0 });
+        reply = { ...cached.value, modelCalls: [] };          // this request made no model call
+    } else {
+        try {
+            reply = await callAgent({ actionId, userId: DEMO_USER.id, message: input.message, history, context }, input.conversationId, onProgress);
+        } catch (error) {
+            await logStep(actionId, 'result', { result: { error: error instanceof Error ? error.message : 'agent call failed' } });
+            throw error;
+        }
     }
 
     // Last wording check, after the agent service's own: a reply with a never-word or a judgement word (English or
@@ -62,6 +80,8 @@ export async function chat(input: ChatInput, onProgress?: (event: AgentProgress)
     const withheld = failsWordCheck(reply.text, context.watchlist.map((pick) => pick.name));
     const refused = reply.refused || withheld;
     const text = withheld ? words.neutralReply : reply.text;
+
+    if (key && !cached && !withheld && isCacheable(reply)) replyCache.set(key, reply, actionId);
 
     const routed = await route(actionId, refused ? undefined : reply.proposed, locale);
     await logStep(actionId, 'action_routed', {
@@ -99,6 +119,7 @@ export async function chat(input: ChatInput, onProgress?: (event: AgentProgress)
             refused, withheldByWordCheck: withheld, sources: out.sources.length, proposed: out.proposed?.type ?? null,
             pendingConfirm: routed.outcome === 'preview', conflict: Boolean(conflict), modelCalls: reply.modelCalls.length,
             agentLogComplete: reply.logComplete ?? null,
+            ...(cached ? { cache: { hit: true, fromActionId: cached.actionId } } : {}),
         },
         statedReason: withheld ? 'The reply held a word from the never-lists or judgement lists and was replaced by the fixed neutral sentence.' : undefined,
     });

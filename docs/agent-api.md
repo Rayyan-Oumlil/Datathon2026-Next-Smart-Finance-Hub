@@ -134,3 +134,8 @@ Each model call row carries `modelId`, `awsRequestId`, token counts, and SHA-256
 | `GUARDRAIL_ID`, `GUARDRAIL_VERSION` | agent | Bedrock Guardrail applied to every reply |
 | `KNOWLEDGE_BASE_ID` | agent | optional; glossary Knowledge Base |
 | `AGENT_ACTION_LOG_TABLE` | both | default `agent_action_log` |
+| `AGENT_REPLY_CACHE` | web | `off` turns off the glossary reply cache (below) |
+
+### Reply cache
+
+A question asked on its own (no history) and answered before, in the same language, level, risk and style, is answered again from the first reply when that reply was made only of glossary sources (`agent/glossary/…`): no proposal, no conflict, nothing refused, nothing withheld. Every figure-bearing reply goes to the agent as before. Entries live one hour in the web server's memory (a restart or a second container starts empty). The stored reply still goes through the web app's wording check, the request leaves its own `chat_input`, `context_built` and `result` rows, and the `result` row carries `cache: { hit: true, fromActionId }` so an auditor can follow it to the original model calls. The stream reports it as a `cache` stage.

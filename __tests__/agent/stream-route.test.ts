@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as STREAM } from '@/app/api/agent/stream/route';
 import { getAppLocale } from '@/i18n/locale';
-import { NEUTRAL_REPLY } from '@/lib/agent/chat';
+import { NEUTRAL_REPLY, resetReplyCache } from '@/lib/agent/chat';
 import { callAgent, type AgentProgress } from '@/lib/agent/client';
 import { bodyChunks, readSse } from '@/lib/agent/sse';
 import { ServiceError } from '@/lib/services/errors';
@@ -34,6 +34,7 @@ const eventsOf = async (response: Response) => {
 
 beforeEach(async () => {
     await freshWorld();
+    resetReplyCache();
     agent.mockReset();
     locale.mockResolvedValue('en');
 });
