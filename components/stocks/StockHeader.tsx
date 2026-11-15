@@ -10,6 +10,8 @@ import TradingViewWidget from "@/components/TradingViewWidget";
 import ChangePill from "@/components/ChangePill";
 import { getYahooDailyQuotes } from "@/lib/actions/yahoo.actions";
 import { isYahooSymbol } from "@/lib/yahoo";
+import { AssetLogo } from "@/components/AssetLogo";
+import { getEntry } from "@/lib/universe";
 
 // Symbols Finnhub's free plan can't price (most non-US listings) use TradingView's quote panel instead.
 // TradingView blocks Tadawul quotes in embeds and has Warsaw only end of day, so those show a delayed Yahoo price
@@ -28,11 +30,14 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
     return (
         <section className="hatch">
             <div className="card flex flex-wrap items-center justify-between gap-4 p-4">
-                <div className="min-w-0">
-                    <h1 className="mono truncate text-xl font-bold tracking-[-0.02em]">{symbol}</h1>
-                    <p className="text-[12.5px] text-faint">
-                        {[tvSymbol.split(':')[0], quote?.name, yahooPriced ? t('quoteViaYahoo') : t('quoteViaTradingView')].filter(Boolean).join(' · ')}
-                    </p>
+                <div className="flex min-w-0 items-center gap-3">
+                    <AssetLogo symbol={symbol} name={quote?.name} assetClass={getEntry(symbol)?.assetClass} size={44} className="shrink-0" />
+                    <div className="min-w-0">
+                        <h1 className="mono truncate text-xl font-bold tracking-[-0.02em]">{symbol}</h1>
+                        <p className="text-[12.5px] text-faint">
+                            {[tvSymbol.split(':')[0], quote?.name, yahooPriced ? t('quoteViaYahoo') : t('quoteViaTradingView')].filter(Boolean).join(' · ')}
+                        </p>
+                    </div>
                 </div>
                 {quote && (
                     <div className="flex items-center gap-3">
@@ -81,11 +86,7 @@ export default async function StockHeader({ symbol }: { symbol: string }) {
         <section className="hatch">
             <div className="card flex flex-wrap items-center gap-x-6 gap-y-4 p-4">
                 <div className="flex min-w-0 flex-1 basis-64 items-center gap-3">
-                    {profile?.logo ? (
-                        <span className="logo-well size-11"><img src={profile.logo} alt="" className="size-full object-contain p-1.5" /></span>
-                    ) : (
-                        <span className="logo-well is-empty size-11">{symbol[0]}</span>
-                    )}
+                    <AssetLogo symbol={symbol} name={company} assetClass={getEntry(symbol)?.assetClass} size={44} className="shrink-0" />
                     <div className="min-w-0">
                         <h1 className="truncate text-xl font-bold tracking-[-0.03em]">{company}</h1>
                         <p className="mono truncate text-[12.5px] text-faint">

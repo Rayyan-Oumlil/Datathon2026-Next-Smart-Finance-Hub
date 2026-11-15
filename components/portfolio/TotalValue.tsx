@@ -3,6 +3,7 @@ import type { Level } from '@/lib/domain/types';
 import type { PortfolioView } from '@/lib/services/portfolio';
 import ChangePill from '@/components/ChangePill';
 import { formatDateTime } from '@/i18n/format';
+import { AssetLogo } from '@/components/AssetLogo';
 import { useFmt } from './useFmt';
 
 const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
@@ -25,7 +26,10 @@ export default function TotalValue({ view, level }: { view: PortfolioView; level
     const invested = valueCad.value - cashCad;
     // Outside a session the change belongs to the last one, so it is named by its date, never as "today"
     const lastSession = formatDateTime(`${market.lastSession}T12:00:00Z`, fmt.locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
-    const priceSources = positions.flatMap((position) => (position.price ? [`${position.symbol}: ${fmt.sourceLine(position.price)}`] : []));
+    const priced = positions.filter((position) => position.price);
+    // The sentence around the list comes from the translation; the list itself is drawn with each asset's logo
+    const LIST = '\u0001';
+    const [pricesBefore, pricesAfter = ''] = t('total.pricesUsed', { list: LIST }).split(LIST);
 
     return (
         <section className="hatch" aria-labelledby="total-value-title">
@@ -63,7 +67,22 @@ export default function TotalValue({ view, level }: { view: PortfolioView; level
                         <span className="font-semibold text-muted-foreground">{t('total.howLabel')}</span>{' '}
                         {t('total.howBody', { when: fmt.when(valueCad.fetchedAt) })}
                     </p>
-                    {priceSources.length > 0 && <p>{t('total.pricesUsed', { list: priceSources.join(' · ') })}</p>}
+                    {priced.length > 0 && (
+                        <p>
+                            {pricesBefore}
+                            {priced.map((position, index) => (
+                                <span key={position.symbol} className="whitespace-normal">
+                                    {index > 0 && ' · '}
+                                    <span className="inline-flex items-center gap-1 align-middle">
+                                        <AssetLogo symbol={position.symbol} name={position.name} assetClass={position.assetClass} size={14} />
+                                        <span className="font-semibold text-muted-foreground">{position.symbol}</span>
+                                    </span>
+                                    {': '}{position.price ? fmt.sourceLine(position.price) : ''}
+                                </span>
+                            ))}
+                            {pricesAfter}
+                        </p>
+                    )}
                     {fxUsdCad && positions.some((position) => position.price?.currency === 'USD') && (
                         <p>{t('total.fxNote', { rate: fmt.units(fxUsdCad.value), source: fmt.sourceLine(fxUsdCad) })}</p>
                     )}

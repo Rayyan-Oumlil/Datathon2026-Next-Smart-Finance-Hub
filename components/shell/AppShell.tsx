@@ -60,7 +60,10 @@ const AppShell = ({ user, initialStocks, children }: AppShellProps) => {
             )}
 
             <div className="shell-container">
-                <div className="app">
+                {/* Without open stock tabs the tab bar is not rendered: the workspace then takes the whole frame */}
+                <div className={cn('app',
+                    '[&:not(:has(>.tabbar))]:[grid-template-rows:minmax(0,1fr)] [&:not(:has(>.tabbar))>.workspace]:rounded-none',
+                    'max-lg:[&:not(:has(>.tabbar))_.workspace-inner]:pt-14')}>
                     <TabBar onMenu={() => setNavOpen(true)} />
                     <main ref={workspaceRef} className={cn('workspace', pathname === '/portfolio' && 'is-first-tab')}>
                         {/* Pages fetch their data when they mount; a change applied by the agent remounts them */}

@@ -27,7 +27,7 @@ const withTab = (tabs: string[], path: string) => {
 
 const TabBar = ({ onMenu }: { onMenu: () => void }) => {
     const t = useTranslations('TabBar');
-        const pathname = usePathname();
+    const pathname = usePathname();
     const router = useRouter();
     const [tabs, setTabs] = useState(() => withTab(PINNED, pathname));
     const tabRefs = useRef(new Map<string, HTMLDivElement>());
@@ -65,6 +65,16 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
         if (path === pathname) router.push(next.length ? next[Math.max(0, index - 1)] : '/portfolio');
     };
 
+    // No open stock: no bar at all, the page moves up. On a small screen the menu button stays in the top corner.
+    if (tabs.length === 0) {
+        return (
+            <button type="button" onClick={onMenu} aria-label={t('openMenu')}
+                className="chrome-btn lg:hidden fixed top-2 start-2 z-30 border border-line bg-card text-foreground shadow-sm">
+                <Menu />
+            </button>
+        );
+    }
+
     return (
         <div className="tabbar">
             <button type="button" onClick={onMenu} className="chrome-btn lg:hidden" aria-label={t('openMenu')}>
@@ -81,8 +91,6 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                     <div className="tab-glider-body" />
                     <svg className="tab-glider-curve is-right" viewBox="0 0 12 12"><path d="M12 0v12H0c6.627 0 12-5.373 12-12z" /></svg>
                 </div>
-
-                {tabs.length === 0 && <span className="px-2 text-[13px] text-faint">{t('emptyHint')}</span>}
 
                 {tabs.map((path) => {
                     const pinned = PINNED.includes(path);

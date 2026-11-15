@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import type { Level } from '@/lib/domain/types';
 import type { PositionView } from '@/lib/services/portfolio';
 import ChangePill from '@/components/ChangePill';
+import { AssetLogo } from '@/components/AssetLogo';
 import Panel from '@/components/Panel';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { api } from './logic';
@@ -138,17 +139,20 @@ export default function Holdings({ positions, totalCad, level, onChanged }: Prop
                             {positions.map((position) => (
                                 <tr key={position.symbol}>
                                     <td className={`${cell} !whitespace-normal py-2`}>
-                                        <div className="flex min-w-40 flex-col gap-0.5">
-                                            <span className="flex flex-wrap items-center gap-1.5">
-                                                <Link href={`/stocks/${encodeURIComponent(position.symbol)}`} className="font-bold text-foreground underline-offset-2 outline-none hover:text-brand-ink hover:underline focus-visible:underline">
-                                                    {position.symbol}
-                                                </Link>
-                                                <span className="pill">{position.sector ?? t(`assetClass.${position.assetClass}`)}</span>
-                                            </span>
-                                            <span className="text-[12.5px] text-muted-foreground">{position.name}</span>
-                                            <span className="text-[11.5px] text-faint">
-                                                {position.price ? t('holdings.price', { line: fmt.sourceLine(position.price) }) : t('holdings.priceUnavailable')}
-                                            </span>
+                                        <div className="flex min-w-48 items-start gap-2.5">
+                                            <AssetLogo symbol={position.symbol} name={position.name} assetClass={position.assetClass} size={dense ? 28 : 32} className="mt-0.5 shrink-0" />
+                                            <div className="flex min-w-0 flex-col gap-0.5">
+                                                <span className="flex flex-wrap items-center gap-1.5">
+                                                    <Link href={`/stocks/${encodeURIComponent(position.symbol)}`} className="font-bold text-foreground underline-offset-2 outline-none hover:text-brand-ink hover:underline focus-visible:underline">
+                                                        {position.symbol}
+                                                    </Link>
+                                                    <span className="pill">{position.sector ?? t(`assetClass.${position.assetClass}`)}</span>
+                                                </span>
+                                                <span className="text-[12.5px] text-muted-foreground">{position.name}</span>
+                                                <span className="text-[11.5px] text-faint">
+                                                    {position.price ? t('holdings.price', { line: fmt.sourceLine(position.price) }) : t('holdings.priceUnavailable')}
+                                                </span>
+                                            </div>
                                         </div>
                                     </td>
                                     {detail && <td className={`is-num ${cell}`}>{fmt.units(position.quantity)}</td>}

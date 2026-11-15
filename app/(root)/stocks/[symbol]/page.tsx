@@ -15,6 +15,7 @@ import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
 import { getStockMetrics } from '@/lib/actions/finnhub.actions';
 import { hasFinnhubCompanyData } from '@/lib/markets';
 import { getEntry } from '@/lib/universe';
+import { AssetLogo } from '@/components/AssetLogo';
 import { signalsFor } from '@/lib/services/quotes';
 import type { UniverseEntry } from '@/lib/domain/types';
 import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
@@ -61,9 +62,12 @@ async function ReferencePage({ entry }: { entry: UniverseEntry }) {
     return (
         <section className="hatch">
             <div className="card flex flex-col gap-3 p-4">
-                <div className="min-w-0">
-                    <h1 className="text-xl font-bold tracking-[-0.03em]">{entry.name}</h1>
-                    <p className="mono text-[12.5px] text-faint">{entry.symbol} · {te(`referenceKind.${entry.assetClass as 'crypto' | 'gold' | 'bond_yield'}`)}</p>
+                <div className="flex min-w-0 items-center gap-3">
+                    <AssetLogo symbol={entry.symbol} name={entry.name} assetClass={entry.assetClass} size={44} className="shrink-0" />
+                    <div className="min-w-0">
+                        <h1 className="text-xl font-bold tracking-[-0.03em]">{entry.name}</h1>
+                        <p className="mono text-[12.5px] text-faint">{entry.symbol} · {te(`referenceKind.${entry.assetClass as 'crypto' | 'gold' | 'bond_yield'}`)}</p>
+                    </div>
                 </div>
                 <p className="text-[13.5px] text-muted-foreground">
                     {te('referenceBody')}

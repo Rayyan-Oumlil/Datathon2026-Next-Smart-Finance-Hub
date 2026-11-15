@@ -1,3 +1,5 @@
+import type { AssetClass } from '@/lib/domain/types';
+
 // Role -> colour group of the allocation bar. Only design tokens (app/globals.css), never a hard-coded colour.
 export type Group = 'bonds' | 'funds' | 'stocks' | 'gold' | 'crypto';
 
@@ -25,3 +27,9 @@ export const GROUP_CLASS: Record<Group, string> = {
 export const GROUP_ORDER: Group[] = ['bonds', 'funds', 'stocks', 'gold', 'crypto'];
 
 export const groupOf = (role: string): Group => GROUP_OF_ROLE[role] ?? 'funds';
+
+/** The asset class a line's role implies, for its logo fallback (bond, index and gold lines are funds). */
+export const assetClassOfRole = (role: string): AssetClass => {
+    const group = groupOf(role);
+    return group === 'stocks' ? 'stock' : group === 'crypto' ? 'crypto' : 'etf';
+};

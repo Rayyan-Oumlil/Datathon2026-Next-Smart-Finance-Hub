@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { ArrowRight, ChevronDown, Loader2 } from 'lucide-react';
 import { formatMoney, formatPercent } from '@/i18n/format';
 import type { ModelOptionView } from '@/lib/services/model-portfolio';
-import { GROUP_CLASS, GROUP_ORDER, groupOf } from './allocation';
+import { AssetLogo } from '@/components/AssetLogo';
+import { GROUP_CLASS, GROUP_ORDER, assetClassOfRole, groupOf } from './allocation';
 
 type Props = {
     option: ModelOptionView;
@@ -108,6 +109,7 @@ export default function OptionCard({ option, amountCad, replaceMode, disabled, b
                                 <details className="group">
                                     <summary className="flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
                                         <span aria-hidden className={`size-2 flex-none rounded-full ${GROUP_CLASS[groupOf(line.role)]}`} />
+                                        <AssetLogo symbol={line.symbol} name={line.name} assetClass={assetClassOfRole(line.role)} size={26} className="shrink-0" />
                                         <span className="flex min-w-0 flex-1 flex-col leading-tight">
                                             <span className="mono text-[13px] font-semibold text-foreground">{line.symbol}</span>
                                             <span className="truncate text-[11.5px] text-faint">{t(`role.${line.role}`)}</span>
