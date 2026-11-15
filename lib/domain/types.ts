@@ -101,7 +101,7 @@ export type SignalSet = {
     pe?: Sourced;
     revenueGrowthPct?: Sourced;
     sectorLabel?: Sourced<string>; // provider's label when we have one; otherwise the list's
-    closes1m?: Sourced<number[]>;  // for the sparkline
+    closes1m?: Sourced<number[]> & { dates?: string[] };  // for the sparkline; dates (YYYY-MM-DD) line up with the closes, absent in older logged runs
     newsCount7d?: Sourced;         // shown, never scored
     missing: string[];             // names of signals we could not get, with no value invented
 };

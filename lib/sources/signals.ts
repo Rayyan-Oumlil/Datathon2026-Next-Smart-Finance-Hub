@@ -67,12 +67,12 @@ function volatilityFrom(closes: Sourced<DailyClose[]>): Sourced | undefined {
     };
 }
 
-function lastMonth(closes: Sourced<DailyClose[]>): Sourced<number[]> {
+function lastMonth(closes: Sourced<DailyClose[]>): NonNullable<SignalSet['closes1m']> {
     const last = closes.value[closes.value.length - 1].date;
     const from = new Date(`${last}T00:00:00Z`);
     from.setUTCMonth(from.getUTCMonth() - 1);
     const rows = closes.value.filter((row) => row.date >= from.toISOString().slice(0, 10));
-    return { ...closes, value: rows.map((row) => row.close), note: `daily closes ${rows[0].date} to ${last}${staleNote(closes)}` };
+    return { ...closes, value: rows.map((row) => row.close), dates: rows.map((row) => row.date), note: `daily closes ${rows[0].date} to ${last}${staleNote(closes)}` };
 }
 
 const historySignals = (closes: Sourced<DailyClose[]> | undefined): Values =>

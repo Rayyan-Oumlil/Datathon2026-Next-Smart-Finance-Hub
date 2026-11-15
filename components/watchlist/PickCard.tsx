@@ -81,12 +81,13 @@ export default function PickCard({ pick, level, pinned, busy, rules, ruleVersion
                             </p>
                         )}
                     </div>
-                    {signals.closes1m && signals.closes1m.value.length > 1 && (
-                        <div className="flex flex-col items-end">
-                            <Sparkline closes={signals.closes1m.value} label={t('card.sparklineLabel', { symbol: pick.symbol })} />
-                            <span className="text-[11px] text-faint">{t('card.oneMonth', { source: sourceLabel(signals.closes1m.source, locale) })}</span>
-                        </div>
-                    )}
+                </div>
+            )}
+
+            {!novice && signals.closes1m && signals.closes1m.value.length > 1 && (
+                <div className="flex flex-col gap-1">
+                    <Sparkline closes={signals.closes1m.value} dates={signals.closes1m.dates} currency={signals.price?.currency} label={t('card.sparklineLabel', { symbol: pick.symbol })} />
+                    <span className="text-[11px] text-faint">{t('card.oneMonth', { source: sourceLabel(signals.closes1m.source, locale) })}</span>
                 </div>
             )}
 

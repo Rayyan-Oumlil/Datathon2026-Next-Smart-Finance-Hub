@@ -102,6 +102,8 @@
     "noData": " aucune donnée",
     "sparklineLabel": "Clôtures quotidiennes de {symbol} sur un mois",
     "oneMonth": "1 mois · {source}",
+    "sparkTip": "{date} · {value}",
+    "sparkRange": "Min. {low} · Max. {high}",
     "peVsSector": "C/B par rapport au secteur :",
     "staleQuote": "Cours du {time}, non en direct",
     "staleDaily": "Valeurs quotidiennes datant d’avant aujourd’hui",

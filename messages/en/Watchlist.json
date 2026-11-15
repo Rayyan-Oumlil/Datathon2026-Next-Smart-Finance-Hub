@@ -101,6 +101,8 @@
     "noData": " no data",
     "sparklineLabel": "{symbol} daily closes over one month",
     "oneMonth": "1 month · {source}",
+    "sparkTip": "{date} · {value}",
+    "sparkRange": "Low {low} · High {high}",
     "peVsSector": "P/E against the sector:",
     "staleQuote": "Quote from {time}, not live",
     "staleDaily": "Daily values from before today",
