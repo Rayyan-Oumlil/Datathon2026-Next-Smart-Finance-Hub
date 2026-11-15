@@ -63,7 +63,29 @@ const envelope = z.object({ type: z.string(), summary: z.string().max(600).defau
 
 export type PreviewRow = { label: string; before: string; after: string };
 export type PreviewFact = { label: string; value: string; source?: string; fetchedAt?: string; asOf?: string };
-export type Preview = { before: unknown; after: unknown; summary: string; rows: PreviewRow[]; facts: PreviewFact[]; strategy?: StrategyPreview };
+/** The pages a proposed change can be shown on, ready to save. */
+export type ProposalPage = '/strategy' | '/overview' | '/portfolio' | '/profile';
+// page: where the app takes the visitor to review and save the change. Absent for a change that stays in the chat (a simulated trade).
+export type Preview = { before: unknown; after: unknown; summary: string; rows: PreviewRow[]; facts: PreviewFact[]; strategy?: StrategyPreview; page?: ProposalPage };
+
+/**
+ * The page a change belongs on: a strategy on Strategy, a profile change on Profile, rules on Portfolio, a layout
+ * change on Overview when it only hides or shows Overview panels and on Portfolio otherwise. A simulated trade has
+ * none: it is confirmed in the chat.
+ */
+export function pageFor(kind: ActionType, preview: Pick<Preview, 'before' | 'after'>): ProposalPage | undefined {
+    if (kind === 'strategy_propose') return '/strategy';
+    if (kind === 'profile_change') return '/profile';
+    if (kind === 'rule_create' || kind === 'rule_pause') return '/portfolio';
+    if (kind === 'layout_change') {
+        const before = preview.before as string[];
+        const after = preview.after as string[];
+        const changed = [...before.filter((id) => !after.includes(id)), ...after.filter((id) => !before.includes(id))];
+        const overviewOnly = changed.length > 0 && changed.every((id) => WIDGET_LIBRARY.find((widget) => widget.id === id)?.tab === 'overview');
+        return overviewOnly ? '/overview' : '/portfolio';
+    }
+    return undefined;
+}
 
 export type Routed =
     | { outcome: 'none' }
@@ -343,10 +365,14 @@ export async function route(actionId: string, proposal: unknown, locale: Locale 
         }
         throw error;
     }
+    const page = pageFor(kind, preview);
+    if (page) preview = { ...preview, page };
     // The preview's sentence is written here from the app's data; the model's own summary is not shown
     const proposed: ProposedAction = { type: kind as AgentActionType, summary: preview.summary, before: preview.before, after: preview.after, params, needsConfirm: true };
     const record: StoredAction = { actionId, createdAt: new Date().toISOString(), proposed, status: 'pending', preview, conflicts };
     await updateState(s, (state) => {
+        // A new proposal for a page replaces the one still waiting there: only one change at a time is previewed on a page
+        if (page) for (const other of state.pendingPreviews as StoredAction[]) if (other.status === 'pending' && other.preview?.page === page && other.actionId !== actionId) other.status = 'cancelled';
         state.pendingPreviews = [...state.pendingPreviews.filter((p) => p.actionId !== actionId), record].slice(-KEPT_ACTIONS);
     });
     return { outcome: 'preview', proposed, preview, conflicts };

@@ -142,5 +142,11 @@
     "sub": "Part de la valeur du portefeuille simulé dans chaque secteur",
     "note": "Les secteurs proviennent de la liste d’actifs de l’application (noms de secteurs tirés des listes Wikipédia ayant servi à la bâtir, et non d’un fournisseur GICS sous licence); un FNB ou un cryptoactif est regroupé sous sa classe d’actif. Les valeurs sont celles des positions au dernier cours, telles qu’elles figurent sous Positions détenues.",
     "unpriced": "Non incluses, aucun cours disponible pour le moment : {list}."
+  },
+  "draft": {
+    "add": "Nouveau · aperçu",
+    "remove": "Sera masqué",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
   }
 }

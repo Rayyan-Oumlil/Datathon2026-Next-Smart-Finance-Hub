@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -13,38 +14,20 @@ import AgentText from "@/components/agent/AgentText";
 import StageList, { reworded, stageFailed, stageText } from "@/components/agent/StageList";
 import Timeline from "@/components/agent/Timeline";
 import Link from "next/link";
-import { RuleFlow, ViewToggle, useRuleView } from "@/components/strategy";
-import type { StrategyRule } from "@/lib/strategy/types";
 import { rowsForStage } from "@/lib/agent/stage-rows";
 import type { StageLine } from "@/lib/agent/stages";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { SpeakerButton, VoiceButton, VoiceStatus } from "@/components/agent/Voice";
 import { useSpeech } from "@/hooks/useSpeech";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
+import PreviewDetails, { timesText, type PreviewData } from "@/components/agent/PreviewDetails";
+import ProposalDock, { type DockKind } from "@/components/agent/ProposalDock";
+import { PROPOSAL_CHANGED_EVENT, PROPOSAL_DECIDE_EVENT } from "@/hooks/usePendingProposal";
+import { toast } from "sonner";
 import { KEY_STEP, PANEL_DEFAULT, PANEL_MAX, PANEL_MIN, stepWidth, swipeOf, widthFromDrag } from "@/components/agent/panel-width";
 
 type Source = { label: string; source: string; fetchedAt?: string; asOf?: string };
 type Check = { filter: string; pass: boolean; detail: string };
-type StrategyPreviewData = {
-    name: string;
-    replaceId: string | null;
-    sentences: string[];
-    rules?: StrategyRule[];
-    beforeSentences: string[] | null;
-    table: Array<{ label: string; without: string; with: string }>;
-    firings: Array<{ ruleId: string; label: string; count: number }>;
-    replay: { replayId: string; snapshotId: string; from: string; to: string; tradingDays: number } | null;
-    replayNote: string | null;
-    conflicts: Array<{ symbol: string; detail: string }>;
-    notes: string[];
-    illustrative: string;
-};
-type PreviewData = {
-    summary: string;
-    strategy?: StrategyPreviewData;
-    rows: Array<{ label: string; before: string; after: string }>;
-    facts: Array<{ label: string; value: string; source?: string; fetchedAt?: string; asOf?: string }>;
-};
 type Reply = {
     actionId: string;
     language?: Locale;                // the language the reply is in: the question's own, not necessarily the app's
@@ -77,13 +60,6 @@ const HISTORY_TURNS = 10;
 const QUICK_ACTIONS = ['explain', 'less', 'etf', 'rule', 'strategy', 'testStrategy'] as const;
 type QuickAction = (typeof QUICK_ACTIONS)[number];
 
-type Translator = ReturnType<typeof useTranslations<'AgentPanel'>>;
-/** Which time a figure carries: the time the value refers to, and the time it was fetched. */
-const timesText = (t: Translator, locale: string, { asOf, fetchedAt }: { asOf?: string; fetchedAt?: string }) =>
-    [
-        formatMoment(asOf, locale) && t('times.asOf', { time: formatMoment(asOf, locale) }),
-        formatMoment(fetchedAt, locale) && t('times.fetched', { time: formatMoment(fetchedAt, locale) }),
-    ].filter(Boolean).join(' · ') || t('times.none');
 const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 async function post<T>(url: string, body: unknown, fallbackError: string): Promise<T> {
@@ -202,110 +178,36 @@ const ConflictBlock = ({ conflict }: { conflict: NonNullable<Reply['conflict']> 
     );
 };
 
-// A proposed strategy: its rules as sentences, the small without / with table of the 5-year replay, how often each rule
-// fired and the profile conflicts. The label of the replay is always shown with its figures.
-const StrategyBlock = ({ data }: { data: StrategyPreviewData }) => {
-    const t = useTranslations('AgentPanel');
-    const [view, setView] = useRuleView();
-    const flow = view === 'flow' && !!data.rules?.length;
-    return (
-        <div className="mt-2 flex flex-col gap-2">
-            <div>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="form-label">{t('preview.strategy.rules')}</p>
-                    {!!data.rules?.length && <ViewToggle value={view} onChange={setView} />}
-                </div>
-                {flow ? <RuleFlow className="mt-1" rules={data.rules!} /> : (
-                <ul className="mt-0.5 list-disc ps-5 text-foreground">
-                    {data.sentences.map((sentence, index) => <li key={index}>{sentence}</li>)}
-                </ul>)}
-                {data.beforeSentences && (
-                    <details className="mt-1 text-xs text-muted-foreground">
-                        <summary className="cursor-pointer select-none">{t('preview.strategy.replaces')}</summary>
-                        <ul className="mt-0.5 list-disc ps-5">{data.beforeSentences.map((sentence, index) => <li key={index}>{sentence}</li>)}</ul>
-                    </details>
-                )}
-            </div>
-            {data.replay && data.table.length > 0 && (
-                <div>
-                    <p className="form-label">{t('preview.strategy.history')}</p>
-                    <p className="text-[11px] text-faint">{t('preview.strategy.window', { from: data.replay.from, to: data.replay.to, days: data.replay.tradingDays })}</p>
-                    <table className="mt-1 w-full text-xs">
-                        <thead>
-                            <tr className="text-faint">
-                                <th scope="col" className="py-0.5 text-start font-semibold">{t('preview.strategy.metric')}</th>
-                                <th scope="col" className="py-0.5 text-end font-semibold">{t('preview.strategy.without')}</th>
-                                <th scope="col" className="py-0.5 text-end font-semibold">{t('preview.strategy.with')}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.table.map((row) => (
-                                <tr key={row.label} className="border-t border-line">
-                                    <th scope="row" className="py-1 text-start font-normal text-muted-foreground">{row.label}</th>
-                                    <td className="num py-1 text-end text-foreground">{row.without}</td>
-                                    <td className="num py-1 text-end text-foreground">{row.with}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {data.firings.length > 0 && (
-                        <ul className="mt-1 text-xs text-muted-foreground" aria-label={t('preview.strategy.fired')}>
-                            {data.firings.map((firing) => <li key={firing.ruleId}>{t('preview.strategy.firedCount', { label: firing.label, count: firing.count })}</li>)}
-                        </ul>
-                    )}
-                    <p className="mono mt-1 break-all text-[11px] text-faint">{t('preview.strategy.ids', { replayId: data.replay.replayId, snapshotId: data.replay.snapshotId })}</p>
-                </div>
-            )}
-            {data.replayNote && <p className="text-xs text-muted-foreground">{data.replayNote}</p>}
-            {data.notes.map((note, index) => <p key={index} className="text-xs text-muted-foreground">{note}</p>)}
-            <p role="note" className="rounded-lg bg-hover px-2 py-1 text-xs font-semibold text-foreground">{data.illustrative}</p>
-        </div>
-    );
-};
+// where: 'chat' is the card in the conversation; 'page' is the same preview on the page the change belongs to, where it is saved.
+// A change that has a page is not confirmed in the chat: its chat card only says where it went.
+type PreviewProps = { message: Message; busy: boolean; onDecide: (accept: boolean) => void; onUndo: () => void; where?: 'chat' | 'page' };
 
-type PreviewProps = { message: Message; busy: boolean; onDecide: (accept: boolean) => void; onUndo: () => void };
-
-const PreviewCard = ({ message, busy, onDecide, onUndo }: PreviewProps) => {
+export const PreviewCard = ({ message, busy, onDecide, onUndo, where = 'chat' }: PreviewProps) => {
     const t = useTranslations('AgentPanel');
     const locale = useLocale();
     const preview = message.reply!.preview!;
+    const viaPage = where === 'chat' && Boolean(preview.page);
     return (
         <div className="mt-2 rounded-xl border border-line bg-canvas p-3 text-[13px]">
-            <p className="kicker">{t('preview.kicker')}</p>
+            <p className="kicker">{viaPage ? t('preview.pageKickerChat') : where === 'page' ? t('preview.pageKicker') : t('preview.kicker')}</p>
             <p className="mt-1 font-semibold text-foreground">{preview.summary}</p>
-            {preview.strategy && <StrategyBlock data={preview.strategy} />}
-            {!preview.strategy && <dl className="mt-2 flex flex-col gap-2">
-                {preview.rows.map((row) => (
-                    <div key={row.label}>
-                        <dt className="form-label">{row.label}</dt>
-                        <dd className="mt-0.5 grid grid-cols-2 gap-2">
-                            <span className="rounded-lg bg-hover px-2 py-1 text-muted-foreground"><span className="block text-[11px] font-bold uppercase text-faint">{t('preview.before')}</span>{row.before || '–'}</span>
-                            <span className="rounded-lg bg-brand-soft px-2 py-1 text-foreground"><span className="block text-[11px] font-bold uppercase text-brand-ink">{t('preview.after')}</span>{row.after || '–'}</span>
-                        </dd>
-                    </div>
-                ))}
-            </dl>}
-            {!preview.strategy && preview.facts.length > 0 && (
-                <ul className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
-                    {preview.facts.map((fact) => (
-                        <li key={fact.label}>
-                            <span className="font-semibold text-foreground">{t('preview.factLabel', { label: fact.label })}</span> <span className="num">{fact.value}</span>
-                            {fact.source && <span className="text-faint"> · {sourceLabel(t, fact.source)}{fact.fetchedAt || fact.asOf ? ` · ${timesText(t, locale, fact)}` : ''}</span>}
-                        </li>
-                    ))}
-                </ul>
+            {viaPage && message.change === 'pending' && preview.page && (
+                <Link href={preview.page} className="mt-1 inline-flex items-center gap-1 font-semibold text-brand-ink hover:underline">
+                    {t('preview.openPage', { page: t(`pageName.${preview.page.slice(1)}`) })} →
+                </Link>
             )}
-            {message.change === 'pending' ? (
+            {!viaPage && <PreviewDetails preview={preview} />}
+            {message.change === 'pending' ? (viaPage ? null : (
                 <div className="mt-3 flex flex-wrap gap-2">
                     <button type="button" className="btn btn-primary" disabled={busy} onClick={() => onDecide(true)}>
-                        {message.reply!.conflict ? t('preview.confirmSimulation') : t('preview.confirm')}
+                        {where === 'page' ? t('preview.save') : message.reply!.conflict ? t('preview.confirmSimulation') : t('preview.confirm')}
                     </button>
                     <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => onDecide(false)}>{t('preview.cancel')}</button>
                 </div>
-            ) : (
+            )) : (
                 <div className="mt-3 border-t border-line pt-2" aria-live="polite">
                     <p className="font-semibold text-foreground">
-                        {message.change === 'applied' ? t('preview.applied') : message.change === 'undone' ? t('preview.undone') : t('preview.cancelled')}
+                        {message.change === 'applied' ? (preview.page ? t('preview.saved') : t('preview.applied')) : message.change === 'undone' ? t('preview.undone') : t('preview.cancelled')}
                     </p>
                     {message.outcome && <p className="text-muted-foreground">{message.outcome}</p>}
                     {message.change === 'applied' && message.strategyId && (
@@ -313,7 +215,7 @@ const PreviewCard = ({ message, busy, onDecide, onUndo }: PreviewProps) => {
                             {t('preview.strategy.openTimeMachine')}
                         </Link>
                     )}
-                    {message.change === 'applied' && (
+                    {message.change === 'applied' && !viaPage && (
                         <button type="button" className="btn btn-ghost mt-2" disabled={busy} onClick={onUndo}>
                             <Undo2 aria-hidden /> {t('preview.undo')}
                         </button>
@@ -332,6 +234,11 @@ type AgentPanelProps = { open: boolean; onOpenChange: (open: boolean) => void; o
 // The agent: it explains data and proposes changes. A change is shown as a preview and runs only after Confirm.
 const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, onResize }: AgentPanelProps) => {
     const t = useTranslations('AgentPanel');
+    // The page a proposed change is saved on shows it in a slot the shell provides; this panel fills the slot
+    const [slot, setSlot] = useState<HTMLElement | null>(null);
+    useEffect(() => setSlot(document.getElementById('agent-proposal-slot')), []);
+    const [decidedHere, setDecidedHere] = useState<string | null>(null);   // the proposal just saved, cancelled or undone on its page
+    const [dismissed, setDismissed] = useState<string[]>([]);
     const drag = useRef<{ startX: number; startWidth: number } | null>(null);
     const swipe = useRef<{ x: number; y: number } | null>(null);
     const isRtl = () => document.documentElement.dir === 'rtl';
@@ -481,6 +388,14 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
                 id, role: 'assistant', text: reply.text, change: reply.preview ? 'pending' : undefined, steps,
                 reply: { actionId: reply.actionId, language: reply.language, sources: reply.sources ?? [], refused: reply.refused, notice: reply.notice, conflict: reply.conflict, preview: reply.preview, proposedType: reply.proposed?.type },
             }]);
+            // A change that belongs on a page: take the visitor there. They review and save it on that page, not in the chat.
+            const page = reply.preview?.page;
+            if (page) {
+                if (!pathname.startsWith(page)) router.push(page);
+                else router.refresh();   // already there: the page reads the new proposal and previews it
+                window.dispatchEvent(new CustomEvent(PROPOSAL_CHANGED_EVENT));
+                if (!window.matchMedia('(min-width: 1024px)').matches) onOpenChange(false);   // on a small screen the panel would cover the page
+            }
             if (viaVoice && !speechRef.current.muted && !voiceRef.current.active) void speechRef.current.speak(reply.text, ticket, reply.language);
         } catch (error) {
             // A stop the reader asked for is not a failure: say so and leave the conversation as it was
@@ -517,7 +432,14 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
         try {
             const outcome = await post<{ applied: boolean; message?: string; result?: { strategy?: { id?: string } } }>('/api/agent/confirm', { actionId, accept, language }, t('errors.apply'));
             patch(message.id, { change: outcome.applied ? 'applied' : 'cancelled', outcome: outcome.message, ...(outcome.result?.strategy?.id ? { strategyId: outcome.result.strategy.id } : {}) });
+            setDecidedHere(message.id);
             if (outcome.applied) dataChanged();
+            else { router.refresh(); window.dispatchEvent(new CustomEvent(PROPOSAL_CHANGED_EVENT)); }
+            if (decisionRef.current.inPlace && message.reply?.preview?.page) {
+                // The preview on the page is gone once the change is saved: say so, with a way back
+                if (outcome.applied) toast.success(outcome.message || t('preview.saved'), { action: { label: t('preview.undo'), onClick: () => void undoRef.current(message) }, duration: 12000 });
+                else toast(t('preview.cancelled'));
+            }
         } catch (error) {
             notice(error instanceof Error ? error.message : t('errors.apply'));
         } finally {
@@ -539,6 +461,66 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
         }
     };
 
+    // The newest change that belongs on a page and still waits for Save, or that was just decided there (so it can be undone)
+    const proposalMessage = useMemo(
+        () => [...messages].reverse().find((m) => m.reply?.preview?.page && !dismissed.includes(m.id) && (m.change === 'pending' || m.id === decidedHere)),
+        [messages, dismissed, decidedHere],
+    );
+    const proposalPage = proposalMessage?.reply?.preview?.page;
+    const onProposalPage = Boolean(proposalPage && pathname.startsWith(proposalPage));
+    const dockKind = ((): DockKind | null => {
+        const type = proposalMessage?.reply?.proposedType;
+        if (type === 'layout_change') return proposalPage === '/overview' ? 'layout_overview' : 'layout_portfolio';
+        return type === 'strategy_propose' || type === 'profile_change' || type === 'rule_create' || type === 'rule_pause' ? type : null;
+    })();
+    // A layout change that adds or removes a module is previewed on the module itself, which carries Save and Cancel
+    // (its decision arrives as an event); the card at the top of the page is for the other changes
+    const previewedInPlace = (() => {
+        const preview = proposalMessage?.reply?.preview;
+        if (proposalMessage?.reply?.proposedType !== 'layout_change' || !Array.isArray(preview?.before) || !Array.isArray(preview?.after)) return false;
+        const before = preview.before as string[];
+        const after = preview.after as string[];
+        return before.some((id) => !after.includes(id)) || after.some((id) => !before.includes(id));
+    })();
+    const decisionRef = useRef<{ message: Message | undefined; inPlace: boolean }>({ message: undefined, inPlace: false });
+    decisionRef.current = { message: proposalMessage, inPlace: previewedInPlace };
+    useEffect(() => {
+        const onDecide = (event: Event) => {
+            const { accept, actionId } = (event as CustomEvent<{ accept?: boolean; actionId?: string }>).detail ?? {};
+            const { message } = decisionRef.current;
+            if (message?.change === 'pending' && (!actionId || message.reply?.actionId === actionId)) return void decideRef.current(message, Boolean(accept));
+            // The conversation is gone (another tab, a new visit) but the proposal is still pending on the server: decide it directly
+            if (!actionId) return;
+            void (async () => {
+                try {
+                    const outcome = await post<{ applied: boolean; message?: string }>('/api/agent/confirm', { actionId, accept: Boolean(accept), language: locale }, t('errors.apply'));
+                    router.refresh();
+                    window.dispatchEvent(new CustomEvent(PROPOSAL_CHANGED_EVENT));
+                    if (outcome.applied) window.dispatchEvent(new CustomEvent('agent:data-changed'));
+                    toast(outcome.applied ? outcome.message || t('preview.saved') : t('preview.cancelled'));
+                } catch (error) {
+                    toast.error(error instanceof Error ? error.message : t('errors.apply'));
+                    window.dispatchEvent(new CustomEvent(PROPOSAL_CHANGED_EVENT));
+                }
+            })();
+        };
+        window.addEventListener(PROPOSAL_DECIDE_EVENT, onDecide);
+        return () => window.removeEventListener(PROPOSAL_DECIDE_EVENT, onDecide);
+    }, [locale, router, t]);
+    const proposalBar = slot && proposalMessage && proposalPage && dockKind && !(previewedInPlace && onProposalPage) ? createPortal(
+        <ProposalDock key={proposalMessage.id} kind={dockKind} page={proposalPage} preview={proposalMessage.reply!.preview!}
+            change={proposalMessage.change} outcome={proposalMessage.outcome} strategyId={proposalMessage.strategyId}
+            withConflict={Boolean(proposalMessage.reply!.conflict)} onPage={onProposalPage} busy={busyAction === proposalMessage.reply!.actionId}
+            onSave={() => void decide(proposalMessage, true)} onCancel={() => void decide(proposalMessage, false)} onUndo={() => void undo(proposalMessage)}
+            onDismiss={() => setDismissed((list) => [...list, proposalMessage.id])} />,
+        slot,
+    ) : null;
+
+    const decideRef = useRef(decide);
+    decideRef.current = decide;
+    const undoRef = useRef(undo);
+    undoRef.current = undo;
+
     const quick = (id: QuickAction) => {
         if (id === 'rule' || id === 'strategy') {
             setDraft(t(`quick.${id}.message`));
@@ -557,9 +539,12 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
 
     if (!open) {
         return (
-            <button type="button" className="btn btn-primary fixed bottom-4 right-4 z-30 rtl:left-4 rtl:right-auto" onClick={() => onOpenChange(true)} aria-expanded={false} aria-controls="agent-panel">
-                <MessageSquareText aria-hidden /> {t('title')}
-            </button>
+            <>
+                <button type="button" className="btn btn-primary fixed bottom-4 right-4 z-30 rtl:left-4 rtl:right-auto" onClick={() => onOpenChange(true)} aria-expanded={false} aria-controls="agent-panel">
+                    <MessageSquareText aria-hidden /> {t('title')}
+                </button>
+                {proposalBar}
+            </>
         );
     }
 
@@ -673,6 +658,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
                     </footer>
                 </div>
             </aside>
+            {proposalBar}
         </>
     );
 };

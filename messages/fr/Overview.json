@@ -1,5 +1,11 @@
 {
   "title": "Aperçu",
   "sub": "Votre liste de suivi intelligente, puis les marchés. Simulation seulement, il ne s’agit pas de conseils en placement.",
-  "hiddenNote": "{count, plural, one {# panneau est masqué.} other {# panneaux sont masqués.}} Demandez à l’agent de {count, plural, one {le} other {les}} remettre."
+  "hiddenNote": "{count, plural, one {# panneau est masqué.} other {# panneaux sont masqués.}} Demandez à l’agent de {count, plural, one {le} other {les}} remettre.",
+  "draft": {
+    "add": "Nouveau · aperçu",
+    "remove": "Sera masqué",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  }
 }

@@ -463,7 +463,7 @@ LANGUAGE_REMINDER = {
 
 def grounding_text(tool_results: list, context: dict, proposed_params: dict | None = None) -> str:
     facts = ("This app is a simulation and gives no investment advice. The assistant can only propose an action; "
-             "the app shows a preview and applies it only after the user confirms. "
+             "the app shows a preview and applies it only after the user confirms (by pressing Save on the page it opens, or Confirm in the chat for a simulated trade). "
              "A simulated trade may go ahead after the user confirms, including when it conflicts with the profile.")
     return facts + "\n\nTool results:\n" + json.dumps(tool_results, default=str) + \
         "\n\nContext:\n" + json.dumps(context, default=str) + \

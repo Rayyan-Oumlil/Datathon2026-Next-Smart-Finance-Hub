@@ -16,8 +16,8 @@ beforeEach(() => freshWorld());
 
 const rule = { text: 'under 90 add 200 CAD of AAPL', symbol: 'AAPL', trigger: { type: 'price_below', value: 90 }, action: { side: 'buy', amountCad: 200 }, once: true };
 const propose = (type: string, params: unknown, extra: object = {}) => ({ type, summary: 'from the model', params, needsConfirm: false, ...extra });
-const preview = async (actionId: string, type: string, params: unknown) => {
-    const routed = await route(actionId, propose(type, params));
+const preview = async (actionId: string, type: string, params: unknown, locale: 'en' | 'fr' = 'en') => {
+    const routed = await route(actionId, propose(type, params), locale);
     if (routed.outcome !== 'preview') throw new Error(`expected a preview, got ${JSON.stringify(routed)}`);
     return routed;
 };
@@ -121,6 +121,37 @@ describe('preview, apply, undo', () => {
         expect((await getLayout()).layout).not.toContain('overview_heatmap');
         await undo('h1');
         expect((await getLayout()).layout).toContain('overview_heatmap');
+    });
+
+    it('layout_change names the Overview panels in French in a French preview', async () => {
+        const all = (await getLayout()).layout;
+        const routed = await preview('h3', 'layout_change', { layout: all.filter((id) => id !== 'overview_heatmap') }, 'fr');
+        expect(routed.preview.summary).toContain('Carte thermique (Aperçu)');
+        expect(routed.preview.summary).not.toContain('Heatmap');
+        const overview = routed.preview.rows.find((row) => row.label === 'Onglet Aperçu');
+        expect(overview?.before).toContain('Carte thermique (Aperçu)');
+        expect(overview?.after).not.toContain('Carte thermique');
+    });
+
+    it('names the page where each kind of change is reviewed and saved, and none for a trade', async () => {
+        const all = (await getLayout()).layout;
+        expect((await preview('pg1', 'layout_change', { layout: all.filter((id) => id !== 'overview_heatmap') })).preview.page).toBe('/overview');
+        expect((await preview('pg2', 'layout_change', { layout: all.filter((id) => id !== 'xray') })).preview.page).toBe('/portfolio');
+        // A change that touches both tabs goes to the Portfolio, where the other half is
+        expect((await preview('pg3', 'layout_change', { layout: all.filter((id) => id !== 'xray' && id !== 'overview_news') })).preview.page).toBe('/portfolio');
+        expect((await preview('pg4', 'rule_create', { rule: { ...rule, status: 'active' } })).preview.page).toBe('/portfolio');
+        expect((await preview('pg5', 'simulated_trade', { symbol: 'AAPL', side: 'buy', amountCad: 100 })).preview.page).toBeUndefined();
+    });
+
+    it('a new proposal for a page replaces the one still waiting on that page, and leaves other pages alone', async () => {
+        const all = (await getLayout()).layout;
+        await preview('s1', 'layout_change', { layout: all.filter((id) => id !== 'overview_heatmap') });
+        await preview('s2', 'layout_change', { layout: all.filter((id) => id !== 'overview_news') });
+        await preview('s3', 'layout_change', { layout: all.filter((id) => id !== 'xray') });   // the Portfolio page
+        expect((await getAction('s1'))?.status).toBe('cancelled');
+        expect((await getAction('s2'))?.status).toBe('pending');
+        expect((await getAction('s3'))?.status).toBe('pending');
+        await expect(apply('s1')).rejects.toMatchObject({ status: 409 });
     });
 
     it('rule_create', async () => {

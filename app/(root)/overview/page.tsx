@@ -20,6 +20,9 @@ import {
 } from "@/lib/constants";
 import { MARKETS, MARKET_COOKIE, getMarket, isMarketOpen, marketForCountry } from "@/lib/markets";
 import { WIDGET_LIBRARY, getLayout } from "@/lib/services/layout";
+import { pendingProposal } from "@/lib/agent/proposal";
+import DraftFrame from "@/components/agent/DraftFrame";
+import ScrollToDraft from "@/components/agent/ScrollToDraft";
 import { toMessageKey } from "@/i18n/config";
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
@@ -54,9 +57,17 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     // Explicit choice, then the remembered one, then the default market
     const saved = (await cookies()).get(MARKET_COOKIE)?.value;
     const market = getMarket(requested ?? saved ?? marketForCountry(null));
-    const [t, tm, tw, to, locale, { layout }] = await Promise.all([getTranslations('Dashboard'), getTranslations('Markets'), getTranslations('TradingViewWidget'), getTranslations('Overview'), getLocale(), getLayout()]);
-    // A panel is shown when its id is in the saved layout (the agent or the visitor can hide it and bring it back)
-    const shown = (id: string) => layout.includes(id);
+    const [t, tm, tw, to, locale, { layout }, proposal] = await Promise.all([getTranslations('Dashboard'), getTranslations('Markets'), getTranslations('TradingViewWidget'), getTranslations('Overview'), getLocale(), getLayout(), pendingProposal('/overview')]);
+    // A panel is shown when its id is in the saved layout (the agent or the visitor can hide it and bring it back).
+    // While a change the agent proposed waits for Save, the panels it would add are shown as a preview and the ones
+    // it would hide stay, dimmed and tagged, until the visitor saves or cancels.
+    const proposed = proposal?.layout ?? null;
+    const draftOf = (id: string): 'add' | 'remove' | null => (!proposed ? null : layout.includes(id) && !proposed.includes(id) ? 'remove' : !layout.includes(id) && proposed.includes(id) ? 'add' : null);
+    const shown = (id: string) => layout.includes(id) || draftOf(id) === 'add';
+    const draftLabels = { add: to('draft.add'), remove: to('draft.remove'), cancel: to('draft.cancel'), save: to('draft.save') };
+    // The first previewed panel carries the Save and Cancel buttons, right on the change
+    const firstDraft = ['overview_watchlist', 'overview_pulse', 'overview_leaders', 'overview_heatmap', 'overview_quotes', 'overview_news'].find((id) => draftOf(id));
+    const frame = (id: string, node: React.ReactNode) => <DraftFrame state={draftOf(id)} labels={draftLabels} primary={id === firstDraft} actionId={proposal?.actionId}>{node}</DraftFrame>;
     const hiddenCount = WIDGET_LIBRARY.filter((widget) => widget.tab === 'overview' && !shown(widget.id)).length;
     const name = tm(`names.${market.id}`);
     const feed = toMessageKey(market.feed) as FeedKey;
@@ -81,7 +92,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 </div>
             </header>
 
-            {shown('overview_watchlist') && <SmartWatchlist rules={watchlistRules} />}
+            {proposal && proposed && <ScrollToDraft id={proposal.actionId} />}
+            {shown('overview_watchlist') && frame('overview_watchlist', <SmartWatchlist rules={watchlistRules} />)}
 
             <header className="page-head mt-4">
                 <div>
@@ -92,9 +104,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
             <MarketSwitcher active={market.id} openIds={MARKETS.filter((m) => isMarketOpen(m)).map((m) => m.id)} />
 
-            {hiddenCount > 0 && <p role="note" className="px-1 text-[12.5px] text-faint">{to('hiddenNote', { count: hiddenCount })}</p>}
+            {hiddenCount > 0 && !proposal && <p role="note" className="px-1 text-[12.5px] text-faint">{to('hiddenNote', { count: hiddenCount })}</p>}
 
-            {shown('overview_pulse') && <section className="hatch">
+            {shown('overview_pulse') && frame('overview_pulse', <section className="hatch">
                 <div className="section-head">
                     <div>
                         <h2 className="section-title">{t('pulseTitle')}</h2>
@@ -106,12 +118,12 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <Suspense key={market.id} fallback={<PulseSkeleton />}>
                     <IndexPulse market={market} locale={locale} />
                 </Suspense>
-            </section>}
+            </section>)}
 
             {/* Narrow (the agent panel open, or a small screen): one column. Container queries follow the workspace width, not the screen's. */}
             <div key={market.id} className="flex flex-col gap-3">
                 {(() => {
-                    const leaders = shown('overview_leaders') && (
+                    const leaders = shown('overview_leaders') && frame('overview_leaders',
                         market.yahoo ? (
                             <Panel title={t('moversTitle')} sub={t('moversSub')}>
                                 <YahooMovers market={market} />
@@ -120,24 +132,24 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                             <Panel title={t('leadersTitle')} sub={t('leadersSub')}>
                                 <TradingViewWidget scriptUrl={`${scriptUrl}market-overview.js`} config={marketOverviewConfig(groups, locale)} height={560} />
                             </Panel>
-                        )
+                        ),
                     );
-                    const quotes = shown('overview_quotes') && (
+                    const quotes = shown('overview_quotes') && frame('overview_quotes',
                         <Panel title={t('quotesTitle')} sub={t('quotesSub', { market: name })}>
                             {market.yahoo
                                 ? <YahooQuotesTable market={market} />
                                 : <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(groups, locale)} height={560} />}
-                        </Panel>
+                        </Panel>,
                     );
-                    const heatmapPanel = heatmap && (
+                    const heatmapPanel = heatmap && frame('overview_heatmap',
                         <Panel title={heatmap.title} sub={t('heatmapSub')}>
                             <TradingViewWidget scriptUrl={`${scriptUrl}${heatmap.script}`} config={heatmap.config} height={560} allowExpand labels={expandLabels} />
-                        </Panel>
+                        </Panel>,
                     );
-                    const news = shown('overview_news') && (
+                    const news = shown('overview_news') && frame('overview_news',
                         <Panel title={t('storiesTitle')} sub={t('storiesSub')}>
                             <TradingViewWidget scriptUrl={`${scriptUrl}timeline.js`} config={timelineConfig(market.news, locale)} height={560} />
-                        </Panel>
+                        </Panel>,
                     );
                     // With a heatmap, the quotes sit beside the news below it; without one (none for this market, or hidden), beside the leaders
                     const row1 = [leaders, heatmapPanel || quotes].filter(Boolean);

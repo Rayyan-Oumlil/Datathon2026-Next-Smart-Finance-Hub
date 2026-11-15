@@ -66,6 +66,9 @@ const AppShell = ({ user, initialStocks, children }: AppShellProps) => {
                     'max-lg:[&:not(:has(>.tabbar))_.workspace-inner]:pt-14')}>
                     <TabBar onMenu={() => setNavOpen(true)} />
                     <main ref={workspaceRef} className={cn('workspace', pathname === '/portfolio' && 'is-first-tab')}>
+                        {/* Where a change proposed by the agent is shown with its details and Save button (the agent panel fills it).
+                            Outside the keyed block below, so it survives the remount that follows a saved change. */}
+                        <div id="agent-proposal-slot" className="px-4 pt-4 empty:hidden max-lg:px-3 max-lg:pt-3" style={{ maxWidth: 1680 }} />
                         {/* Pages fetch their data when they mount; a change applied by the agent remounts them */}
                         <div className="workspace-inner" key={dataVersion}>
                             {children}

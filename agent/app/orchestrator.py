@@ -15,6 +15,24 @@ REQUIRED_PARAMS = {
     "rule_pause": ["ruleId", "status"], "profile_change": ["changes"], "simulated_trade": ["symbol", "side"],
     "strategy_propose": ["strategy"],
 }
+# The page the web app takes the user to for each kind of change: they review and save it there, not in the chat.
+# For a layout change it depends on the widgets it touches (an Overview panel or a Portfolio module).
+PAGE_OF = {"strategy_propose": "Strategy", "profile_change": "Profile", "rule_create": "Portfolio", "rule_pause": "Portfolio"}
+
+
+def page_for(action_type: str, params: dict, layout_result) -> str | None:
+    """The page name the app will open for this proposal, or None when it stays in the chat (a simulated trade)."""
+    if action_type in PAGE_OF:
+        return PAGE_OF[action_type]
+    if action_type != "layout_change" or not isinstance(layout_result, dict):
+        return None
+    before = set(layout_result.get("current") or [])
+    after = set(params.get("layout") or [])
+    tabs = {w.get("id"): w.get("tab") for w in layout_result.get("library") or [] if isinstance(w, dict)}
+    changed = before ^ after
+    return "Overview" if changed and all(tabs.get(i) == "overview" for i in changed) else "Portfolio"
+
+
 # A refused strategy may be corrected once from its issue codes; after that the proposal is not recorded.
 MAX_STRATEGY_REFUSALS = 2
 
@@ -65,6 +83,10 @@ def record_proposal(current: trace.RequestTrace, action_type: str, summary: str,
             proposal["before"], proposal["after"] = preview.get("before"), preview.get("after")
 
     current.proposed = proposal
+    page = page_for(action_type, params, _last_result(current, "/layout"))
+    if page:
+        return (f"Recorded. The app will take the user to the {page} page with the change shown as a preview there; "
+                f"nothing is saved until they press Save on that page. Say it was the {page} page, never another one.")
     if proposal["needsConfirm"]:
         return "Recorded. The app will show a preview; nothing is applied until the user confirms."
     return "Recorded."
