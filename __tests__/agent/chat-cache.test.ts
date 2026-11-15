@@ -66,10 +66,20 @@ describe('reply cache in chat', () => {
 
     it('keeps languages apart', async () => {
         agent.mockResolvedValue(glossaryReply() as never);
-        await chat({ message: 'What is an ETF?' });
+        // A bare word has no language of its own, so the reply takes the app's language, and each language has its own entry
+        await chat({ message: 'ETF' });
+        locale.mockResolvedValue('fr');
+        await chat({ message: 'ETF' });
+        expect(agent).toHaveBeenCalledTimes(2);
+    });
+
+    it('answers a message in its own language whatever the app language is, and caches it per language', async () => {
+        agent.mockResolvedValue(glossaryReply() as never);
         locale.mockResolvedValue('fr');
         await chat({ message: 'What is an ETF?' });
-        expect(agent).toHaveBeenCalledTimes(2);
+        await chat({ message: 'What is an ETF?' });
+        expect(agent).toHaveBeenCalledTimes(1);
+        expect(agent.mock.calls[0][0].context.locale).toBe('en');
     });
 
     it('does not cache a reply that holds live data, a proposal or a refusal', async () => {

@@ -130,5 +130,28 @@
   "sourceNames": {
     "demodata": "données de démonstration",
     "derived": "dérivé"
+  },
+  "voice": {
+    "start": "Parler à l’agent",
+    "stop": "Arrêter et envoyer",
+    "hint": "Maintenez Alt+V pour parler",
+    "processing": "Fin de la transcription",
+    "listening": "À l’écoute… relâchez Alt+V ou touchez le microphone pour envoyer. Échap annule.",
+    "starting": "Démarrage du microphone…",
+    "unsupported": "La saisie vocale n’est pas disponible dans ce navigateur. Utilisez Chrome, Edge ou Safari.",
+    "insecure": "La saisie vocale nécessite une connexion sécurisée (HTTPS).",
+    "errors": {
+      "denied": "L’accès au microphone est bloqué. Autorisez-le dans les paramètres du site de votre navigateur.",
+      "noSpeech": "Rien n’a été entendu. Réessayez.",
+      "unavailable": "Le service de transcription n’est pas disponible pour le moment. Écrivez votre message.",
+      "failed": "La saisie vocale ne fonctionne plus. Écrivez votre message.",
+      "speech": "La réponse n’a pas pu être lue à voix haute."
+    },
+    "speak": {
+      "on": "Désactiver la lecture des réponses",
+      "off": "Activer la lecture des réponses",
+      "stop": "Arrêter la lecture",
+      "hint": "Les réponses à vos questions dictées sont lues à voix haute"
+    }
   }
 }
