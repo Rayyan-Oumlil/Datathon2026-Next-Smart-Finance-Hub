@@ -27,7 +27,7 @@ const args = (msg: string) => collect(parse(msg), new Set());
 
 // French values that may read exactly like the English: proper nouns, symbols, words spelled the same.
 // Keep it short; anything else identical is an untranslated string.
-const SAME_IN_BOTH = new Set(['Canada', 'MACD', 'Stable', '{value} mentions']);
+const SAME_IN_BOTH = new Set(['Canada', 'MACD', 'Stable', '{value} mentions', '{ms, number} ms']);
 // No letters left once the arguments are removed ("{symbol}", "⌘K"): nothing to translate
 const nothingToTranslate = (msg: string) => !/\p{L}/u.test(msg.replace(/\{[^}]*\}/g, '').replace(/⌘K/g, ''));
 

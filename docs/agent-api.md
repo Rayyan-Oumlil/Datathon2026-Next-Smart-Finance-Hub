@@ -72,6 +72,19 @@ Proposed action types and their `params`:
 | `profile_change` | `{ changes: { level?, risk?, sectors?, … } }` | yes |
 | `simulated_trade` | `{ symbol, side, amountCad? , quantity? }` | yes |
 
+### Streaming
+
+With `"stream": true` in the request the agent service answers `text/event-stream` (AgentCore does this when the entrypoint returns a generator): one JSON object per `data:` line. Without the flag the reply is the single JSON body above.
+
+| `type` | Fields | Meaning |
+|---|---|---|
+| `stage` | `stage` (`orchestrator`, `subagent`, `tool`, `guardrail`, `retry`), `state` (`start`, `done`), `name?`, `ok?`, `ms?`, `attempt?`, `passed?` | a step began or ended; names and timings only, never arguments or text |
+| `heartbeat` | none | sent every 10 s while quiet, so a load balancer does not drop the connection |
+| `final` | `reply` (the response body above) | always last on success |
+| `error` | `message` | an unexpected failure; the stream ends |
+
+The web app's `POST /api/agent/stream` takes the same body as `/api/agent`, runs the same pipeline, forwards `stage` events, and sends `final` only after the word check, the router and the log rows are done; it sends `error` with `status` and `message` for a failure after the stream started. A bad or rate-limited request is answered as JSON before the stream starts. Text that fails a check is never sent. Models still use Converse, so the audit rows are unchanged.
+
 ## 2. Agent service → web app (tools)
 
 Base URL `WEB_INTERNAL_URL` (default `http://localhost:3000`). Every call sends `x-internal-token: $INTERNAL_API_TOKEN` and `x-action-id`. All are `POST` with a JSON body containing `userId`. Every number in a response is a `Sourced` object.

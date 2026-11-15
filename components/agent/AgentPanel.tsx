@@ -7,6 +7,9 @@ import { AlertTriangle, MessageSquareText, RotateCcw, SendHorizontal, Undo2, X }
 import { cn } from "@/lib/utils";
 import { formatNumber, formatDateTime } from "@/i18n/format";
 import { formatMoment, sourceLabel } from "@/components/agent/time";
+import AgentText from "@/components/agent/AgentText";
+import StageList from "@/components/agent/StageList";
+import { useAgentStream } from "@/hooks/useAgentStream";
 
 type Source = { label: string; source: string; fetchedAt?: string; asOf?: string };
 type Check = { filter: string; pass: boolean; detail: string };
@@ -200,6 +203,9 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
     const [waiting, setWaiting] = useState(false);
     const [busyAction, setBusyAction] = useState('');
     const [loaded, setLoaded] = useState(false);
+    const { stages, ask } = useAgentStream();
+    const [revealing, setRevealing] = useState('');         // the reply that is appearing now; stored ones show at once
+    const doneRevealing = useCallback(() => setRevealing(''), []);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const endRef = useRef<HTMLDivElement>(null);
 
@@ -223,7 +229,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
 
     useEffect(() => {
         if (open) endRef.current?.scrollIntoView({ block: 'end' });
-    }, [open, messages, waiting]);
+    }, [open, messages, waiting, stages, revealing]);
 
     useEffect(() => {
         if (!open) return;
@@ -244,9 +250,11 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
         setDraft('');
         setWaiting(true);
         try {
-            const reply = await post<Reply & { text: string; proposed?: { type: string } }>('/api/agent', { message, history, conversationId }, t('errors.request'));
+            const reply = await ask<Reply & { text: string; proposed?: { type: string } }>({ message, history, conversationId }, t('errors.request'));
+            const id = newId();
+            setRevealing(id);
             setMessages((list) => [...list, {
-                id: newId(), role: 'assistant', text: reply.text, change: reply.preview ? 'pending' : undefined,
+                id, role: 'assistant', text: reply.text, change: reply.preview ? 'pending' : undefined,
                 reply: { actionId: reply.actionId, sources: reply.sources ?? [], refused: reply.refused, notice: reply.notice, conflict: reply.conflict, preview: reply.preview, proposedType: reply.proposed?.type },
             }]);
         } catch (error) {
@@ -346,7 +354,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                                         <p className="max-w-[88%] whitespace-pre-wrap break-words rounded-2xl bg-brand-soft px-3 py-2 text-sm text-foreground"><span className="sr-only">{t('youSaid')}</span>{message.text}</p>
                                     ) : (
                                         <div className={cn('rounded-2xl border border-line px-3 py-2 text-sm', message.failed && 'bg-down-soft')}>
-                                            <p className="whitespace-pre-wrap break-words text-foreground"><span className="sr-only">{t('agentSaid')}</span>{message.text}</p>
+                                            <AgentText text={message.text} animate={revealing === message.id} onDone={doneRevealing} />
                                             {message.reply && (
                                                 <>
                                                     {message.reply.sources.length > 0 && (
@@ -372,7 +380,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                                 </li>
                             ))}
                         </ol>
-                        {waiting && <p className="mt-3 text-[13px] text-faint">{t('working')}</p>}
+                        {waiting && <StageList stages={stages} />}
                         <div ref={endRef} />
                     </div>
 

@@ -26,6 +26,7 @@ def call_web(name: str, body: dict | None = None) -> Any:
     endpoint = TOOLS + name
     started = time.monotonic()
     status = None
+    current.emit("tool", "start", name)
     try:
         response = _client().post(
             config.web_url() + endpoint,

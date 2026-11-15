@@ -62,6 +62,9 @@ if [ -z "$ALB_ARN" ] || [ "$ALB_ARN" = "None" ]; then
   # shellcheck disable=SC2086
   ALB_ARN=$(aws elbv2 create-load-balancer --region "$REGION" --name "${NAME}-web" --type application --scheme internet-facing --subnets $SUBNETS --security-groups "$ALB_SG" --query 'LoadBalancers[0].LoadBalancerArn' --output text)
 fi
+# The agent stream stays open for up to two minutes; the default idle timeout is 60 s. Runs on every call, so an
+# existing load balancer gets it too.
+aws elbv2 modify-load-balancer-attributes --region "$REGION" --load-balancer-arn "$ALB_ARN" --attributes Key=idle_timeout.timeout_seconds,Value=300 >/dev/null
 TG_ARN=$(aws elbv2 describe-target-groups --region "$REGION" --names "${NAME}-web" --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || true)
 if [ -z "$TG_ARN" ] || [ "$TG_ARN" = "None" ]; then
   TG_ARN=$(aws elbv2 create-target-group --region "$REGION" --name "${NAME}-web" --protocol HTTP --port 3000 --vpc-id "$VPC" --target-type ip --health-check-path /api/health --health-check-interval-seconds 15 --healthy-threshold-count 2 --query 'TargetGroups[0].TargetGroupArn' --output text)

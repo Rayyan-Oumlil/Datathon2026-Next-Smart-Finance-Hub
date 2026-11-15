@@ -2,6 +2,8 @@
 import contextvars
 import hashlib
 import json
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 
 from . import action_log, config
@@ -34,6 +36,7 @@ class RequestTrace:
     log_errors: list = field(default_factory=list)
     log_skipped: int = 0                                 # rows not attempted once the log was given up on
     log_table = None                                     # tests pass a fake table
+    on_event: object = None                              # set by a streaming request: receives each stage event
 
     @property
     def locale(self) -> str:
@@ -62,6 +65,26 @@ class RequestTrace:
         else:
             self.log_rows += 1
 
+    def emit(self, stage: str, state: str, name: str | None = None, **fields) -> None:
+        """Tells a streaming caller that one stage of this request started or finished. Only names and timings:
+        never arguments, results or text. A request that is not streamed has no listener and nothing happens."""
+        if self.on_event is not None:
+            self.on_event({"type": "stage", "stage": stage, "state": state, **({"name": name} if name else {}), **fields})
+
+    @contextmanager
+    def stage(self, stage: str, name: str | None = None):
+        """Emits start, then done with the time taken. The caller sets done["ok"] = False for a stage that failed
+        without raising; an exception that leaves the block is reported as ok: False and raised again."""
+        self.emit(stage, "start", name)
+        started = time.monotonic()
+        done: dict = {}
+        try:
+            yield done
+        except BaseException:
+            self.emit(stage, "done", name, ok=False, ms=int((time.monotonic() - started) * 1000))
+            raise
+        self.emit(stage, "done", name, **{"ok": True, **done, "ms": int((time.monotonic() - started) * 1000)})
+
     @property
     def log_stopped(self) -> bool:
         """True once enough rows have failed that further writes for this request are not attempted."""
@@ -72,6 +95,7 @@ class RequestTrace:
         if ok:
             self.tool_results.append({"endpoint": endpoint, "result": result})
         size = len(json.dumps(result, default=str))
+        self.emit("tool", "done", endpoint.rsplit("/", 1)[-1], ok=ok, ms=ms)
         self.log("tool_call" if ok else "error", dataUsed={"endpoint": endpoint, "body": body},
                  result={"status": status, "ok": ok, "sha256": sha256(result), "bytes": size, "ms": ms,
                          **({} if ok else {"error": str(result.get("error"))[:200]})})

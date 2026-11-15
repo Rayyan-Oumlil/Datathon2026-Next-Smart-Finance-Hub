@@ -5,7 +5,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { getAppLocale } from '@/i18n/locale';
 import { DEMO_USER } from '@/lib/demo-user';
 import type { AgentReply, FilterCheck } from '@/lib/domain/types';
-import { callAgent, type AgentServiceReply } from './client';
+import { callAgent, type AgentProgress, type AgentServiceReply } from './client';
 import { buildContext } from './context';
 import { logStep } from './log';
 import { ServiceError } from '@/lib/services/errors';
@@ -31,7 +31,8 @@ const sha256 = (text: string) => createHash('sha256').update(text, 'utf8').diges
 export const NEUTRAL_REPLY = agentText('en').neutralReply;
 export const NEUTRAL_REPLY_FR = agentText('fr').neutralReply;
 
-export async function chat(input: ChatInput): Promise<ChatReply> {
+/** One agent request. `onProgress`, when given, hears each stage of the agent service while it works. */
+export async function chat(input: ChatInput, onProgress?: (event: AgentProgress) => void): Promise<ChatReply> {
     const actionId = `act_${randomBytes(8).toString('hex')}`;
     const history = (input.history ?? []).slice(-MAX_TURNS).map((turn) => ({ role: turn.role, text: turn.text.slice(0, MAX_TURN_CHARS) }));
     await logStep(actionId, 'chat_input', { dataUsed: { message: input.message, messageSha256: sha256(input.message), historyTurns: history.length } });
@@ -50,7 +51,7 @@ export async function chat(input: ChatInput): Promise<ChatReply> {
 
     let reply: AgentServiceReply;
     try {
-        reply = await callAgent({ actionId, userId: DEMO_USER.id, message: input.message, history, context }, input.conversationId);
+        reply = await callAgent({ actionId, userId: DEMO_USER.id, message: input.message, history, context }, input.conversationId, onProgress);
     } catch (error) {
         await logStep(actionId, 'result', { result: { error: error instanceof Error ? error.message : 'agent call failed' } });
         throw error;
