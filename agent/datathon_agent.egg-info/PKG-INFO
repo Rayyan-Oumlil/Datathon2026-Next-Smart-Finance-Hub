@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: datathon-agent
+Version: 0.1.0
+Summary: Agent service: orchestrator + subagents on Strands, served through BedrockAgentCoreApp
+Requires-Python: >=3.11
+Requires-Dist: strands-agents>=1.30
+Requires-Dist: bedrock-agentcore>=1.0
+Requires-Dist: boto3>=1.40
+Requires-Dist: httpx>=0.27
+Requires-Dist: python-dotenv>=1.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: botocore[crt]; extra == "dev"
+Provides-Extra: otel
+Requires-Dist: aws-opentelemetry-distro>=0.18.0; extra == "otel"

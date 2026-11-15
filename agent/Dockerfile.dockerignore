@@ -1,0 +1,7 @@
+# Used instead of the root .dockerignore when building with -f agent/Dockerfile.
+*
+!agent/pyproject.toml
+!agent/app
+!agent/glossary
+!rules/v1.json
+**/__pycache__
