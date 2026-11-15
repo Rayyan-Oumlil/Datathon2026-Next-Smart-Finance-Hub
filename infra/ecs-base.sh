@@ -83,6 +83,12 @@ DNS=$(aws elbv2 describe-load-balancers --region "$REGION" --load-balancer-arns 
 AGENT_RUNTIME_ARN=$(aws bedrock-agentcore-control list-agent-runtimes --region "$REGION" --query "agentRuntimes[?agentRuntimeName=='datathon_agent'].agentRuntimeArn | [0]" --output text 2>/dev/null || true)
 [ "$AGENT_RUNTIME_ARN" = "None" ] && AGENT_RUNTIME_ARN=""
 
+# The HTTPS address: a CloudFront distribution in front of the load balancer (created once from infra/cloudfront.json
+# with `aws cloudfront create-distribution --distribution-config file://infra/cloudfront.json`). Without one, the
+# public address is the load balancer's plain-HTTP one, and voice input stays off (browsers need HTTPS for the microphone).
+CF_DOMAIN=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment!=null && contains(Comment, 'datathon web app')].DomainName | [0]" --output text 2>/dev/null || true)
+if [ -n "$CF_DOMAIN" ] && [ "$CF_DOMAIN" != "None" ]; then PUBLIC_URL="https://$CF_DOMAIN"; else PUBLIC_URL="http://$DNS"; fi
+
 cat > infra/outputs.env <<OUT
 REGION=$REGION
 ACCOUNT=$ACCOUNT
@@ -95,5 +101,6 @@ TG_ARN=$TG_ARN
 SECRET_ARN=$SECRET_ARN
 WEB_URL=http://$DNS
 AGENT_RUNTIME_ARN=$AGENT_RUNTIME_ARN
+PUBLIC_URL=$PUBLIC_URL
 OUT
-echo "done: http://$DNS"
+echo "done: $PUBLIC_URL (load balancer: http://$DNS)"

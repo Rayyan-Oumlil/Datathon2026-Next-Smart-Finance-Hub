@@ -7,6 +7,8 @@ cd "$(dirname "$0")/.."
 # The load balancer keeps idle connections for 300 s (the agent stream); the Node server must keep them longer,
 # or the balancer reuses a connection the server already closed (KEEP_ALIVE_TIMEOUT in the task definition).
 if [ -z "${AGENT_RUNTIME_ARN:-}" ]; then echo "AGENT_RUNTIME_ARN is empty in infra/outputs.env: run infra/ecs-base.sh first" >&2; exit 1; fi
+# Voice needs HTTPS in the browser, so it is switched on only when the public address is HTTPS
+case "${PUBLIC_URL:-}" in https://*) VOICE_ENABLED=${VOICE_ENABLED:-true} ;; *) VOICE_ENABLED=false ;; esac
 TAG=${1:-$(git rev-parse --short HEAD)}
 IMAGE="${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/datathon-web:${TAG}"
 aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com" >/dev/null
@@ -30,7 +32,8 @@ cat > "$TMP/task.json" <<JSON
     "portMappings": [{"containerPort": 3000, "protocol": "tcp"}],
     "environment": [
       {"name": "AWS_REGION", "value": "${REGION}"},
-      {"name": "APP_URL", "value": "${WEB_URL}"},
+      {"name": "APP_URL", "value": "${PUBLIC_URL:-$WEB_URL}"},
+      {"name": "VOICE_ENABLED", "value": "${VOICE_ENABLED}"},
       {"name": "AGENT_RUNTIME_ARN", "value": "${AGENT_RUNTIME_ARN:-}"},
       {"name": "STORE_BACKEND", "value": "dynamodb"},
       {"name": "KEEP_ALIVE_TIMEOUT", "value": "310000"},
@@ -56,4 +59,4 @@ else
 fi
 echo "deploying ${IMAGE}; waiting for the service to settle"
 aws ecs wait services-stable --region "$REGION" --cluster datathon --services datathon-web
-echo "live at ${WEB_URL}"
+echo "live at ${PUBLIC_URL:-$WEB_URL}"

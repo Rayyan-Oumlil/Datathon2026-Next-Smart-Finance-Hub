@@ -13,5 +13,5 @@ aws bedrock-agentcore-control update-agent-runtime --region "$REGION" --agent-ru
   --agent-runtime-artifact "{\"containerConfiguration\":{\"containerUri\":\"${IMAGE}\"}}" \
   --role-arn "arn:aws:iam::${ACCOUNT}:role/datathon-agent-runtime-role" \
   --network-configuration '{"networkMode":"PUBLIC"}' --protocol-configuration '{"serverProtocol":"HTTP"}' \
-  --environment-variables "AWS_REGION=${REGION},GUARDRAIL_ID=${GUARDRAIL_ID},GUARDRAIL_VERSION=${GUARDRAIL_VERSION},INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN},WEB_INTERNAL_URL=${WEB_URL}" \
+  --environment-variables "AWS_REGION=${REGION},GUARDRAIL_ID=${GUARDRAIL_ID},GUARDRAIL_VERSION=${GUARDRAIL_VERSION},INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN},WEB_INTERNAL_URL=${PUBLIC_URL:-$WEB_URL}" \
   --query status --output text
