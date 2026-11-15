@@ -76,7 +76,7 @@ export default function StrategyBuilder() {
     const head = (
         <header className="page-head">
             <div>
-                <h1 className="page-title">{t('title')} <span className="pill is-brand ms-1 align-middle">{t('simulated')}</span></h1>
+                <h1 className="page-title">{t('title')} <span className="pill is-brand ms-1 align-middle tracking-normal [word-spacing:normal]">{t('simulated')}</span></h1>
                 <p className="page-sub max-w-2xl">{t('sub')}</p>
             </div>
         </header>

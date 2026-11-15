@@ -40,8 +40,8 @@ const Sidebar = ({ user }: SidebarProps) => {
 
             <nav className="flex flex-col gap-0.5">
                 {NAV.map(({ href, label, icon: Icon }) => (
-                    <Link key={href} href={href} className={cn('side-item', pathname === href && 'is-active')}>
-                        <Icon /> {ts(`nav.${label}`)}
+                    <Link key={href} href={href} className={cn('side-item h-auto min-h-9 py-1.5 leading-tight', pathname === href && 'is-active')}>
+                        <Icon /> <span className="min-w-0">{ts(`nav.${label}`)}</span>
                     </Link>
                 ))}
             </nav>
