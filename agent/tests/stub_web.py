@@ -108,6 +108,8 @@ def xray_view(aapl_value, cash):
         "assumptions": ["Scenario: today's proportions are applied to every past day."],
         "sources": [{"value": "AAPL: 1256 daily values, 2021-11-12 to 2026-11-13", "unit": "USD",
                      "source": "TMX Money getTimeSeriesData", "fetchedAt": FETCHED}],
+        "figures": {"topShare": {"value": share, "unit": "%", "source": "derived (xray-v1) from daily closes: TMX Money",
+                                 "fetchedAt": FETCHED, "asOf": "2026-11-13", "note": "share of the whole portfolio"}},
     }
 
 

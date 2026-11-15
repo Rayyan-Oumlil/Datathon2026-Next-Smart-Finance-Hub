@@ -311,3 +311,8 @@ def test_the_page_the_user_is_on_reaches_the_orchestrator_and_the_portfolio_spec
         assert '"xrayWindow"' not in prompts.render(name, context)
     # no page, no change: the context is exactly what it was
     assert "page" not in main.parse_request(PAYLOAD).context
+
+
+def test_stray_markdown_bold_is_dropped_from_a_reply():
+    assert orchestrator.plain("- **Concentration:** AAPL is 25%. **Risk**") == "- Concentration: AAPL is 25%. Risk"
+    assert orchestrator.plain("no markers *here*") == "no markers *here*"

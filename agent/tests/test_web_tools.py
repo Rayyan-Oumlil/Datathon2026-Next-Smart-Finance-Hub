@@ -66,6 +66,19 @@ def test_xray_sends_the_one_window_asked_for_and_refuses_an_unknown_one_without_
     assert len(stub.requests) == before
 
 
+def test_the_model_reads_a_slim_xray_while_the_full_result_stays_in_the_trace(stub, current):
+    result = web_tools.get_portfolio_xray()
+    # the model: no repeated sourced figures, no series list; one source line instead
+    assert "figures" not in result and "sources" not in result and "assumptions" not in result
+    assert result["source"].startswith("derived (xray-v1)") and result["fetchedAt"] and result["asOf"] == "2026-11-13"
+    assert result["concentration"]["topHolding"]["symbol"] == "AAPL"
+    # the trace keeps the full result: the reply's sources are taken from it by plain code
+    full = current.tool_results[-1]["result"]
+    assert "figures" in full and "sources" in full
+    changed = web_tools.get_portfolio_xray(symbol="AAPL", amount_cad=500, direction="reduce")
+    assert "figures" not in changed["before"] and "figures" not in changed["after"] and changed["after"]["source"]
+
+
 def test_xray_refusal_is_not_data(stub, current):
     result = web_tools.get_portfolio_xray(symbol="ZZZ", amount_cad=100, direction="add")
     assert "error" in result and current.tool_results == []

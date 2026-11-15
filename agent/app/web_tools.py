@@ -85,6 +85,25 @@ XRAY_DIRECTIONS = ("add", "reduce")
 XRAY_WINDOWS = ("full", "last3y", "last1y")
 
 
+def _xray_for_model(result):
+    """What the portfolio specialist reads. The full result (every figure repeated as a sourced value, the list of
+    series) stays in the request's tool results, where plain code takes the reply's sources from it; the model
+    gets the figures once, with a single `source` line, so its report fits its output limit."""
+    if not isinstance(result, dict) or "error" in result:
+        return result
+    if "before" in result and "after" in result:
+        return {**result, "before": _xray_for_model(result["before"]), "after": _xray_for_model(result["after"])}
+    figures = result.get("figures") or {}
+    first = next((v for v in figures.values() if isinstance(v, dict) and "source" in v), None)
+    slim = {k: v for k, v in result.items() if k not in ("figures", "sources", "assumptions")}
+    if first:
+        slim["source"] = first["source"]
+        slim["fetchedAt"] = first["fetchedAt"]
+        if first.get("asOf"):
+            slim["asOf"] = first["asOf"]
+    return slim
+
+
 @tool
 def get_portfolio_xray(window: str = "full", symbol: str | None = None, amount_cad: float | None = None,
                        direction: str | None = None) -> dict:
@@ -110,7 +129,7 @@ def get_portfolio_xray(window: str = "full", symbol: str | None = None, amount_c
     given = [value is not None for value in (symbol, amount_cad, direction)]
     body: dict = {"locale": trace.current().locale, "window": window}
     if not any(given):
-        return call_web("portfolio-xray", body)
+        return _xray_for_model(call_web("portfolio-xray", body))
     if not all(given):
         return {"error": "symbol, amount_cad and direction must be given together, or none of them"}
     if direction not in XRAY_DIRECTIONS:
@@ -120,7 +139,7 @@ def get_portfolio_xray(window: str = "full", symbol: str | None = None, amount_c
     if not str(symbol).strip():
         return {"error": "symbol must not be empty"}
     change = {"symbol": str(symbol).strip(), "amountCad": amount_cad, "direction": direction}
-    return call_web("portfolio-xray", {"change": change, **body})
+    return _xray_for_model(call_web("portfolio-xray", {"change": change, **body}))
 
 
 # ---- rules

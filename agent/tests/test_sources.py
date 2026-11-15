@@ -67,6 +67,22 @@ def test_xray_figures_are_collected_with_their_window_in_the_label():
 def test_a_reply_that_states_an_xray_figure_cites_its_source():
     found = sources.collect([{"endpoint": "x", "result": _xray_result()}])
     kept = sources.relevant(found, "NVDA carries 36.97% of the risk with a 15% weight. Volatility is 10.37%.")
-    assert {k["label"] for k in kept} == {"volatility (1 year)", "NVDA share of the risk (1 year)", "NVDA weight (1 year)"}
-    assert all(k["source"].startswith("derived (xray-v1)") and k["fetchedAt"] and k["asOf"] == "2026-11-13" for k in kept)
+    # three figures with one source line and one time are listed once, naming the figures
+    assert len(kept) == 1
+    assert kept[0]["label"].startswith("X-ray figures (") and "volatility (1 year)" in kept[0]["label"]
+    assert kept[0]["source"].startswith("derived (xray-v1)") and kept[0]["fetchedAt"] and kept[0]["asOf"] == "2026-11-13"
     assert sources.relevant(found, "Nothing about the portfolio figures here.") == []
+
+
+def test_more_than_three_xray_figures_are_counted_and_another_source_is_left_alone():
+    figure = lambda v: {"value": v, "unit": "%", "source": "derived (xray-v1) from daily closes: TMX Money",
+                        "fetchedAt": "2026-11-15T09:00:00.000Z", "asOf": "2026-11-13"}
+    result = {"figures": {"topShare": figure(25), "top3Share": figure(60), "cashShare": figure(30), "volatility_full": figure(14.21)},
+              "price": {"value": 356.27, "source": "Finnhub", "fetchedAt": "2026-11-15T09:00:00.000Z"}}
+    found = sources.collect([{"endpoint": "x", "result": result}])
+    kept = sources.relevant(found, "Largest 25%, top 60%, cash 30%, volatility 14.21%, price 356.27")
+    labels = [k["label"] for k in kept]
+    assert any(label.startswith("X-ray figures (") and label.endswith(" +1)") for label in labels)
+    assert any(k["source"] == "Finnhub" for k in kept) and len(kept) == 2
+    fr = sources.relevant(sources.collect([{"endpoint": "x", "result": result}], "fr"), "25 %, 60 %, 30 %", "fr")
+    assert fr and fr[0]["label"].startswith("Chiffres de la radiographie (")

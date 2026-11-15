@@ -115,7 +115,7 @@ export default function XrayPage() {
             </Rise>
 
             {isAvailable(current) ? (
-                <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
+                <div className="@container"><div className="grid items-start gap-5 @4xl:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
                     {/* key: switching the period replays the motion with the new figures; the lab beside it keeps its state */}
                     <div key={id} className="flex min-w-0 flex-col gap-5">
                         <Rise index={1}><Card><Tiles view={view} window={current} level={level} /></Card></Rise>
@@ -125,13 +125,13 @@ export default function XrayPage() {
                             <ValueVsRisk window={current} level={level} />
                         </Card></Rise>
                         <Rise index={4}><Card><MoveChart view={view} window={current} level={level} /></Card></Rise>
-                        {level !== 'Novice' && <Rise index={5}><Card className="grid gap-6 md:grid-cols-2 [&>section]:border-t-0 [&>section]:pt-0"><Together window={current} /><Exposure view={view} /></Card></Rise>}
+                        {level !== 'Novice' && <Rise index={5}><Card className="grid gap-6 @2xl:grid-cols-2 [&>section]:border-t-0 [&>section]:pt-0"><Together window={current} /><Exposure view={view} /></Card></Rise>}
                     </div>
-                    <Rise index={2} className="lg:sticky lg:top-4">
+                    <Rise index={2} className="@4xl:sticky @4xl:top-4">
                         <Card><WhatIf view={view} windowId={id} preset={preset} /></Card>
                     </Rise>
-                    <Rise index={6} className="lg:col-span-2"><Card><Limits view={view} window={current} level={level} /></Card></Rise>
-                </div>
+                    <Rise index={6} className="@4xl:col-span-2"><Card><Limits view={view} window={current} level={level} /></Card></Rise>
+                </div></div>
             ) : (
                 <div className="flex flex-col gap-5">
                     <Card><p className="text-[13.5px] text-muted-foreground">{t(current.reason === 'no_holdings' ? 'window.noHoldings' : 'window.unavailable')}</p></Card>

@@ -1,4 +1,6 @@
 """The orchestrator: a Strands Agent whose only tools are the subagents and two control tools."""
+import re
+
 from strands import Agent, tool
 
 from . import bedrock, prompts, subagents, trace, web_tools
@@ -121,5 +123,13 @@ def build(current: trace.RequestTrace) -> Agent:
     )
 
 
+_BOLD = re.compile(r"\*\*(.+?)\*\*", re.DOTALL)
+
+
+def plain(text: str) -> str:
+    """The panel shows plain text and the prompt forbids markdown: stray **bold** markers are dropped."""
+    return _BOLD.sub(lambda match: match.group(1), text)
+
+
 def ask(agent: Agent, text: str) -> str:
-    return subagents.message_text(agent(text).message)
+    return plain(subagents.message_text(agent(text).message))

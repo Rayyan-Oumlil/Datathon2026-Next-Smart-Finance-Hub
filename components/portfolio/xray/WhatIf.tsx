@@ -155,16 +155,18 @@ export default function WhatIf({ view, windowId, preset }: Props) {
                             </tbody>
                         </table>
                     </div>
-                    <div>
-                        <p className="kicker">{t('whatIf.conflictsTitle')}</p>
-                        {result.conflicts.length === 0 ? (
-                            <p className="mt-1 text-[13px] text-muted-foreground">{mode === 'add' ? t('whatIf.noConflicts') : '–'}</p>
-                        ) : (
-                            <ul className="mt-1 flex flex-col gap-1.5">
-                                {result.conflicts.map((conflict) => <li key={conflict.filter} className="rounded-[10px] bg-brand-soft px-3 py-2 text-[13px] text-foreground">{conflict.detail}</li>)}
-                            </ul>
-                        )}
-                    </div>
+                    {mode === 'add' && (
+                        <div>
+                            <p className="kicker">{t('whatIf.conflictsTitle')}</p>
+                            {result.conflicts.length === 0 ? (
+                                <p className="mt-1 text-[13px] text-muted-foreground">{t('whatIf.noConflicts')}</p>
+                            ) : (
+                                <ul className="mt-1 flex flex-col gap-1.5">
+                                    {result.conflicts.map((conflict) => <li key={conflict.filter} className="rounded-[10px] bg-brand-soft px-3 py-2 text-[13px] text-foreground">{conflict.detail}</li>)}
+                                </ul>
+                            )}
+                        </div>
+                    )}
                     <p className="text-[12px] text-faint">{t('whatIf.scenarioNote')}</p>
                 </div>
             )}
