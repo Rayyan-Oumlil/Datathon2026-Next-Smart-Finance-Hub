@@ -16,7 +16,7 @@ import type { Scope } from '@/lib/session';
 import { appendDecision, updateState } from '@/lib/store';
 import { STRATEGY_CONFIG } from '@/lib/strategy/config';
 import '@/lib/strategy/text';
-import { parseStrategy, type Strategy, type StrategyIssue } from '@/lib/strategy/types';
+import { parseStrategy, type Strategy, type StrategyIssue, type StrategyRule } from '@/lib/strategy/types';
 import { renderText } from '@/lib/watchlist/text';
 import { checkStrategyConflicts, type StrategyConflict } from './strategy-conflict';
 import { strategyRuleSentence, strategyWords } from './strategy-words';
@@ -28,6 +28,7 @@ export type StrategyPreview = {
     name: string;
     replaceId: string | null;
     sentences: string[];
+    rules: StrategyRule[];             // the validated rules, for the workflow view of the preview
     beforeSentences: string[] | null;
     table: Array<{ label: string; without: string; with: string }>;
     firings: Array<{ ruleId: string; label: string; count: number }>;
@@ -129,6 +130,7 @@ export async function previewStrategy(raw: Record<string, unknown>, replaceId: s
         name: strategy.name,
         replaceId: previous?.id ?? null,
         sentences,
+        rules: strategy.rules,
         beforeSentences: previous ? previous.rules.map((rule) => strategyRuleSentence(rule, locale)) : null,
         table, firings, replay, replayNote,
         conflicts: report.conflicts.map(({ symbol, detail }) => ({ symbol, detail })),

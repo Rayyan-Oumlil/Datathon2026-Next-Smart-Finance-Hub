@@ -13,6 +13,8 @@ import AgentText from "@/components/agent/AgentText";
 import StageList, { reworded, stageFailed, stageText } from "@/components/agent/StageList";
 import Timeline from "@/components/agent/Timeline";
 import Link from "next/link";
+import { RuleFlow, ViewToggle, useRuleView } from "@/components/strategy";
+import type { StrategyRule } from "@/lib/strategy/types";
 import { rowsForStage } from "@/lib/agent/stage-rows";
 import type { StageLine } from "@/lib/agent/stages";
 import { useAgentStream } from "@/hooks/useAgentStream";
@@ -27,6 +29,7 @@ type StrategyPreviewData = {
     name: string;
     replaceId: string | null;
     sentences: string[];
+    rules?: StrategyRule[];
     beforeSentences: string[] | null;
     table: Array<{ label: string; without: string; with: string }>;
     firings: Array<{ ruleId: string; label: string; count: number }>;
@@ -203,13 +206,19 @@ const ConflictBlock = ({ conflict }: { conflict: NonNullable<Reply['conflict']> 
 // fired and the profile conflicts. The label of the replay is always shown with its figures.
 const StrategyBlock = ({ data }: { data: StrategyPreviewData }) => {
     const t = useTranslations('AgentPanel');
+    const [view, setView] = useRuleView();
+    const flow = view === 'flow' && !!data.rules?.length;
     return (
         <div className="mt-2 flex flex-col gap-2">
             <div>
-                <p className="form-label">{t('preview.strategy.rules')}</p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="form-label">{t('preview.strategy.rules')}</p>
+                    {!!data.rules?.length && <ViewToggle value={view} onChange={setView} />}
+                </div>
+                {flow ? <RuleFlow className="mt-1" rules={data.rules!} /> : (
                 <ul className="mt-0.5 list-disc ps-5 text-foreground">
                     {data.sentences.map((sentence, index) => <li key={index}>{sentence}</li>)}
-                </ul>
+                </ul>)}
                 {data.beforeSentences && (
                     <details className="mt-1 text-xs text-muted-foreground">
                         <summary className="cursor-pointer select-none">{t('preview.strategy.replaces')}</summary>
