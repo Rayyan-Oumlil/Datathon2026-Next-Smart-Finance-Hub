@@ -1,0 +1,58 @@
+{
+  "metaTitle": "Journaux",
+  "title": "Journaux",
+  "subtitle": "Ces lignes sont ajoutées à la suite, jamais modifiées ni effacées, et sont écrites par du code ordinaire, pas par un modèle de langage.",
+  "tabs": {
+    "label": "Journal affiché",
+    "agent": "Journal de l’agent",
+    "decisions": "Journal des décisions"
+  },
+  "generation": {
+    "label": "Sessions précédentes",
+    "current": "Session actuelle (profil {profile}, portefeuille {portfolio})",
+    "earlier": "Profil {profile}, portefeuille {portfolio} · jusqu’au {until}",
+    "earlierOpen": "Profil {profile}, portefeuille {portfolio}",
+    "note": "Une réinitialisation ouvre une nouvelle génération; les lignes des générations précédentes restent lisibles ici."
+  },
+  "filter": {
+    "actionId": "Identifiant de l’action",
+    "actionIdPlaceholder": "p. ex. act_…",
+    "apply": "Filtrer",
+    "clear": "Tout afficher",
+    "kind": "Type de décision",
+    "allKinds": "Tous les types",
+    "kinds": {
+      "watchlist_run": "Calcul de la liste de surveillance",
+      "pick": "Titre retenu dans la liste",
+      "user_action": "Action de l’utilisateur",
+      "simulated_trade": "Opération simulée",
+      "profile_conflict": "Conflit avec le profil",
+      "profile_change": "Modification du profil",
+      "session_reset": "Réinitialisation"
+    }
+  },
+  "export": "Exporter en JSON",
+  "reload": "Recharger",
+  "loading": "Chargement des lignes…",
+  "empty": "Aucune ligne ne correspond à ce filtre.",
+  "error": "Les lignes ne peuvent pas être lues pour le moment.",
+  "count": "{count, plural, =0 {aucune ligne} one {# ligne} other {# lignes}}",
+  "columns": {
+    "time": "Heure",
+    "actionId": "Identifiant de l’action",
+    "step": "Étape",
+    "actor": "Acteur",
+    "model": "Modèle",
+    "awsRequestId": "Identifiant de requête AWS",
+    "tokens": "Jetons (entrée / sortie)",
+    "kind": "Type de décision",
+    "symbol": "Titre",
+    "details": "Contenu"
+  },
+  "cloudTrail": "Rechercher dans CloudTrail",
+  "copy": "Copier la commande",
+  "copied": "Copiée",
+  "showRow": "Ligne complète",
+  "filterThis": "Filtrer sur cette action",
+  "none": "–"
+}

@@ -50,3 +50,7 @@ agent/.venv/
 agent/**/__pycache__/
 .pytest_cache/
 infra/outputs.env
+
+# replay snapshot builder (scripts/build_replay_dataset.py): its virtualenv and download cache
+scripts/.venv/
+scripts/.cache/

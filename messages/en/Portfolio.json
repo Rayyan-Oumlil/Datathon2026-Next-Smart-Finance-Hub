@@ -56,7 +56,7 @@
     "title": "Total value",
     "today": "Today",
     "noChangeCashOnly": "no change: the portfolio holds cash only",
-    "changeUnavailable": "not available: a held asset has no change for today",
+    "changeUnavailable": "not available: a held asset has no change for this session",
     "startingAmount": "Starting amount",
     "startingSub": "simulated cash, fixed",
     "sinceStart": "Since the start",
@@ -68,8 +68,12 @@
     "howBody": "cash + quantity × last price of each position. Computed {when}",
     "pricesUsed": "Prices used: {list}",
     "fxNote": "USD converted at {rate} CAD per USD ({source}).",
-    "dayNote": "Today's change is the move of the positions held now since their previous close, from the same quotes. A position added today counts its whole day, so it can differ from the change since the start.",
-    "unpriced": "Not included, no price available right now: {list}."
+    "dayNote": "The session change compares the value now with the value at the previous close. A position added during the session counts from its fill price, and a reduction up to its fill price, so a portfolio whose trades all date from this session shows the same change as since the start. The percentage is on the total portfolio value, cash included.",
+    "unpriced": "Not included, no price available right now: {list}.",
+    "lastSession": "Last session ({day})",
+    "marketsClosed": "Markets closed",
+    "pctOfTotal": "of the total portfolio value",
+    "pctOfStart": "{pct} of the starting amount"
   },
   "performance": {
     "title": "Performance (simulated)",
@@ -92,7 +96,9 @@
     "colTime": "Time",
     "colValue": "Value (CAD)",
     "colAgainstStart": "Against start",
-    "footer": "Starting amount: {start} CAD (simulated). {note}"
+    "footer": "Starting amount: {start} CAD (simulated). {note}",
+    "noCloseTitle": "No daily close yet",
+    "noCloseBody": "No daily close yet: the line will appear after the next session. Until then, the current value is in the Total value card."
   },
   "holdings": {
     "title": "Holdings (simulated)",
@@ -105,7 +111,7 @@
     "colQuantity": "Quantity",
     "colLastPrice": "Last price",
     "colAvgCost": "Avg cost (CAD)",
-    "colToday": "Today",
+    "colToday": "Session",
     "colValue": "Value (CAD)",
     "colWeight": "Weight",
     "colSinceAdded": "Since added",

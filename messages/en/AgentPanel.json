@@ -14,6 +14,70 @@
   "working": "Working on it. A reply can take up to a minute: each figure is fetched and checked.",
   "stop": "Stop",
   "stopped": "Stopped. Nothing was changed.",
+  "logsLink": "Agent logs",
+  "timeline": {
+    "title": "Steps the agent took",
+    "expand": "Show the steps",
+    "collapse": "Hide the steps",
+    "loading": "Loading the steps…",
+    "unavailable": "The steps are not available right now.",
+    "empty": "No readable step yet. The log can lag by a few seconds.",
+    "note": "Sentences written by code from the log rows, with no language model.",
+    "rawLink": "View the raw log",
+    "reload": "Reload the steps",
+    "type": "{type, select, layout_change {layout change} rule_create {new rule} rule_propose {new rule} rule_pause {rule pause} profile_change {profile change} simulated_trade {simulated trade} module_propose {new module} explain_pick {explanation of a pick} lookup {data lookup} reply {reply} other {other action}}",
+    "tools": {
+      "market-data": "the prices and signals",
+      "explain-pick": "the watchlist decision log",
+      "portfolio": "the simulated portfolio",
+      "portfolio-stats": "the portfolio figures",
+      "portfolio-xray": "the portfolio X-ray",
+      "validate-rule": "the rule validation",
+      "rules": "your rules",
+      "layout": "the dashboard layout",
+      "profile-preview": "the profile change preview",
+      "conflict-check": "your profile filters"
+    },
+    "agents": {
+      "market_data": "the market data specialist",
+      "watchlist_explainer": "the watchlist specialist",
+      "portfolio": "the portfolio specialist",
+      "rules": "the rules specialist",
+      "layout": "the layout specialist",
+      "profile": "the profile specialist",
+      "glossary": "the glossary specialist"
+    },
+    "steps": {
+      "chat_input": "I received your message ({turns, plural, =0 {no earlier turn} one {# earlier turn} other {# earlier turns}})",
+      "context_built": "I checked your profile (risk {risk, select, Low {low} Medium {medium} High {high} other {{risk}}}, level {level, select, Novice {Novice} Intermediate {Intermediate} Expert {Expert} other {not set}}): {holdings, plural, =0 {no position} one {# position} other {# positions}}, {picks, plural, =0 {no watched pick} one {# watched pick} other {# watched picks}}",
+      "context_built_noProfile": "I read your data, with no risk profile: {holdings, plural, =0 {no position} one {# position} other {# positions}}, {picks, plural, =0 {no watched pick} one {# watched pick} other {# watched picks}}",
+      "prompt_built": "I prepared the model instructions",
+      "orchestrator_call": "I called the model {model} ({input, number} input tokens, {output, number} output)",
+      "subagent_call": "I called on {agent} (model {model})",
+      "tool_call": "I looked up {tool} ({time})",
+      "tool_call_symbols": "I looked up {tool} ({symbols}, {time})",
+      "guardrail_passed": "Guardrail: no issue found in the figures and wording",
+      "guardrail_failed": "Guardrail: an issue was found on attempt {attempt}, the reply was redone",
+      "action_preview": "I prepared a proposal ({type}) waiting for your confirmation",
+      "action_info": "I prepared some information ({type}), with no change",
+      "action_dropped": "The proposal ({type}) was set aside by the app's validation",
+      "action_none": "No change proposed",
+      "preview_shown": "I showed you a preview ({type}){conflicts, plural, =0 {} one {, with # profile conflict} other {, with # profile conflicts}}",
+      "confirmed": "You confirmed the preview",
+      "cancelled": "You cancelled the preview: nothing was changed",
+      "applied": "The change was applied in the simulation",
+      "result_error": "The request did not go through",
+      "result_notApplied": "The change was not applied",
+      "result_cache": "Reply taken from an earlier reply that had passed every check",
+      "result_refused": "The reply was replaced by a neutral sentence",
+      "result_reply": "I wrote the reply ({sources, plural, =0 {no source cited} one {# source cited} other {# sources cited}})",
+      "undo": "Undo done",
+      "undo_failed": "The undo was not possible",
+      "error_tool": "The call to {tool} failed",
+      "error": "A step failed",
+      "unknown": "Logged step: {step}"
+    }
+  },
   "stages": {
     "title": "What the agent is doing",
     "orchestrator": "Reading your request",
@@ -60,6 +124,14 @@
     "rule": {
       "label": "Create a rule",
       "message": "Create a rule: when "
+    },
+    "strategy": {
+      "label": "Build a strategy",
+      "message": "Build me a strategy: "
+    },
+    "testStrategy": {
+      "label": "Test my strategy on history",
+      "message": "Test my strategy on the last 5 years of history"
     }
   },
   "inputLabel": "Message to the agent",
@@ -125,7 +197,21 @@
     "applied": "Applied",
     "undone": "Undone",
     "cancelled": "Cancelled",
-    "undo": "Undo"
+    "undo": "Undo",
+    "strategy": {
+      "rules": "Rules",
+      "replaces": "Replaces the current version",
+      "history": "History preview, about 5 years",
+      "window": "{from} to {to} · {days} trading days",
+      "metric": "Figure",
+      "without": "Without rules",
+      "with": "With the strategy",
+      "fired": "Rule firings",
+      "firedCount": "{label}: {count, plural, =0 {never fired} one {fired once} other {fired # times}}",
+      "conflicts": "Profile conflicts",
+      "ids": "Replay {replayId} · snapshot {snapshotId}",
+      "openTimeMachine": "Open in the time machine"
+    }
   },
   "sourceNames": {
     "demodata": "demo data",

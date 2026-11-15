@@ -5,8 +5,8 @@ import { internalTool } from '@/lib/agent/internal';
 import { getLayout } from '@/lib/services/layout';
 
 // locale: the agent's reply language, so the widget titles reach the model as the Portfolio tab shows them
-export const POST = internalTool(z.object({ locale: z.enum(LOCALES).optional() }), async ({ locale }) => {
-    const { layout, library } = await getLayout();
+export const POST = internalTool(z.object({ locale: z.enum(LOCALES).optional() }), async ({ locale }, _actionId, scope) => {
+    const { layout, library } = await getLayout('en', scope);
     const messages = locale && locale !== 'en' ? ((await loadMessages(locale).catch(() => ({}))) as { Portfolio?: { modules?: Record<string, string> } }) : {};
     const titles = messages.Portfolio?.modules ?? {};
     return {

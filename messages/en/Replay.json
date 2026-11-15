@@ -1,0 +1,318 @@
+{
+  "units": {
+    "pts": "{value} pts"
+  },
+  "page": {
+    "metaTitle": "Time machine",
+    "title": "Time machine",
+    "illustrative": "illustrative",
+    "sub": "Replay a portfolio on frozen historical data, without rules and then with a strategy, side by side. Fictitious amount, no real order.",
+    "label": "Illustrative replay on historical data. This is not a prediction.",
+    "ask": "Ask the agent to explain",
+    "askMessage": "Explain replay {id} to me from its numbers only: what the strategy changed, the return, the worst fall and the volatility."
+  },
+  "controls": {
+    "title": "Replay settings",
+    "sub": "Both series start from the same portfolio, the same amount and the same data.",
+    "portfolio": "Portfolio",
+    "current": "My current portfolio (simulated)",
+    "examples": "Example portfolios",
+    "personas": {
+      "amira": "Example: {name} (growth)",
+      "mateo": "Example: {name} (balance, ESG)",
+      "robert": "Example: {name} (capital preservation)"
+    },
+    "models": "Suggested portfolios",
+    "strategy": "Strategy",
+    "noRules": "No rules",
+    "strategyOption": "{name} ({count, plural, one {# rule} other {# rules}})",
+    "noStrategies": "No saved strategy yet: the replay will run without rules.",
+    "capital": "Fictitious amount",
+    "cad": "CAD",
+    "fictitious": "{amount}, fictitious amount",
+    "startDate": "Start date",
+    "otherDate": "Other start date",
+    "window": "Data available from {from} to {to}",
+    "fee": "Fee per order",
+    "feeHint": "$0 by default; no taxes.",
+    "footnote": "Signal at the close of a day, execution at the price of the next trading day.",
+    "running": "Replaying…",
+    "run": "Run the replay"
+  },
+  "states": {
+    "errorGeneric": "The replay could not be computed.",
+    "error": "The replay did not complete: {message}",
+    "retry": "Try again",
+    "running": "Replaying on the frozen snapshot…",
+    "nothingTitle": "None of this portfolio's holdings can be replayed",
+    "nothingHint": "Pick another portfolio or a later start date. The snapshot's symbols are listed under “Why this data?”."
+  },
+  "idle": {
+    "title": "How it works",
+    "one": "Pick a portfolio, a strategy (or no rules), a fictitious amount and a start date.",
+    "two": "The engine replays two series day by day on the frozen snapshot: the same portfolio held as is, and the same portfolio run by the strategy.",
+    "three": "You watch both curves being drawn, every rule firing, the order journal and a comparison in numbers, with no verdict."
+  },
+  "ids": {
+    "copy": "Copy {label}: {value}",
+    "unnamed": "Unnamed strategy",
+    "window": "from {from} to {to} ({days} trading days)",
+    "capital": "{amount} fictitious, fee of {fee} per order",
+    "snapshot": "Snapshot",
+    "replay": "Replay",
+    "startMoved": "Date asked: {asked}. The replay starts on the first available trading day, {from}."
+  },
+  "chart": {
+    "title": "The two replays",
+    "sub": "Value in Canadian dollars. Drag on the chart or use the slider to travel back in time.",
+    "without": "Without rules",
+    "with": "With the strategy",
+    "gap": "Difference",
+    "sinceStart": "{pct} since the start",
+    "year2022": "Year 2022",
+    "marker": "Rule firing",
+    "benchmarks": "Benchmarks",
+    "aria": "Simulated value from {from} to {to}, starting from {capital}: {without} without rules, {with} with the strategy.",
+    "gapExContributions": "Difference excluding contributions"
+  },
+  "player": {
+    "pause": "Pause",
+    "replay": "Play the animation again",
+    "play": "Play",
+    "slider": "Replay date",
+    "speed": "Speed",
+    "speedValue": "{n}×"
+  },
+  "event": {
+    "title": "Rule firing",
+    "guard": {
+      "entered": "defensive mode on",
+      "exited": "defensive mode off"
+    },
+    "previous": "Previous firing",
+    "next": "Next firing",
+    "position": "{n} of {total}",
+    "close": "Close",
+    "condition": "Condition, with its numbers",
+    "days": "Decision and execution",
+    "daysValue": "decided on {decision}, executed on {execution}",
+    "before": "Value at the close of the decision day",
+    "after": "Value at the close of the execution day",
+    "beforeAfterNote": "The gap between the two values comes mostly from prices moving between the two closes, plus fees if any.",
+    "orders": "{count, plural, =0 {No order} one {# order} other {# orders}}",
+    "hint": "Click a marker on the chart or a row of the journal to see one of the {count, plural, one {# firing} other {# firings}}.",
+    "none": "No rule fired during this replay: the two series are identical.",
+    "noRules": "Replay without rules: there is no firing to show."
+  },
+  "rule": {
+    "name": "{kind} ({n})",
+    "describe": {
+      "drawdown_guard": "If the portfolio falls {trigger}% below its peak, move {move}% of the holdings to {symbol}; return when the fall is back under {recover}%.",
+      "allocation_quarterly": "Bring the {count, plural, one {# allocation target} other {# allocation targets}} back every quarter.",
+      "allocation_drift": "Bring the {count, plural, one {# allocation target} other {# allocation targets}} back as soon as a gap exceeds {drift} points.",
+      "weight_cap": "No holding above {cap}%; the excess goes to cash.",
+      "weight_cap_to": "No holding above {cap}%; the excess goes to {symbol}.",
+      "periodic_month": "Add {amount} every month.",
+      "periodic_days": "Add {amount} every {n} trading days.",
+      "price_threshold": "Threshold on {symbol}: {trigger} {value}."
+    }
+  },
+  "kinds": {
+    "drawdown_guard": "Drawdown guard",
+    "allocation_target": "Rebalancing",
+    "weight_cap": "Weight cap",
+    "periodic_purchase": "Periodic contribution",
+    "price_threshold": "Price threshold"
+  },
+  "triggers": {
+    "price_below": "price below",
+    "price_above": "price above",
+    "change_pct_below": "change below (%)",
+    "change_pct_above": "change above (%)"
+  },
+  "condition": {
+    "guard_enter": "Fall of {fall}% below the peak (threshold: {threshold}%): {value} against a peak of {peak}.",
+    "guard_exit": "Fall back to {fall}% (return threshold: {threshold}%): {value} against a peak of {peak}.",
+    "rebalance_quarterly": "Quarter {quarter}: the largest gap with the target was {drift} points ({symbol}).",
+    "rebalance_drift": "Gap of {drift} points with the target ({symbol}), threshold of {threshold} points.",
+    "weight_cap": "{symbol} weighed {weight}% (cap: {cap}%){others, plural, =0 {} one {, and # other holding above} other {, and # other holdings above}}.",
+    "periodic_first": "First contribution of {amount}.",
+    "periodic": "Contribution of {amount}, {days} trading days after the previous one.",
+    "price_threshold": "{symbol} at {price} {currency}; condition: {trigger} {threshold}."
+  },
+  "journal": {
+    "title": "Order journal",
+    "sub": "The simulated orders of the series with the strategy, one sentence per order.",
+    "count": "{count, plural, =0 {No rule order} one {# rule order} other {# rule orders}}, plus {initial} starting orders.",
+    "filter": "Rule",
+    "allRules": "All rules",
+    "decision": "Decision",
+    "execution": "Execution",
+    "sentence": "Order",
+    "quantity": "Quantity",
+    "price": "Price (CAD)",
+    "fee": "Fee",
+    "initial": "Starting orders ({count}), on {date}",
+    "noRules": "Replay without rules: only the starting orders are in the journal.",
+    "empty": "No order for this rule."
+  },
+  "compare": {
+    "title": "Comparison",
+    "sub": "The same measures for both series. The difference is “with” minus “without”.",
+    "metric": "Measure",
+    "difference": "Difference",
+    "fallDates": "from {peak} to {trough}",
+    "rows": {
+      "finalValue": "Final value",
+      "contributed": "Contributions added",
+      "valueExContributions": "Final value excluding contributions",
+      "totalReturn": "Total return",
+      "annualised": "Annualised return",
+      "volatility": "Annualised volatility",
+      "worstFall": "Worst fall",
+      "return2022": "2022 return",
+      "worstDay": "Worst day",
+      "orders": "Number of orders",
+      "turnover": "Turnover",
+      "fees": "Fees"
+    },
+    "note": "The number of orders counts the rules' orders; the {initial} starting orders are common to both series. Time-weighted return, dividends reinvested. An empty 2022 return means the replay does not cover the whole year.",
+    "contributionsNote": "Returns are time-weighted: money added is not counted as a gain."
+  },
+  "gap": {
+    "title": "Gap over time",
+    "at": "On {date}: {value}",
+    "aria": "Gap between the two series over time, in index points; final gap: {final}.",
+    "note": "“With the strategy” minus “without rules”, in index points (100 = starting amount)."
+  },
+  "summary": {
+    "title": "Neutral summary",
+    "sub": "Facts taken from the replay's numbers, with no verdict.",
+    "noRules": "Without rules, the two series are identical: the starting portfolio held as is.",
+    "identical": "The rules changed no holding: the two series are identical.",
+    "endedEqual": "Both series ended at the same total return.",
+    "endedWith": "The series with the strategy ended higher: {with} total return against {without}, {pts} points more.",
+    "endedWithout": "The series without rules ended higher: {without} total return against {with}, {pts} points more.",
+    "fallShallower": "The worst fall was {pts} points shallower with the strategy: {with} against {without}.",
+    "fallDeeper": "The worst fall was {pts} points deeper with the strategy: {with} against {without}.",
+    "fallSame": "The worst fall is the same in both series: {value}.",
+    "volLower": "Annualised volatility was {pts} points lower with the strategy: {with} against {without}.",
+    "volHigher": "Annualised volatility was {pts} points higher with the strategy: {with} against {without}.",
+    "volSame": "Annualised volatility is the same in both series: {with}.",
+    "tradeoffCost": "Over this period, the strategy cost return but reduced the worst fall: a trade-off between risk and return that each person weighs according to their own situation.",
+    "tradeoffRisk": "Over this period, the strategy ended higher, but with a deeper worst fall: the extra return came with more risk.",
+    "fees": "Fees differed by {cad} between the two series.",
+    "fired": "{rule}: {count, plural, one {# firing} other {# firings}}.",
+    "neverFired": "{rule}: the rule never fired.",
+    "contributions": "The strategy added {cad} of periodic contributions; the returns and gaps above exclude them.",
+    "valueGap": "Final value gap, with minus without: {cad}.",
+    "valueGapEx": "Final value gap excluding contributions, with minus without: {cad}."
+  },
+  "effects": {
+    "title": "Market effect and currency effect",
+    "sub": "Where each series' change in value came from.",
+    "market": "Market effect",
+    "currency": "Currency effect",
+    "other": "Fees: {fees} · contributions: {contributed}",
+    "explain": "The market effect is the change in prices in their listing currency; the currency effect is what the USD/CAD rate added or removed on U.S. assets and crypto."
+  },
+  "contrib": {
+    "title": "Contribution of each rule",
+    "rule": "Rule",
+    "value": "Final value",
+    "return": "Total return",
+    "fall": "Worst fall",
+    "explain": "What each rule changes on its own: the full strategy minus the same strategy without that rule. Contributions do not necessarily add up, since the rules interact."
+  },
+  "caveats": {
+    "title": "Assumptions and limits",
+    "unreplayable": "Holdings that could not be replayed",
+    "assumptions": "Replay assumptions",
+    "limits": "Data limits"
+  },
+  "sensitivity": {
+    "title": "Sensitivity",
+    "sub": "The same replay under other assumptions.",
+    "intro": "Three start dates and one threshold variant per rule. Each variant is a full replay, logged with its own id.",
+    "run": "Test the sensitivity",
+    "rerun": "Run the sensitivity again",
+    "needRun": "Run a replay first.",
+    "base": "Base replay",
+    "startDate": "Start on {date}",
+    "threshold": "{rule}: {field} {from} → {to}",
+    "tally": "Over {n} variants, the series with the strategy ended higher {with} times and the series without rules {without} times (equal: {equal}). Total return gap: from {rMin} to {rMax}; worst fall gap: from {fMin} to {fMax}.",
+    "variant": "Variant",
+    "returnWithout": "Return without rules",
+    "returnWith": "Return with the strategy",
+    "fallGap": "Worst fall gap",
+    "replayId": "Replay",
+    "window": "from {from} to {to}",
+    "note": "A positive worst fall gap means a shallower fall with the strategy. Variants stay in the server's memory during the demo session."
+  },
+  "values": {
+    "quarterly": "quarterly",
+    "month": "every month",
+    "drift": "gap of {n} points",
+    "tradingDays": "every {n} trading days"
+  },
+  "fields": {
+    "triggerDrawdownPct": "fall threshold (%)",
+    "maxWeightPct": "cap (%)",
+    "rebalance_driftPts": "tolerated gap (points)",
+    "rebalance": "rebalancing",
+    "every": "frequency",
+    "trigger_value": "threshold"
+  },
+  "dataset": {
+    "title": "Why this data?",
+    "teaser": "Snapshot {id} · {count} symbols · read from manifest.json",
+    "teaserLoading": "Frozen snapshot of historical data",
+    "factsTitle": "The snapshot replayed",
+    "snapshot": "Id",
+    "source": "Source",
+    "library": "Library",
+    "extracted": "Extraction",
+    "window": "Window",
+    "windowValue": "from {from} to {to}",
+    "symbols": "Symbols",
+    "warnings": "Quality warnings",
+    "warningsValue": "{count} (on {symbols, plural, one {# symbol} other {# symbols}}), kept and listed in the manifest",
+    "excluded": "Excluded symbols",
+    "excludedNone": "None",
+    "notReplayable": "Not replayable",
+    "notReplayableValue": "{symbols}: a bond yield is not a price",
+    "whyTitle": "Why yfinance and a frozen snapshot",
+    "why": {
+      "coverage": "Covers the app's whole universe: you can replay your own portfolio, not only an index.",
+      "sameSource": "Same source as the app's live quotes (Yahoo Finance).",
+      "totalReturn": "Total return through the adjusted close: dividends and splits included.",
+      "reproducible": "Reproducible: a new extraction would change past adjusted values, so the snapshot is frozen, checked by SHA-256 and never overwritten.",
+      "noLookAhead": "No look-ahead: only past prices, no current fundamentals; each decision reads only what was known at that day's close.",
+      "offline": "No network call during a replay: the demo depends on no outside service."
+    },
+    "xrayTitle": "Difference with the X-ray",
+    "xray": "The X-ray applies today's weights to past price changes, without dividends; the time machine follows a strategy through time, with dividends reinvested. The two figures are not comparable.",
+    "limitsTitle": "Stated limits",
+    "notesTitle": "Data processing",
+    "filesTitle": "Verified files",
+    "rows": "{count} rows"
+  },
+  "limitations": {
+    "unofficial_source": "Unofficial source: Yahoo Finance data read with the yfinance library, not certified by the exchanges.",
+    "demo_use_only": "Demonstration use only, not commercial: yfinance reads Yahoo data meant for personal and research use.",
+    "survivorship_bias": "Survivorship bias: the universe is today's list of large companies, replayed into the past; it looks more favourable than a list picked in 2020 would.",
+    "no_fees_no_taxes": "No fees and no taxes by default.",
+    "fx_effect_included": "Currency effect included: U.S. assets and crypto are converted to Canadian dollars at the day's USD/CAD rate.",
+    "start_near_market_top": "The window starts in December 2020, close to the 2021 market top that preceded the 2022 decline.",
+    "frozen_snapshot": "Frozen snapshot: a new extraction would change past adjusted values, so results are only comparable on the same snapshot id.",
+    "not_frozen": "Live Yahoo data, not frozen: results may change from one run to the next."
+  },
+  "notes": {
+    "total_return_adj_close": "Returns use the adjusted close (Yahoo method: split- and dividend-adjusted, back-adjusted from the extraction date), so dividends are reinvested in the return.",
+    "splits_not_reapplied": "The close is split-adjusted and the adjusted close is split- and dividend-adjusted; corporate actions are reference only and never re-applied.",
+    "common_calendar": "The replay calendar is every day on which the TSX or U.S. markets trade in the snapshot; an asset whose market is closed that day keeps its last close.",
+    "crypto_previous_utc_day": "Crypto rows are UTC days ending at midnight UTC, after the North American close; on a given date the replay uses the crypto close of the previous UTC day.",
+    "fx_last_known_rate": "U.S. dollar amounts are converted with Yahoo's USD/CAD close (USDCAD=X) of the day, or the last rate known before it.",
+    "quality_checks_recorded": "Quality checks (missing days, moves over 25%, zero-volume days, incomplete history, unknown currency) are recorded in manifest.json; a symbol failing a hard check is excluded with its reason, nothing is corrected."
+  }
+}

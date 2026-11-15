@@ -1,3 +1,4 @@
+import '@/__tests__/test-user';
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET, POST } from '@/app/api/voice/token/route';
@@ -21,8 +22,8 @@ beforeEach(() => {
 });
 
 describe('POST /api/voice/token', () => {
-    it('returns a pre-signed Transcribe URL that identifies English or French, preferring English by default', async () => {
-        const response = await call();
+    it('returns a pre-signed Transcribe URL that identifies English or French, preferring the app language (English here)', async () => {
+        const response = await call({ cookie: 'NEXT_LOCALE=en' });
         expect(response.status).toBe(200);
         const body = await response.json();
         expect(body).toMatchObject({ languages: ['en-US', 'fr-CA'], preferred: 'en-US', sampleRate: 16000 });
@@ -74,7 +75,7 @@ describe('POST /api/voice/token', () => {
     it('mints nothing and answers 404 with an error when VOICE_ENABLED is not "true"', async () => {
         for (const value of ['false', 'no', 'TRUE ']) {
             vi.stubEnv('VOICE_ENABLED', value);
-            const response = await call();
+            const response = await call({ cookie: 'NEXT_LOCALE=en' });
             if (value === 'TRUE ') { expect(response.status).toBe(200); continue; }
             expect(response.status).toBe(404);
             expect((await response.json()).error).toMatch(/turned off/);
@@ -122,7 +123,7 @@ describe('POST /api/voice/token', () => {
         const keys = limited.mock.calls.map(([key, max, window]) => [key, max, window]);
         expect(keys).toContainEqual(['voice:ip:10.0.0.2:minute', 6, 60]);
         expect(keys).toContainEqual(['voice:ip:10.0.0.2:hour', 60, 3600]);
-        expect(keys).toContainEqual([expect.stringMatching(/^voice:user:/), 30, 60]);
+        expect(keys).toContainEqual([expect.stringMatching(/^voice:session:/), 30, 60]);
     });
 
     it('refuses with a 429 when one address is over its limit, and mints nothing', async () => {
@@ -138,7 +139,7 @@ describe('POST /api/voice/token', () => {
         expect(response.status).toBe(429);
         expect((await response.json()).error).toMatch(/limite d'aujourd'hui/);
         expect(credentials).not.toHaveBeenCalled();
-        expect((await (await call()).json()).error).toMatch(/today's limit/);
+        expect((await (await call({ cookie: 'NEXT_LOCALE=en' })).json()).error).toMatch(/today's limit/);
     });
 
     it('starts a new daily count on the next UTC day', () => {

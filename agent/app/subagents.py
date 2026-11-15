@@ -1,4 +1,4 @@
-"""The seven subagents. Each is a Strands Agent on the subagent model with only its own tools and its
+"""The eight subagents. Each is a Strands Agent on the subagent model with only its own tools and its
 slice of the context. The orchestrator reaches them as tools; they never reach each other or the user."""
 from strands import Agent, tool
 
@@ -25,6 +25,15 @@ SUBAGENTS = {
         "tools": [web_tools.validate_rule, web_tools.list_rules],
         "description": "Turns the user's words into a simulated rule and validates it; lists existing rules "
                        "with their ids. Pass the user's exact words.",
+    },
+    "strategy": {
+        "tools": [web_tools.list_strategies, web_tools.validate_strategy, web_tools.run_replay,
+                  web_tools.validate_rule, web_tools.list_rules],
+        "description": "Builds, changes or tests a strategy (a named set of rules: allocation target with "
+                       "quarterly or drift rebalancing, weight cap, drawdown guard, periodic contribution, price "
+                       "threshold): lists the user's strategies and current weights, validates a strategy against "
+                       "the app's schema, and replays it on the historical snapshot without and with the rules "
+                       "(the time machine). Give the user's exact words and, for a change, the strategy id.",
     },
     "layout": {
         "tools": [web_tools.get_layout],

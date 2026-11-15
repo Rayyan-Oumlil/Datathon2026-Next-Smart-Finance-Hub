@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
+import { listScopeDecisions } from '@/lib/session';
 import { RULES, RULES_VERSION } from '@/lib/rules';
 import { listDecisions } from '@/lib/store';
 import { getPortfolioState, simulateTrade } from '@/lib/services/portfolio';
@@ -12,7 +13,7 @@ beforeEach(() => freshWorld());
 
 const below100 = { text: 'add 500 CAD of AAPL under 100', symbol: 'AAPL', trigger: { type: 'price_below', value: 100 }, action: { side: 'buy', amountCad: 500 }, once: true };
 const errorsOf = async (rule: unknown) => {
-    const checked = await validateRule(rule);
+    const checked = await validateRule(rule, 'en');
     return checked.ok ? [] : checked.errors;
 };
 
@@ -44,7 +45,7 @@ describe('validateRule', () => {
 describe('evaluateRules', () => {
     it('does nothing while the trigger is not met', async () => {
         const rule = await createRule(below100);           // price is 100: not below 100
-        const { fired, checks } = await evaluateRules();
+        const { fired, checks } = await evaluateRules('en');
         expect(fired).toEqual([]);
         expect(checks).toEqual([expect.objectContaining({ ruleId: rule.id, hit: false, fired: false, note: 'price 100.00 USD was not below 100.00 USD' })]);
     });
@@ -52,27 +53,27 @@ describe('evaluateRules', () => {
     it('simulates a fill at the last price on a hit, with a factual reason, and fires a once-rule only once', async () => {
         const rule = await createRule(below100);
         market.prices.AAPL = { value: 98.2, currency: 'USD' };
-        const { fired } = await evaluateRules();
+        const { fired } = await evaluateRules('en');
         expect(fired).toEqual([expect.objectContaining({ symbol: 'AAPL', origin: 'rule', ruleId: rule.id, valueCad: 500, reason: `rule ${rule.id}: price 98.20 USD was below 100.00 USD`, simulated: true })]);
         expect(fired[0].price.value).toBe(98.2);
         expect((await getPortfolioState()).cashCad).toBe(9500);
         expect(await listRules()).toEqual([expect.objectContaining({ id: rule.id, status: 'paused', lastFiredAt: fired[0].at })]);
 
-        expect((await evaluateRules()).fired).toEqual([]);
+        expect((await evaluateRules('en')).fired).toEqual([]);
         // A once-rule that has fired cannot be resumed into an active rule that does nothing
         await expect(setRuleStatus(rule.id, 'active')).rejects.toMatchObject({ status: 409 });
         expect(await listRules()).toEqual([expect.objectContaining({ status: 'paused' })]);
-        expect(await listDecisions(DEMO_USER.id, { kind: 'simulated_trade' })).toHaveLength(1);
+        expect(await listScopeDecisions(TEST_SCOPE, { kind: 'simulated_trade' })).toHaveLength(1);
     });
 
     it('does not fire at the trigger value itself, in either direction, and fires one cent past it', async () => {
         const above = await createRule({ ...below100, text: 'add 500 CAD of AAPL over 100', trigger: { type: 'price_above', value: 100 } });
         await createRule({ ...below100, once: false, trigger: { type: 'change_pct_above', value: 10 } });       // the change is 10%
-        const at = await evaluateRules();
+        const at = await evaluateRules('en');
         expect(at.fired).toEqual([]);
         expect(at.checks.map((check) => check.note)).toEqual(['price 100.00 USD was not above 100.00 USD', 'change today 10.00% was not above 10.00%']);
         market.prices.AAPL = { value: 100.01, currency: 'USD', change: 10 };
-        const past = await evaluateRules();
+        const past = await evaluateRules('en');
         expect(past.fired).toEqual([expect.objectContaining({ ruleId: above.id, reason: `rule ${above.id}: price 100.01 USD was above 100.00 USD` })]);
         expect(past.fired[0].price).toMatchObject({ value: 100.01, source: 'stub quotes', fetchedAt: expect.any(String) });
     });
@@ -81,17 +82,17 @@ describe('evaluateRules', () => {
         const rule = await createRule({ ...below100, once: false, trigger: { type: 'price_above', value: 50 }, action: { side: 'buy', amountCad: 9000 } });
         market.signals.AAPL = { volatility1y: sourced(0.5, { source: 'derived' }) };
         await simulateTrade({ symbol: 'RY.TO', side: 'buy', amountCad: 5000 });         // leaves 5000: the rule's 9000 no longer fits
-        const { fired, checks } = await evaluateRules();
+        const { fired, checks } = await evaluateRules('en');
         expect(fired).toEqual([]);
         expect(checks).toEqual([expect.objectContaining({ ruleId: rule.id, hit: true, fired: false })]);
-        expect(await listDecisions(DEMO_USER.id, { kind: 'profile_conflict' })).toEqual([]);
+        expect(await listScopeDecisions(TEST_SCOPE, { kind: 'profile_conflict' })).toEqual([]);
     });
 
     it('fires a repeating rule at most once per market day', async () => {
         await createRule({ ...below100, once: false, trigger: { type: 'change_pct_above', value: 5 } });      // AAPL is +10% today
-        const first = await evaluateRules();
+        const first = await evaluateRules('en');
         expect(first.fired[0].reason).toContain('change today 10.00% was above 5.00%');
-        const second = await evaluateRules();
+        const second = await evaluateRules('en');
         expect(second.fired).toEqual([]);
         expect(second.checks[0].note).toBe('already fired today');
         expect((await listRules())[0].status).toBe('active');
@@ -104,7 +105,7 @@ describe('evaluateRules', () => {
         const out = await createRule({ text: 'reduce RY above 55', symbol: 'RY.TO', trigger: { type: 'price_above', value: 55 }, action: { side: 'sell', quantity: 4 } });
         market.prices.AAPL = { value: 90, currency: 'USD' };
         market.prices['RY.TO'] = { value: 60, currency: 'CAD' };
-        const { fired, checks } = await evaluateRules();
+        const { fired, checks } = await evaluateRules('en');
         expect(checks.map((check) => check.ruleId)).toEqual([out.id]);
         expect(fired).toEqual([expect.objectContaining({ symbol: 'RY.TO', side: 'sell', quantity: 4, valueCad: 240, reason: `rule ${out.id}: price 60.00 CAD was above 55.00 CAD` })]);
         expect((await getPortfolioState()).positions[0].quantity).toBe(6);
@@ -114,10 +115,10 @@ describe('evaluateRules', () => {
         const rule = await createRule(below100);
         market.prices.AAPL = { value: 95, currency: 'USD' };
         market.signals.AAPL = { volatility1y: sourced(0.5, { source: 'derived' }) };
-        const { fired } = await evaluateRules();
+        const { fired } = await evaluateRules('en');
         expect(fired).toHaveLength(1);
         expect(fired[0].reason).toContain('profile conflict logged: volatility');
-        const [conflict] = await listDecisions(DEMO_USER.id, { kind: 'profile_conflict' });
+        const [conflict] = await listScopeDecisions(TEST_SCOPE, { kind: 'profile_conflict' });
         expect(conflict.payload).toMatchObject({ origin: 'rule', ruleId: rule.id, proceeded: true, acknowledged: false });
     });
 
@@ -125,7 +126,7 @@ describe('evaluateRules', () => {
         const rule = await createRule({ ...below100, action: { side: 'buy', amountCad: 9000 } });
         await simulateTrade({ symbol: 'RY.TO', side: 'buy', amountCad: 5000 });
         market.prices.AAPL = { value: 95, currency: 'USD' };
-        const { fired, checks } = await evaluateRules();
+        const { fired, checks } = await evaluateRules('en');
         expect(fired).toEqual([]);
         expect(checks[0]).toMatchObject({ ruleId: rule.id, hit: true, fired: false });
         expect(checks[0].note).toContain('not simulated: Simulated cash is 5,000.00 CAD');
@@ -136,7 +137,7 @@ describe('evaluateRules', () => {
         const rule = await createRule(below100);
         await setRuleStatus(rule.id, 'paused');
         await expect(setRuleStatus('rule_missing', 'paused')).rejects.toMatchObject({ status: 404 });
-        const rows = await listDecisions(DEMO_USER.id, { kind: 'user_action' });
+        const rows = await listScopeDecisions(TEST_SCOPE, { kind: 'user_action' });
         expect(rows.map((entry) => (entry.payload as { action: string }).action)).toEqual(['rule_create', 'rule_pause']);
         for (const row of rows) expect(row.ruleVersions).toEqual({ rules: RULES_VERSION, filters: RULES.filters.version });
     });

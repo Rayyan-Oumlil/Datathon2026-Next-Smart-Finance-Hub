@@ -120,7 +120,7 @@ export default function PortfolioBoard() {
 
     const modules: Record<ModuleId, () => React.ReactNode> = {
         total_value: () => <TotalValue view={view!} level={level} />,
-        performance: () => <PerformanceChart history={view!.history} startingCashCad={view!.portfolio.startingCashCad} note={view!.historyNote} level={level} />,
+        performance: () => <PerformanceChart history={view!.history} dailyCloses={view!.historyCloses} startingCashCad={view!.portfolio.startingCashCad} note={view!.historyNote} level={level} />,
         holdings: () => <Holdings positions={view!.positions} totalCad={view!.valueCad.value} level={level} onChanged={refresh} />,
         sector_allocation: () => <SectorAllocation bySector={view!.bySector} cashCad={view!.cashCad} totalCad={view!.valueCad.value} unpriced={view!.unpriced} level={level} />,
         xray: () => <XrayCard refreshKey={view!.portfolio.trades.length} />,

@@ -1,0 +1,112 @@
+{
+ "snapshotId": "yf-2021-01-10",
+ "source": "fixture for tests (hand-written values, not market data)",
+ "sourceUrl": "https://finance.yahoo.com",
+ "library": {
+  "name": "yfinance",
+  "version": "fixture"
+ },
+ "call": "hand-written",
+ "extractedAt": "2021-01-10T12:00:00+00:00",
+ "extractionDate": "2021-01-10",
+ "window": {
+  "requestedFrom": "2021-01-02",
+  "requestedTo": "2021-01-09",
+  "from": "2021-01-02",
+  "to": "2021-01-09"
+ },
+ "files": {
+  "prices.csv": {
+   "sha256": "1ef11aa8e3e47f5a386165124d9252738a3fdd53ec75ad3779f3ee038fef34e0",
+   "rows": 18
+  },
+  "actions.csv": {
+   "sha256": "5d39b90f2d6a2d0a433e66ce9dc1be2c78ac8d335f612e189c7c93bd2868b335",
+   "rows": 2
+  },
+  "fx.csv": {
+   "sha256": "90fe2fb5a4240589765e40b88e50254fedfadec9bbf62c49bf5a6bc6a12fabce",
+   "rows": 4
+  }
+ },
+ "fx": {
+  "yahooSymbol": "USDCAD=X",
+  "firstDate": "2021-01-04",
+  "lastDate": "2021-01-08",
+  "rows": 4,
+  "warnings": [
+   "1 missing trading days against the fx calendar (20.0%): 2021-01-06"
+  ]
+ },
+ "symbols": [
+  {
+   "yahooSymbol": "AAPL",
+   "appSymbols": [
+    "AAPL"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "US",
+   "currency": "USD",
+   "exchange": null,
+   "exchangeTimezone": null,
+   "firstDate": "2021-01-04",
+   "lastDate": "2021-01-08",
+   "rows": 5,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "BTC-USD",
+   "appSymbols": [
+    "BTC"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "crypto",
+   "currency": "USD",
+   "exchange": null,
+   "exchangeTimezone": null,
+   "firstDate": "2021-01-02",
+   "lastDate": "2021-01-09",
+   "rows": 8,
+   "warnings": []
+  },
+  {
+   "yahooSymbol": "RY.TO",
+   "appSymbols": [
+    "RY.TO"
+   ],
+   "origins": [
+    "universe"
+   ],
+   "group": "TSX",
+   "currency": "CAD",
+   "exchange": null,
+   "exchangeTimezone": null,
+   "firstDate": "2021-01-04",
+   "lastDate": "2021-01-08",
+   "rows": 5,
+   "warnings": []
+  }
+ ],
+ "excluded": [
+  {
+   "yahooSymbol": "SPCX",
+   "appSymbols": [
+    "SPCX"
+   ],
+   "reason": "incomplete history: ends early (fixture)"
+  }
+ ],
+ "notReplayable": [
+  {
+   "symbol": "CA10Y",
+   "reason": "not replayable: a yield is not a price"
+  }
+ ],
+ "limitations": [
+  "fixture"
+ ]
+}

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
+import { listScopeDecisions } from '@/lib/session';
 import { apply, cancel, getAction, route, ruleSentence, undo } from '@/lib/agent/router';
 import { getLayout } from '@/lib/services/layout';
 import { getPortfolioState } from '@/lib/services/portfolio';
@@ -31,7 +32,7 @@ describe('whitelist and params', () => {
             expect(await route('a1', propose(type, {}))).toMatchObject({ outcome: 'dropped', type });
         }
         expect(await route('a1', 'buy everything')).toMatchObject({ outcome: 'dropped' });
-        expect((await readState()).pendingPreviews).toEqual([]);
+        expect((await readState(TEST_SCOPE)).pendingPreviews).toEqual([]);
     });
 
     it('drops params that do not pass the schema of their type', async () => {
@@ -59,7 +60,7 @@ describe('whitelist and params', () => {
             const routed = await route('a2', propose(type, params));
             expect(routed, `${type} ${JSON.stringify(params)}`).toMatchObject({ outcome: 'dropped', type });
         }
-        expect((await readState()).pendingPreviews).toEqual([]);
+        expect((await readState(TEST_SCOPE)).pendingPreviews).toEqual([]);
     });
 
     it('lets read-only actions through without a preview, and decides needsConfirm itself', async () => {
@@ -109,7 +110,7 @@ describe('preview, apply, undo', () => {
         expect(applied).toMatchObject({ applied: true, result: { rule: { id: rules[0].id, status: 'active' } } });
         expect(await undo('r1')).toMatchObject({ restored: true, result: { removed: true } });
         expect(await listRules()).toEqual([]);
-        const actions = (await listDecisions(DEMO_USER.id, { kind: 'user_action' })).map((row) => (row.payload as { action: string }).action);
+        const actions = (await listScopeDecisions(TEST_SCOPE, { kind: 'user_action' })).map((row) => (row.payload as { action: string }).action);
         expect(actions).toEqual(['rule_create', 'rule_remove']);
     });
 
@@ -164,7 +165,7 @@ describe('preview, apply, undo', () => {
             'simulated purchase from the agent (action t1)',
             expect.stringContaining('undo of simulated trade'),
         ]);
-        expect(await listDecisions(DEMO_USER.id, { kind: 'simulated_trade' })).toHaveLength(2);
+        expect(await listScopeDecisions(TEST_SCOPE, { kind: 'simulated_trade' })).toHaveLength(2);
     });
 
     it('simulated_trade with a profile conflict: the preview names it, and the confirmed trade is acknowledged', async () => {
@@ -172,10 +173,10 @@ describe('preview, apply, undo', () => {
         const routed = await preview('t2', 'simulated_trade', { symbol: 'AAPL', side: 'buy', amountCad: 142 });
         expect(routed.conflicts).toMatchObject([{ filter: 'volatility', pass: false }]);
         expect(routed.conflicts[0].detail).toContain('60.0%');
-        expect(await listDecisions(DEMO_USER.id, { kind: 'profile_conflict' })).toEqual([]);     // a preview logs no decision
+        expect(await listScopeDecisions(TEST_SCOPE, { kind: 'profile_conflict' })).toEqual([]);     // a preview logs no decision
 
         expect(await apply('t2')).toMatchObject({ applied: true });
-        const [conflict] = await listDecisions(DEMO_USER.id, { kind: 'profile_conflict' });
+        const [conflict] = await listScopeDecisions(TEST_SCOPE, { kind: 'profile_conflict' });
         expect(conflict.payload).toMatchObject({ acknowledged: true, proceeded: true, origin: 'agent' });
     });
 

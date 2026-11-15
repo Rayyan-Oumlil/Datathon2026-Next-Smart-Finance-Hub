@@ -11,6 +11,8 @@ import { formatNumber, formatDateTime } from "@/i18n/format";
 import { formatMoment, sourceLabel } from "@/components/agent/time";
 import AgentText from "@/components/agent/AgentText";
 import StageList, { stageFailed, stageText } from "@/components/agent/StageList";
+import Timeline from "@/components/agent/Timeline";
+import Link from "next/link";
 import { rowsForStage } from "@/lib/agent/stage-rows";
 import type { StageLine } from "@/lib/agent/stages";
 import { useAgentStream } from "@/hooks/useAgentStream";
@@ -20,8 +22,22 @@ import { useVoiceInput } from "@/hooks/useVoiceInput";
 
 type Source = { label: string; source: string; fetchedAt?: string; asOf?: string };
 type Check = { filter: string; pass: boolean; detail: string };
+type StrategyPreviewData = {
+    name: string;
+    replaceId: string | null;
+    sentences: string[];
+    beforeSentences: string[] | null;
+    table: Array<{ label: string; without: string; with: string }>;
+    firings: Array<{ ruleId: string; label: string; count: number }>;
+    replay: { replayId: string; snapshotId: string; from: string; to: string; tradingDays: number } | null;
+    replayNote: string | null;
+    conflicts: Array<{ symbol: string; detail: string }>;
+    notes: string[];
+    illustrative: string;
+};
 type PreviewData = {
     summary: string;
+    strategy?: StrategyPreviewData;
     rows: Array<{ label: string; before: string; after: string }>;
     facts: Array<{ label: string; value: string; source?: string; fetchedAt?: string; asOf?: string }>;
 };
@@ -43,6 +59,7 @@ type Message = {
     reply?: Reply;
     change?: 'pending' | 'applied' | 'cancelled' | 'undone';
     outcome?: string;
+    strategyId?: string;              // a strategy saved by Confirm: links to the time machine
     steps?: StageLine[];              // what the agent did for this reply, each step linked to its log rows
 };
 type LogRow = { id: string; at: string; step: string; actor: string; modelId?: string; awsRequestId?: string; inputTokens?: number; outputTokens?: number; dataUsed?: unknown };
@@ -52,7 +69,8 @@ const HISTORY_TURNS = 10;
 // The chips and what each one sends. The "less" message names a fixed choice (the Novice starting layout):
 // the bare words name no widget and the agent would ask which ones to hide, so the reply is a layout preview
 // to confirm or cancel. The "rule" chip only starts a sentence in the input.
-const QUICK_ACTIONS = ['explain', 'less', 'etf', 'rule'] as const;
+// "strategy" starts a sentence too; "testStrategy" asks for a replay of the stored strategy.
+const QUICK_ACTIONS = ['explain', 'less', 'etf', 'rule', 'strategy', 'testStrategy'] as const;
 type QuickAction = (typeof QUICK_ACTIONS)[number];
 
 type Translator = ReturnType<typeof useTranslations<'AgentPanel'>>;
@@ -180,6 +198,61 @@ const ConflictBlock = ({ conflict }: { conflict: NonNullable<Reply['conflict']> 
     );
 };
 
+// A proposed strategy: its rules as sentences, the small without / with table of the 5-year replay, how often each rule
+// fired and the profile conflicts. The label of the replay is always shown with its figures.
+const StrategyBlock = ({ data }: { data: StrategyPreviewData }) => {
+    const t = useTranslations('AgentPanel');
+    return (
+        <div className="mt-2 flex flex-col gap-2">
+            <div>
+                <p className="form-label">{t('preview.strategy.rules')}</p>
+                <ul className="mt-0.5 list-disc ps-5 text-foreground">
+                    {data.sentences.map((sentence, index) => <li key={index}>{sentence}</li>)}
+                </ul>
+                {data.beforeSentences && (
+                    <details className="mt-1 text-xs text-muted-foreground">
+                        <summary className="cursor-pointer select-none">{t('preview.strategy.replaces')}</summary>
+                        <ul className="mt-0.5 list-disc ps-5">{data.beforeSentences.map((sentence, index) => <li key={index}>{sentence}</li>)}</ul>
+                    </details>
+                )}
+            </div>
+            {data.replay && data.table.length > 0 && (
+                <div>
+                    <p className="form-label">{t('preview.strategy.history')}</p>
+                    <p className="text-[11px] text-faint">{t('preview.strategy.window', { from: data.replay.from, to: data.replay.to, days: data.replay.tradingDays })}</p>
+                    <table className="mt-1 w-full text-xs">
+                        <thead>
+                            <tr className="text-faint">
+                                <th scope="col" className="py-0.5 text-start font-semibold">{t('preview.strategy.metric')}</th>
+                                <th scope="col" className="py-0.5 text-end font-semibold">{t('preview.strategy.without')}</th>
+                                <th scope="col" className="py-0.5 text-end font-semibold">{t('preview.strategy.with')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.table.map((row) => (
+                                <tr key={row.label} className="border-t border-line">
+                                    <th scope="row" className="py-1 text-start font-normal text-muted-foreground">{row.label}</th>
+                                    <td className="num py-1 text-end text-foreground">{row.without}</td>
+                                    <td className="num py-1 text-end text-foreground">{row.with}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {data.firings.length > 0 && (
+                        <ul className="mt-1 text-xs text-muted-foreground" aria-label={t('preview.strategy.fired')}>
+                            {data.firings.map((firing) => <li key={firing.ruleId}>{t('preview.strategy.firedCount', { label: firing.label, count: firing.count })}</li>)}
+                        </ul>
+                    )}
+                    <p className="mono mt-1 break-all text-[11px] text-faint">{t('preview.strategy.ids', { replayId: data.replay.replayId, snapshotId: data.replay.snapshotId })}</p>
+                </div>
+            )}
+            {data.replayNote && <p className="text-xs text-muted-foreground">{data.replayNote}</p>}
+            {data.notes.map((note, index) => <p key={index} className="text-xs text-muted-foreground">{note}</p>)}
+            <p role="note" className="rounded-lg bg-hover px-2 py-1 text-xs font-semibold text-foreground">{data.illustrative}</p>
+        </div>
+    );
+};
+
 type PreviewProps = { message: Message; busy: boolean; onDecide: (accept: boolean) => void; onUndo: () => void };
 
 const PreviewCard = ({ message, busy, onDecide, onUndo }: PreviewProps) => {
@@ -190,7 +263,8 @@ const PreviewCard = ({ message, busy, onDecide, onUndo }: PreviewProps) => {
         <div className="mt-2 rounded-xl border border-line bg-canvas p-3 text-[13px]">
             <p className="kicker">{t('preview.kicker')}</p>
             <p className="mt-1 font-semibold text-foreground">{preview.summary}</p>
-            <dl className="mt-2 flex flex-col gap-2">
+            {preview.strategy && <StrategyBlock data={preview.strategy} />}
+            {!preview.strategy && <dl className="mt-2 flex flex-col gap-2">
                 {preview.rows.map((row) => (
                     <div key={row.label}>
                         <dt className="form-label">{row.label}</dt>
@@ -200,8 +274,8 @@ const PreviewCard = ({ message, busy, onDecide, onUndo }: PreviewProps) => {
                         </dd>
                     </div>
                 ))}
-            </dl>
-            {preview.facts.length > 0 && (
+            </dl>}
+            {!preview.strategy && preview.facts.length > 0 && (
                 <ul className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
                     {preview.facts.map((fact) => (
                         <li key={fact.label}>
@@ -224,6 +298,11 @@ const PreviewCard = ({ message, busy, onDecide, onUndo }: PreviewProps) => {
                         {message.change === 'applied' ? t('preview.applied') : message.change === 'undone' ? t('preview.undone') : t('preview.cancelled')}
                     </p>
                     {message.outcome && <p className="text-muted-foreground">{message.outcome}</p>}
+                    {message.change === 'applied' && message.strategyId && (
+                        <Link href={`/time-machine?strategy=${encodeURIComponent(message.strategyId)}`} className="mt-1 inline-block font-semibold text-brand-ink hover:underline">
+                            {t('preview.strategy.openTimeMachine')}
+                        </Link>
+                    )}
                     {message.change === 'applied' && (
                         <button type="button" className="btn btn-ghost mt-2" disabled={busy} onClick={onUndo}>
                             <Undo2 aria-hidden /> {t('preview.undo')}
@@ -372,8 +451,8 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
         const { actionId, language } = message.reply!;
         setBusyAction(actionId);
         try {
-            const outcome = await post<{ applied: boolean; message?: string }>('/api/agent/confirm', { actionId, accept, language }, t('errors.apply'));
-            patch(message.id, { change: outcome.applied ? 'applied' : 'cancelled', outcome: outcome.message });
+            const outcome = await post<{ applied: boolean; message?: string; result?: { strategy?: { id?: string } } }>('/api/agent/confirm', { actionId, accept, language }, t('errors.apply'));
+            patch(message.id, { change: outcome.applied ? 'applied' : 'cancelled', outcome: outcome.message, ...(outcome.result?.strategy?.id ? { strategyId: outcome.result.strategy.id } : {}) });
             if (outcome.applied) dataChanged();
         } catch (error) {
             notice(error instanceof Error ? error.message : t('errors.apply'));
@@ -397,8 +476,8 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
     };
 
     const quick = (id: QuickAction) => {
-        if (id === 'rule') {
-            setDraft(t('quick.rule.message'));
+        if (id === 'rule' || id === 'strategy') {
+            setDraft(t(`quick.${id}.message`));
             inputRef.current?.focus();
         } else void send(t(`quick.${id}.message`));
     };
@@ -473,6 +552,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                                                     {message.reply.preview && (
                                                         <PreviewCard message={message} busy={busyAction === message.reply.actionId} onDecide={(accept) => void decide(message, accept)} onUndo={() => void undo(message)} />
                                                     )}
+                                                    <Timeline actionId={message.reply.actionId} refreshKey={message.change} />
                                                     <Trace actionId={message.reply.actionId} steps={message.steps} />
                                                 </>
                                             )}
@@ -514,6 +594,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                             <VoiceButton state={voice.state} support={voice.support} onStart={() => void voice.start()} onStop={voice.stop} />
                             <button type="submit" className="btn btn-primary h-11 px-3" disabled={waiting || !draft.trim()} aria-label={t('send')}><SendHorizontal aria-hidden /></button>
                         </form>
+                        <Link href="/logs" className="mt-1.5 inline-block text-[11px] font-semibold text-faint hover:text-foreground hover:underline">{t('logsLink')}</Link>
                     </footer>
                 </div>
             </aside>

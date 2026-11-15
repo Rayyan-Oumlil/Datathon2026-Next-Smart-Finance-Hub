@@ -183,6 +183,16 @@
     "label": "simulated"
   },
 
+  "strategy": {
+    "version": "strategy-v1",
+    "origin": "owner; agreed on 2026-11-15 (docs/v2-plan.md, 'Rule priority')",
+    "note": "Read by the one rules evaluator shared by the live app and the replay (lib/strategy/evaluate.ts). The priority, the anti-oscillation delay and the minimum order size were agreed on 2026-11-15. price_threshold is the V1 rule kind: it comes last and keeps its V1 delay (at most one firing per market day).",
+    "priority": ["drawdown_guard", "weight_cap", "allocation_target", "periodic_purchase", "price_threshold"],
+    "anti_oscillation_trading_days": 5,
+    "min_order_cad": 25,
+    "price_threshold_min_days_between_firings": 1
+  },
+
   "agent": {
     "origin": "board; models and region changed by the owner",
     "whitelisted_actions": [
@@ -205,6 +215,223 @@
     "bedrock_region_note": "Board says Montréal; the workshop account denies Bedrock in ca-central-1. Changed by the owner on 2026-11-14.",
     "runtime": "Bedrock AgentCore Runtime (owner)",
     "glossary": "Bedrock Knowledge Base (owner)"
+  },
+
+  "model_portfolios": {
+    "version": "model-portfolios-v1",
+    "origin": "owner; agreed on 2026-11-15 (docs/v2-plan.md, step 2 'Suggested portfolios'; brief B9)",
+    "note": "Teaching examples, not advice. Three options per risk level; the middle one of each level is the example portfolio of lib/personas/presets.ts (Robert = Low, Mateo = Medium, Amira = High); the defensive neighbour moves 10 to 15 points from equities to bonds and short-term funds, the growth neighbour moves 10 to 15 points the other way. Every symbol is in the app universe (tradable) and in the replay snapshot. Weights are whole percentage points and sum to 100. Adjustments run in 'adjustments_order', are applied by lib/services/model-portfolio.ts and only ever move whole points between lines; every line keeps the rule that produced it.",
+    "label_fr": "Exemple pédagogique, pas un conseil",
+    "label_en": "Teaching example, not advice",
+    "roles": ["bonds", "short_bonds", "canada_equity", "us_equity", "tech_equity", "esg_equity", "stock", "dividend_stock", "gold", "crypto"],
+    "broad_fund": { "Low": "XIU.TO", "Medium": "ESGV", "High": "SPY" },
+    "options": {
+      "Low": [
+        {
+          "id": "low-defensive", "variant": "defensive",
+          "name": { "fr": "Prudent défensif", "en": "Cautious defensive" },
+          "description": { "fr": "60 % en obligations et court terme, le reste en grands fonds et en sociétés à dividendes.", "en": "60% in bonds and short-term funds, the rest in broad funds and dividend companies." },
+          "lines": [
+            { "symbol": "XBB.TO", "weightPct": 26, "role": "bonds" },
+            { "symbol": "ZST.TO", "weightPct": 24, "role": "short_bonds" },
+            { "symbol": "AGG", "weightPct": 10, "role": "bonds" },
+            { "symbol": "XIU.TO", "weightPct": 12, "role": "canada_equity" },
+            { "symbol": "RY.TO", "weightPct": 5, "role": "dividend_stock" },
+            { "symbol": "JNJ", "weightPct": 5, "role": "stock" },
+            { "symbol": "PG", "weightPct": 5, "role": "stock" },
+            { "symbol": "FTS.TO", "weightPct": 5, "role": "dividend_stock" },
+            { "symbol": "GLD", "weightPct": 5, "role": "gold" },
+            { "symbol": "SPY", "weightPct": 3, "role": "us_equity" }
+          ]
+        },
+        {
+          "id": "low-core", "variant": "core",
+          "name": { "fr": "Prudent central", "en": "Cautious core" },
+          "description": { "fr": "L’exemple de Robert : près de la moitié en obligations, l’autre en actions canadiennes et à dividendes.", "en": "Robert’s example: about half in bonds, the other half in Canadian and dividend equities." },
+          "lines": [
+            { "symbol": "XBB.TO", "weightPct": 22, "role": "bonds" },
+            { "symbol": "ZST.TO", "weightPct": 18, "role": "short_bonds" },
+            { "symbol": "AGG", "weightPct": 8, "role": "bonds" },
+            { "symbol": "XIU.TO", "weightPct": 15, "role": "canada_equity" },
+            { "symbol": "RY.TO", "weightPct": 6, "role": "dividend_stock" },
+            { "symbol": "JNJ", "weightPct": 6, "role": "stock" },
+            { "symbol": "PG", "weightPct": 6, "role": "stock" },
+            { "symbol": "FTS.TO", "weightPct": 6, "role": "dividend_stock" },
+            { "symbol": "GLD", "weightPct": 5, "role": "gold" },
+            { "symbol": "SPY", "weightPct": 8, "role": "us_equity" }
+          ]
+        },
+        {
+          "id": "low-growth", "variant": "growth",
+          "name": { "fr": "Prudent croissance", "en": "Cautious growth" },
+          "description": { "fr": "36 % en obligations : 12 points de plus en actions que l’option centrale.", "en": "36% in bonds: 12 more points in equities than the core option." },
+          "lines": [
+            { "symbol": "XBB.TO", "weightPct": 18, "role": "bonds" },
+            { "symbol": "ZST.TO", "weightPct": 12, "role": "short_bonds" },
+            { "symbol": "AGG", "weightPct": 6, "role": "bonds" },
+            { "symbol": "XIU.TO", "weightPct": 18, "role": "canada_equity" },
+            { "symbol": "RY.TO", "weightPct": 7, "role": "dividend_stock" },
+            { "symbol": "JNJ", "weightPct": 7, "role": "stock" },
+            { "symbol": "PG", "weightPct": 7, "role": "stock" },
+            { "symbol": "FTS.TO", "weightPct": 7, "role": "dividend_stock" },
+            { "symbol": "GLD", "weightPct": 5, "role": "gold" },
+            { "symbol": "SPY", "weightPct": 13, "role": "us_equity" }
+          ]
+        }
+      ],
+      "Medium": [
+        {
+          "id": "medium-defensive", "variant": "defensive",
+          "name": { "fr": "Équilibré défensif", "en": "Balanced defensive" },
+          "description": { "fr": "41 % en obligations, 54 % en actions, surtout par un grand fonds ESG.", "en": "41% in bonds, 54% in equities, mostly through a broad ESG fund." },
+          "lines": [
+            { "symbol": "ESGV", "weightPct": 24, "role": "esg_equity" },
+            { "symbol": "XIU.TO", "weightPct": 10, "role": "canada_equity" },
+            { "symbol": "MSFT", "weightPct": 5, "role": "stock" },
+            { "symbol": "JNJ", "weightPct": 5, "role": "stock" },
+            { "symbol": "PG", "weightPct": 5, "role": "stock" },
+            { "symbol": "FTS.TO", "weightPct": 5, "role": "dividend_stock" },
+            { "symbol": "XBB.TO", "weightPct": 22, "role": "bonds" },
+            { "symbol": "AGG", "weightPct": 10, "role": "bonds" },
+            { "symbol": "GLD", "weightPct": 5, "role": "gold" },
+            { "symbol": "ZST.TO", "weightPct": 9, "role": "short_bonds" }
+          ]
+        },
+        {
+          "id": "medium-core", "variant": "core",
+          "name": { "fr": "Équilibré central", "en": "Balanced core" },
+          "description": { "fr": "L’exemple de Mateo : un grand fonds ESG, des actions canadiennes et 31 % en obligations.", "en": "Mateo’s example: a broad ESG fund, Canadian equities and 31% in bonds." },
+          "lines": [
+            { "symbol": "ESGV", "weightPct": 30, "role": "esg_equity" },
+            { "symbol": "XIU.TO", "weightPct": 12, "role": "canada_equity" },
+            { "symbol": "MSFT", "weightPct": 6, "role": "stock" },
+            { "symbol": "JNJ", "weightPct": 6, "role": "stock" },
+            { "symbol": "PG", "weightPct": 5, "role": "stock" },
+            { "symbol": "FTS.TO", "weightPct": 5, "role": "dividend_stock" },
+            { "symbol": "XBB.TO", "weightPct": 17, "role": "bonds" },
+            { "symbol": "AGG", "weightPct": 8, "role": "bonds" },
+            { "symbol": "GLD", "weightPct": 5, "role": "gold" },
+            { "symbol": "ZST.TO", "weightPct": 6, "role": "short_bonds" }
+          ]
+        },
+        {
+          "id": "medium-growth", "variant": "growth",
+          "name": { "fr": "Équilibré croissance", "en": "Balanced growth" },
+          "description": { "fr": "74 % en actions et 21 % en obligations : 10 points de plus en actions que l’option centrale.", "en": "74% in equities and 21% in bonds: 10 more points in equities than the core option." },
+          "lines": [
+            { "symbol": "ESGV", "weightPct": 36, "role": "esg_equity" },
+            { "symbol": "XIU.TO", "weightPct": 14, "role": "canada_equity" },
+            { "symbol": "MSFT", "weightPct": 8, "role": "stock" },
+            { "symbol": "JNJ", "weightPct": 6, "role": "stock" },
+            { "symbol": "PG", "weightPct": 5, "role": "stock" },
+            { "symbol": "FTS.TO", "weightPct": 5, "role": "dividend_stock" },
+            { "symbol": "XBB.TO", "weightPct": 12, "role": "bonds" },
+            { "symbol": "AGG", "weightPct": 6, "role": "bonds" },
+            { "symbol": "GLD", "weightPct": 5, "role": "gold" },
+            { "symbol": "ZST.TO", "weightPct": 3, "role": "short_bonds" }
+          ]
+        }
+      ],
+      "High": [
+        {
+          "id": "high-defensive", "variant": "defensive",
+          "name": { "fr": "Dynamique défensif", "en": "Dynamic defensive" },
+          "description": { "fr": "25 % en obligations : 13 points de moins en actions et en crypto que l’option centrale.", "en": "25% in bonds: 13 fewer points in equities and crypto than the core option." },
+          "lines": [
+            { "symbol": "QQQ", "weightPct": 20, "role": "tech_equity" },
+            { "symbol": "NVDA", "weightPct": 6, "role": "stock" },
+            { "symbol": "GOOGL", "weightPct": 6, "role": "stock" },
+            { "symbol": "SHOP.TO", "weightPct": 3, "role": "stock" },
+            { "symbol": "BTC", "weightPct": 5, "role": "crypto" },
+            { "symbol": "ETH", "weightPct": 2, "role": "crypto" },
+            { "symbol": "XIU.TO", "weightPct": 15, "role": "canada_equity" },
+            { "symbol": "SPY", "weightPct": 10, "role": "us_equity" },
+            { "symbol": "GLD", "weightPct": 8, "role": "gold" },
+            { "symbol": "XBB.TO", "weightPct": 20, "role": "bonds" },
+            { "symbol": "ZST.TO", "weightPct": 5, "role": "short_bonds" }
+          ]
+        },
+        {
+          "id": "high-core", "variant": "core",
+          "name": { "fr": "Dynamique central", "en": "Dynamic core" },
+          "description": { "fr": "L’exemple d’Amira : technologie, un peu de crypto et 12 % en obligations.", "en": "Amira’s example: technology, some crypto and 12% in bonds." },
+          "lines": [
+            { "symbol": "QQQ", "weightPct": 25, "role": "tech_equity" },
+            { "symbol": "NVDA", "weightPct": 8, "role": "stock" },
+            { "symbol": "GOOGL", "weightPct": 8, "role": "stock" },
+            { "symbol": "SHOP.TO", "weightPct": 4, "role": "stock" },
+            { "symbol": "BTC", "weightPct": 7, "role": "crypto" },
+            { "symbol": "ETH", "weightPct": 3, "role": "crypto" },
+            { "symbol": "XIU.TO", "weightPct": 15, "role": "canada_equity" },
+            { "symbol": "SPY", "weightPct": 10, "role": "us_equity" },
+            { "symbol": "GLD", "weightPct": 8, "role": "gold" },
+            { "symbol": "XBB.TO", "weightPct": 12, "role": "bonds" }
+          ]
+        },
+        {
+          "id": "high-growth", "variant": "growth",
+          "name": { "fr": "Dynamique croissance", "en": "Dynamic growth" },
+          "description": { "fr": "Aucune obligation : les 12 points d’obligations de l’option centrale passent aux actions.", "en": "No bonds: the core option’s 12 points of bonds move to equities." },
+          "lines": [
+            { "symbol": "QQQ", "weightPct": 30, "role": "tech_equity" },
+            { "symbol": "NVDA", "weightPct": 10, "role": "stock" },
+            { "symbol": "GOOGL", "weightPct": 9, "role": "stock" },
+            { "symbol": "SHOP.TO", "weightPct": 5, "role": "stock" },
+            { "symbol": "BTC", "weightPct": 7, "role": "crypto" },
+            { "symbol": "ETH", "weightPct": 3, "role": "crypto" },
+            { "symbol": "XIU.TO", "weightPct": 16, "role": "canada_equity" },
+            { "symbol": "SPY", "weightPct": 12, "role": "us_equity" },
+            { "symbol": "GLD", "weightPct": 8, "role": "gold" }
+          ]
+        }
+      ]
+    },
+    "adjustments_order": ["crypto_high_only", "esg", "markets_canada", "avoid", "theme_ai", "theme_dividends"],
+    "adjustments": {
+      "crypto_high_only": {
+        "when": "the profile's risk is Low or Medium",
+        "then": "every crypto line is removed and its weight goes to the option's broad fund"
+      },
+      "esg": {
+        "when": "'ESG' is among the themes picked",
+        "replace": {
+          "SPY": { "to": "ESGV", "role": "esg_equity" },
+          "QQQ": { "to": "ESGV", "role": "esg_equity" }
+        },
+        "then": "each listed fund is replaced by its 'to' fund with the same weight (added to it when the option already holds it)"
+      },
+      "markets_canada": {
+        "when": "markets = Canada",
+        "replace": {
+          "SPY": { "to": "VFV.TO", "role": "us_equity" },
+          "QQQ": { "to": "VFV.TO", "role": "us_equity" },
+          "ESGV": { "to": "VFV.TO", "role": "us_equity" },
+          "AGG": { "to": "XBB.TO", "role": "bonds" },
+          "TLT": { "to": "XBB.TO", "role": "bonds" }
+        },
+        "broad_fund": "XIU.TO",
+        "us_stocks": "the option's broad fund becomes 'broad_fund' (added at 0 when missing); a U.S. stock is removed and its weight goes to it",
+        "kept": { "GLD": "no Canadian-listed gold fund in the app universe or the replay snapshot" },
+        "then": "each U.S. fund is replaced by a Canadian-listed one with the same weight"
+      },
+      "avoid": {
+        "when": "a line's symbol, or its stock's sector, is on the avoid list",
+        "then": "the line is removed and its weight goes to the option's broad fund",
+        "fallback": "when the avoided line is the broad fund itself, its weight goes to the largest line left"
+      },
+      "theme_ai": {
+        "when": "'AI' is among the themes picked",
+        "targets": ["QQQ", "NVDA", "MSFT", "GOOGL"],
+        "points": 6,
+        "then": "up to 'points' points move from the broad fund to the targets the option already holds, split evenly (the first ones in the option's order take any remainder); nothing moves when it holds none"
+      },
+      "theme_dividends": {
+        "when": "'dividends' is among the themes picked",
+        "targets": ["RY.TO", "FTS.TO", "TD.TO", "BNS.TO", "ENB.TO", "BCE.TO", "JNJ", "PG", "XEI.TO", "VYM"],
+        "points": 6,
+        "then": "same as theme_ai, toward the dividend names the option already holds"
+      }
+    }
   },
 
   "unspecified": [

@@ -1,6 +1,7 @@
 // Pure helpers of the Portfolio tab: number and time formats, the chart's period windows, the layout merge.
 
 import type { Sourced } from '@/lib/domain/types';
+import { sourceLabel } from '@/lib/source-label';
 import { formatDateTime, formatNumber, formatPercent } from '@/i18n/format';
 
 /** A next-intl translator, narrowed to what these helpers call. */
@@ -31,8 +32,8 @@ export const when = (iso: string, locale: string) => {
 /** "Finnhub, as of Nov 13, 4:00 p.m." The provider's own time when it gives one, otherwise when we fetched it. */
 export const sourceLine = (sourced: Pick<Sourced<unknown>, 'source' | 'asOf' | 'fetchedAt'>, locale: string, t: Translate) =>
     sourced.asOf
-        ? t('sourceLine.asOf', { source: sourced.source, when: when(sourced.asOf, locale) })
-        : t('sourceLine.fetched', { source: sourced.source, when: when(sourced.fetchedAt, locale) });
+        ? t('sourceLine.asOf', { source: sourceLabel(sourced.source, locale), when: when(sourced.asOf, locale) })
+        : t('sourceLine.fetched', { source: sourceLabel(sourced.source, locale), when: when(sourced.fetchedAt, locale) });
 
 // Words the app never shows, in English and French. A server message that carries one (a raw validation echo) is replaced.
 const NEVER_WORDS = [

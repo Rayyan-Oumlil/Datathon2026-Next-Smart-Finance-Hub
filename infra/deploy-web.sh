@@ -36,13 +36,13 @@ cat > "$TMP/task.json" <<JSON
       {"name": "VOICE_ENABLED", "value": "${VOICE_ENABLED}"},
       {"name": "AGENT_RUNTIME_ARN", "value": "${AGENT_RUNTIME_ARN:-}"},
       {"name": "STORE_BACKEND", "value": "dynamodb"},
-      {"name": "KEEP_ALIVE_TIMEOUT", "value": "310000"},
-      {"name": "DEMO_USER_ID", "value": "${DEMO_USER_ID:-demo-live-1}"}
+      {"name": "KEEP_ALIVE_TIMEOUT", "value": "310000"}
     ],
     "secrets": [
       {"name": "FINNHUB_API_KEY", "valueFrom": "${SECRET_ARN}:FINNHUB_API_KEY::"},
       {"name": "ADANOS_API_KEY", "valueFrom": "${SECRET_ARN}:ADANOS_API_KEY::"},
-      {"name": "INTERNAL_API_TOKEN", "valueFrom": "${SECRET_ARN}:INTERNAL_API_TOKEN::"}
+      {"name": "INTERNAL_API_TOKEN", "valueFrom": "${SECRET_ARN}:INTERNAL_API_TOKEN::"},
+      {"name": "SESSION_SECRET", "valueFrom": "${SECRET_ARN}:SESSION_SECRET::"}
     ],
     "logConfiguration": {"logDriver": "awslogs", "options": {"awslogs-group": "/ecs/datathon-web", "awslogs-region": "${REGION}", "awslogs-stream-prefix": "web"}}
   }]

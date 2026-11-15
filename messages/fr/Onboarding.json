@@ -1,5 +1,5 @@
 {
-  "title": "Configurer votre profil — AlphaForge",
+  "title": "Configurer votre profil — Next Smart Finance Hub",
   "simulationOnly": "Simulation seulement",
   "disclaimer": "Aucune transaction réelle n’est effectuée et rien ici ne constitue un conseil en placement. Vos réponses sont évaluées sur le serveur selon des règles versionnées, et les données saisies sont consignées.",
   "progress": "Progression",
@@ -167,7 +167,7 @@
     "levelKept": "Vous avez choisi {value} dans l’onglet Profil; ce choix est conservé.",
     "riskKept": "Vous avez choisi {value} dans l’onglet Profil; ce choix est conservé.",
     "editAnswers": "Modifier mes réponses",
-    "openDashboard": "Ouvrir mon tableau de bord"
+    "seeSuggested": "Voir des portefeuilles suggérés"
   },
   "describe": {
     "questions": {

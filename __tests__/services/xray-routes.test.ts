@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET as XRAY } from '@/app/api/portfolio/xray/route';
 import { POST as WHAT_IF } from '@/app/api/portfolio/xray/what-if/route';
 import { POST as TOOL } from '@/app/api/internal/tools/portfolio-xray/route';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
 import { simulateTrade } from '@/lib/services/portfolio';
 import { freshWorld, market, sourced } from './helpers';
 
@@ -26,7 +26,7 @@ const post = (body: unknown, headers: Record<string, string> = {}) =>
     WHAT_IF(new NextRequest('http://localhost/api/portfolio/xray/what-if', { method: 'POST', body: JSON.stringify(body), headers }));
 const tool = (body: unknown, token: string | null = TOKEN) =>
     TOOL(new NextRequest('http://localhost/api/internal/tools/portfolio-xray', {
-        method: 'POST', body: JSON.stringify({ userId: DEMO_USER.id, ...(body as object) }), headers: token === null ? {} : { 'x-internal-token': token },
+        method: 'POST', body: JSON.stringify({ userId: TEST_SCOPE.scopeId, ...(body as object) }), headers: token === null ? {} : { 'x-internal-token': token },
     }));
 
 beforeEach(async () => {

@@ -1,0 +1,92 @@
+{
+    "metaTitle": "Voyons ce que ça donnerait",
+    "kicker": "Étape 2 sur 4 · Portefeuilles suggérés",
+    "title": "Voyons ce que ça donnerait",
+    "intro": "Trois exemples de portefeuilles construits pour un profil de risque {risk, select, Low {Faible} Medium {Moyen} High {Élevé} other {{risk}}}, à partir d’une table de règles versionnée. Chaque ligne explique d’où vient son poids.",
+    "label": "Exemple pédagogique, pas un conseil",
+    "simulated": "Simulé",
+    "tableVersion": "Table de règles {version}",
+    "amount": {
+        "label": "Montant fictif",
+        "currency": "$ CA",
+        "help": "Entre {min} et {max}. Aucun argent réel n’est utilisé.",
+        "invalid": "Entrez un montant entre {min} et {max}."
+    },
+    "existing": {
+        "title": "Vous avez déjà un portefeuille simulé",
+        "body": "Il compte {count, plural, one {# position} other {# positions}}. Vous pouvez le garder et passer à la stratégie, ou le remplacer par l’un de ces exemples.",
+        "continue": "Continuer vers la stratégie"
+    },
+    "adjustedBy": "Ajusté selon votre profil :",
+    "notAdjusted": "Table de base, sans ajustement pour votre profil.",
+    "linesTitle": "Lignes",
+    "why": "Pourquoi ?",
+    "choose": "Choisir ce portefeuille",
+    "choosing": "Création en cours…",
+    "replace": "Remplacer par ce portefeuille",
+    "replaceConfirm": "Le portefeuille simulé actuel sera mis de côté (rien n’est effacé, il reste dans le journal). Confirmer ?",
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "skip": "Passer cette étape",
+    "skippedLines": "{count, plural, one {# ligne n’a pas pu être placée} other {# lignes n’ont pas pu être placées}} : {symbols}.",
+    "skippedContinue": "Continuer",
+    "error": {
+        "generic": "La création du portefeuille a échoué. Réessayez dans un instant.",
+        "exists": "Un portefeuille simulé existe déjà."
+    },
+    "figures": {
+        "title": "Risque sur l’instantané",
+        "volatility": "Volatilité annualisée",
+        "drawdown": "Pire repli",
+        "worstDay": "Pire journée",
+        "window": "Du {from} au {to} · instantané {snapshot}",
+        "note": "Les poids de l’exemple appliqués aux cours passés de l’instantané, sans dividendes. Ce n’est pas une prévision.",
+        "unavailable": "Chiffres de risque non disponibles pour cette option."
+    },
+    "variant": {
+        "defensive": "Défensif",
+        "core": "Central",
+        "growth": "Croissance"
+    },
+    "role": {
+        "bonds": "Obligations",
+        "short_bonds": "Obligations court terme",
+        "canada_equity": "Actions canadiennes (fonds)",
+        "us_equity": "Actions américaines (fonds)",
+        "tech_equity": "Technologie (fonds)",
+        "esg_equity": "Actions ESG (fonds)",
+        "stock": "Action",
+        "dividend_stock": "Action à dividendes",
+        "gold": "Or",
+        "crypto": "Cryptoactif"
+    },
+    "legend": {
+        "bonds": "Obligations",
+        "funds": "Fonds d’actions",
+        "stocks": "Actions",
+        "gold": "Or",
+        "crypto": "Cryptoactifs"
+    },
+    "rule": {
+        "base": "Table de base",
+        "crypto_high_only": "Crypto : profil Élevé seulement",
+        "esg": "Thème ESG",
+        "markets_canada": "Canada seulement",
+        "avoid": "Liste à éviter",
+        "theme_ai": "Thème IA",
+        "theme_dividends": "Thème dividendes"
+    },
+    "whyItem": {
+        "base": "Poids de départ de {weight} % dans la table {version} pour un profil de risque {risk, select, Low {Faible} Medium {Moyen} High {Élevé} other {{risk}}}.",
+        "crypto_removed": "Reçoit {points} points de {from} : la crypto est réservée au profil de risque Élevé.",
+        "esg_replaced": "Remplace {from} ({points} points) : vous avez choisi le thème ESG, alors {from} cède sa place à {to}.",
+        "canada_replaced": "Remplace {from} ({points} points) : marché Canada seulement, le fonds américain cède sa place à {to}, coté au Canada.",
+        "canada_stock_moved": "Reçoit {points} points de {from} : marché Canada seulement, l’action américaine est retirée.",
+        "canada_kept": "{symbol} est gardé : aucun fonds d’or coté au Canada dans l’univers de l’application.",
+        "avoid_moved": "Reçoit {points} points de {from}, retiré parce que « {item} » est sur votre liste à éviter.",
+        "ai_in": "+{points} points pris sur {from} : vous avez choisi le thème IA.",
+        "ai_out": "−{points} points vers {to} : vous avez choisi le thème IA.",
+        "dividends_in": "+{points} points pris sur {from} : vous avez choisi le thème dividendes.",
+        "dividends_out": "−{points} points vers {to} : vous avez choisi le thème dividendes."
+    }
+}

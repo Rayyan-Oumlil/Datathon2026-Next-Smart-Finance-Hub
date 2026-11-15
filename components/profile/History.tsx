@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import type { DecisionLogEntry, FilterCheck, Sourced } from '@/lib/domain/types';
 import Panel from '@/components/Panel';
 import { formatDateTime, formatMoney, formatNumber } from '@/i18n/format';
+import { sourceLabel } from '@/lib/source-label';
 import { cn } from '@/lib/utils';
 
 const KINDS = [{ kind: 'pick' }, { kind: 'simulated_trade' }, { kind: 'profile_conflict' }] as const;
@@ -74,12 +75,12 @@ function describe(entry: DecisionLogEntry, t: Translator, locale: string): { tag
                 : `${h('trade.asked', { origin })}${failed.length ? ` ${h('trade.acknowledged')}` : ''}`,
             facts: [
                 price
-                    ? `${h('trade.filled', { price: num(price.value), currency: price.currency ?? '', source: price.source, fetched: when(price.fetchedAt) })}${price.asOf ? h('trade.asOfSuffix', { asOf: when(price.asOf) }) : ''}`
+                    ? `${h('trade.filled', { price: num(price.value), currency: price.currency ?? '', source: price.source ? sourceLabel(price.source, locale) : NA, fetched: when(price.fetchedAt) })}${price.asOf ? h('trade.asOfSuffix', { asOf: when(price.asOf) }) : ''}`
                     : h('trade.noPrice'),
                 // The CAD value of a USD fill depends on the day's rate, so the rate is shown with its source
                 ...(price?.currency === 'USD'
                     ? [fx
-                        ? `${h('trade.converted', { rate: num(fx.value, 4), source: fx.source, fetched: when(fx.fetchedAt) })}${fx.asOf ? h('trade.asOfSuffix', { asOf: fx.asOf }) : ''}`
+                        ? `${h('trade.converted', { rate: num(fx.value, 4), source: fx.source ? sourceLabel(fx.source, locale) : NA, fetched: when(fx.fetchedAt) })}${fx.asOf ? h('trade.asOfSuffix', { asOf: fx.asOf }) : ''}`
                         : h('trade.noRate')]
                     : []),
                 ...(tr.reason ? [h('trade.reason', { reason: tr.reason })] : []),

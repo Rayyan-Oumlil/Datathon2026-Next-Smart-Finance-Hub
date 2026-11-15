@@ -154,7 +154,7 @@ export default function Holdings({ positions, totalCad, level, onChanged }: Prop
                                     {detail && <td className={`is-num ${cell}`}>{fmt.units(position.quantity)}</td>}
                                     {detail && <td className={`is-num ${cell}`}>{position.price ? `${fmt.money(position.price.value)} ${position.price.currency ?? ''}` : na}</td>}
                                     {dense && <td className={`is-num ${cell}`}>{fmt.money(position.avgCostCad)}</td>}
-                                    {dense && <td className={`is-num ${cell}`}>{position.changePercent ? <ChangePill value={position.changePercent.value} /> : na}</td>}
+                                    {dense && <td className={`is-num ${cell}`}>{position.dayChangePct !== null ? <ChangePill value={position.dayChangePct} /> : na}</td>}
                                     <td className={`is-num font-semibold text-foreground ${cell}`}>{position.valueCad !== null ? fmt.money(position.valueCad) : na}</td>
                                     {dense && <td className={`is-num ${cell}`}>{position.valueCad !== null && totalCad > 0 ? fmt.share((position.valueCad / totalCad) * 100) : na}</td>}
                                     <td className={`is-num ${cell}`}>{position.returnPct !== null ? <ChangePill value={position.returnPct} /> : na}</td>

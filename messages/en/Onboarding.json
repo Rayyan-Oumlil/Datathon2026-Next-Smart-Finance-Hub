@@ -1,5 +1,5 @@
 {
-  "title": "Set up your profile — AlphaForge",
+  "title": "Set up your profile — Next Smart Finance Hub",
   "simulationOnly": "Simulation only",
   "disclaimer": "No real trades are placed and nothing here is investment advice. Your answers are scored on the server by versioned rules, and the inputs are logged.",
   "progress": "Progress",
@@ -167,7 +167,7 @@
     "levelKept": "You chose {value} on the Profile tab; that choice is kept.",
     "riskKept": "You chose {value} on the Profile tab; that choice is kept.",
     "editAnswers": "Edit my answers",
-    "openDashboard": "Open my dashboard"
+    "seeSuggested": "See suggested portfolios"
   },
   "describe": {
     "questions": {

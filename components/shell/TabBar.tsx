@@ -4,30 +4,22 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { LayoutDashboard, Menu, Plus, X } from "lucide-react";
+import { Menu, Plus, X } from "lucide-react";
 import { openSearch } from "@/components/SearchCommand";
 import { cn } from "@/lib/utils";
 
-const PINNED = ['/portfolio', '/overview', '/profile'];
+const PINNED: string[] = [];
 const STORAGE_KEY = 'openstock-tabs';
 const MAX_TABS = 12;
 
-// Message keys of the Shell namespace (nav.*)
-const PAGE_LABELS: Record<string, 'portfolio' | 'overview' | 'profile' | 'xray'> = {
-    '/portfolio': 'portfolio',
-    '/portfolio/xray': 'xray',
-    '/overview': 'overview',
-    '/profile': 'profile',
-};
-
-// Pages become browser-style tabs; stock pages are labelled by their symbol.
+// Tabs are only for opened stocks, labelled by their symbol.
 const stockSymbol = (path: string) => {
     const stock = path.match(/^\/stocks\/([^/]+)$/);
     return stock ? decodeURIComponent(stock[1]).toUpperCase() : null;
 };
 
 const withTab = (tabs: string[], path: string) => {
-    if (!(stockSymbol(path) || PAGE_LABELS[path]) || tabs.includes(path)) return tabs;
+    if (!stockSymbol(path) || tabs.includes(path)) return tabs;
     const next = [...tabs, path];
     const extra = next.length - MAX_TABS;
     return extra > 0 ? next.filter((t, i) => PINNED.includes(t) || i >= extra + PINNED.length) : next;
@@ -35,8 +27,7 @@ const withTab = (tabs: string[], path: string) => {
 
 const TabBar = ({ onMenu }: { onMenu: () => void }) => {
     const t = useTranslations('TabBar');
-    const tn = useTranslations('Shell.nav');
-    const pathname = usePathname();
+        const pathname = usePathname();
     const router = useRouter();
     const [tabs, setTabs] = useState(() => withTab(PINNED, pathname));
     const tabRefs = useRef(new Map<string, HTMLDivElement>());
@@ -65,13 +56,13 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
         el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }, [pathname, tabs]);
 
-    const tabLabel = (path: string) => stockSymbol(path) ?? (PAGE_LABELS[path] ? tn(PAGE_LABELS[path]) : null);
+    const tabLabel = (path: string) => stockSymbol(path);
 
     const closeTab = (path: string) => {
         const index = tabs.indexOf(path);
         const next = tabs.filter((t) => t !== path);
         setTabs(next);
-        if (path === pathname) router.push(next[Math.max(0, index - 1)] ?? '/portfolio');
+        if (path === pathname) router.push(next.length ? next[Math.max(0, index - 1)] : '/portfolio');
     };
 
     return (
@@ -91,6 +82,8 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                     <svg className="tab-glider-curve is-right" viewBox="0 0 12 12"><path d="M12 0v12H0c6.627 0 12-5.373 12-12z" /></svg>
                 </div>
 
+                {tabs.length === 0 && <span className="px-2 text-[13px] text-faint">{t('emptyHint')}</span>}
+
                 {tabs.map((path) => {
                     const pinned = PINNED.includes(path);
                     const isStock = path.startsWith('/stocks/');
@@ -103,7 +96,6 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                         >
                             {/* Stretched link: the whole tab navigates, while the close button stays a real, focusable button */}
                             <Link href={path} aria-current={active ? 'page' : undefined} className="flex min-w-0 flex-1 items-center gap-2 before:absolute before:inset-0 before:content-['']">
-                                {path === '/overview' && <LayoutDashboard />}
                                 <span className={cn('tab-label', isStock && 'mono text-[13px]')}>{tabLabel(path)}</span>
                             </Link>
                             {!pinned && (

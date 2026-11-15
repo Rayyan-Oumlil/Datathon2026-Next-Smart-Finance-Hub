@@ -27,8 +27,8 @@ const forAgent = (view: XrayView, only: WindowId) => ({
 });
 
 // The portfolio X-ray, or the X-ray before and after a hypothetical change. Read-only: nothing is traded or stored.
-export const POST = internalTool(schema, async ({ change, locale, window }) => {
-    if (!change) return forAgent(await getPortfolioXray(locale ?? 'en'), window);
-    const result = await getXrayWhatIf(change, locale ?? 'en');
+export const POST = internalTool(schema, async ({ change, locale, window }, _actionId, scope) => {
+    if (!change) return forAgent(await getPortfolioXray(locale ?? 'en', scope), window);
+    const result = await getXrayWhatIf(change, locale ?? 'en', scope);
     return { ...result, before: forAgent(result.before, window), after: forAgent(result.after, window) };
 });

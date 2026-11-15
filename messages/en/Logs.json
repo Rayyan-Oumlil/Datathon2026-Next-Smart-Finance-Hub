@@ -1,0 +1,58 @@
+{
+  "metaTitle": "Logs",
+  "title": "Logs",
+  "subtitle": "These rows are only ever appended, never changed or erased, and they are written by plain code, not by a language model.",
+  "tabs": {
+    "label": "Log shown",
+    "agent": "Agent log",
+    "decisions": "Decision log"
+  },
+  "generation": {
+    "label": "Earlier sessions",
+    "current": "Current session (profile {profile}, portfolio {portfolio})",
+    "earlier": "Profile {profile}, portfolio {portfolio} · until {until}",
+    "earlierOpen": "Profile {profile}, portfolio {portfolio}",
+    "note": "A reset opens a new generation; the rows of earlier generations stay readable here."
+  },
+  "filter": {
+    "actionId": "Action id",
+    "actionIdPlaceholder": "e.g. act_…",
+    "apply": "Filter",
+    "clear": "Show all",
+    "kind": "Decision type",
+    "allKinds": "All types",
+    "kinds": {
+      "watchlist_run": "Watchlist run",
+      "pick": "Watchlist pick",
+      "user_action": "User action",
+      "simulated_trade": "Simulated trade",
+      "profile_conflict": "Profile conflict",
+      "profile_change": "Profile change",
+      "session_reset": "Reset"
+    }
+  },
+  "export": "Export JSON",
+  "reload": "Reload",
+  "loading": "Loading the rows…",
+  "empty": "No row matches this filter.",
+  "error": "The rows cannot be read right now.",
+  "count": "{count, plural, =0 {no row} one {# row} other {# rows}}",
+  "columns": {
+    "time": "Time",
+    "actionId": "Action id",
+    "step": "Step",
+    "actor": "Actor",
+    "model": "Model",
+    "awsRequestId": "AWS request id",
+    "tokens": "Tokens (input / output)",
+    "kind": "Decision type",
+    "symbol": "Symbol",
+    "details": "Content"
+  },
+  "cloudTrail": "Look up in CloudTrail",
+  "copy": "Copy the command",
+  "copied": "Copied",
+  "showRow": "Full row",
+  "filterThis": "Filter on this action",
+  "none": "–"
+}

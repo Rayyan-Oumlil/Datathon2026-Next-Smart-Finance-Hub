@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { agentText } from '@/lib/agent/text';
-import { DEMO_USER } from '@/lib/demo-user';
 import { clientIp, isRateLimited } from '@/lib/rate-limit';
 import { ServiceError } from '@/lib/services/errors';
 import { requestLocale, respond } from '@/lib/services/http';
 import { AWS_REGION, signingCredentials } from '@/lib/voice/credentials';
 import { assertSameOrigin, assertVoiceEnabled, takeDailyUrl, voiceEnabled, voiceText } from '@/lib/voice/guard';
 import { presignTranscribeUrl } from '@/lib/voice/presign';
+import { getSession } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +35,7 @@ export const POST = (req: NextRequest) => respond(async () => {
     const limits: Array<[string, number, number]> = [
         [`voice:ip:${ip}:minute`, MAX_PER_MINUTE_PER_IP, 60],
         [`voice:ip:${ip}:hour`, MAX_PER_HOUR_PER_IP, 3600],
-        [`voice:user:${DEMO_USER.id}`, MAX_PER_MINUTE, 60],
+        [`voice:session:${(await getSession(req)).sessionId}`, MAX_PER_MINUTE, 60],
     ];
     for (const [key, max, window] of limits) {
         if (await isRateLimited(key, max, window)) throw new ServiceError(429, agentText(locale).tooMany);

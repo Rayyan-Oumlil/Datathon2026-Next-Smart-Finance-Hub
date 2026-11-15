@@ -5,7 +5,8 @@ import { POST as LAYOUT } from '@/app/api/internal/tools/layout/route';
 import { POST as CONFLICT } from '@/app/api/internal/tools/conflict-check/route';
 import { POST as PROFILE_PREVIEW } from '@/app/api/internal/tools/profile-preview/route';
 import { POST as VALIDATE } from '@/app/api/internal/tools/validate-rule/route';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
+import { listScopeDecisions } from '@/lib/session';
 import { listDecisions } from '@/lib/store';
 import { freshWorld, market, sourced } from '../services/helpers';
 
@@ -25,7 +26,7 @@ beforeEach(async () => {
 describe('internal token', () => {
     it('refuses a missing, wrong or prefix token with 401', async () => {
         for (const token of [undefined, '', 'wrong', TOKEN.slice(0, -1), `${TOKEN}x`]) {
-            const response = await call(LAYOUT, { userId: DEMO_USER.id }, token);
+            const response = await call(LAYOUT, { userId: TEST_SCOPE.scopeId }, token);
             expect(response.status, String(token)).toBe(401);
             expect(await response.json()).toEqual({ error: 'unauthorized' });
         }
@@ -38,7 +39,7 @@ describe('internal token', () => {
     });
 
     it('accepts the right token and takes the user from the body', async () => {
-        const ok = await call(LAYOUT, { userId: DEMO_USER.id }, TOKEN);
+        const ok = await call(LAYOUT, { userId: TEST_SCOPE.scopeId }, TOKEN);
         expect(ok.status).toBe(200);
         expect(await ok.json()).toMatchObject({ current: expect.arrayContaining(['total_value']), library: expect.any(Array) });
         expect((await call(LAYOUT, { userId: 'someone-else' }, TOKEN)).status).toBe(404);
@@ -50,30 +51,30 @@ describe('internal token', () => {
 describe('tools', () => {
     it('conflict-check names the failed filter with its values and logs it', async () => {
         market.signals.AAPL = { volatility1y: sourced(0.6, { source: 'derived' }) };
-        const body = await (await call(CONFLICT, { userId: DEMO_USER.id, symbol: 'aapl' }, TOKEN)).json();
+        const body = await (await call(CONFLICT, { userId: TEST_SCOPE.scopeId, symbol: 'aapl' }, TOKEN)).json();
         expect(body).toMatchObject({ symbol: 'AAPL', level: 'Intermediate', risk: 'Medium', conflicts: [{ filter: 'volatility', pass: false }] });
         // Only the value behind the conflict comes back, with its source; the full signal set does not
         expect(body).not.toHaveProperty('signals');
         expect(body.sources).toEqual({ volatility1y: expect.objectContaining({ value: 0.6, source: 'derived' }) });
-        const [row] = await listDecisions(DEMO_USER.id, { kind: 'profile_conflict' });
+        const [row] = await listScopeDecisions(TEST_SCOPE, { kind: 'profile_conflict' });
         expect(row).toMatchObject({ symbol: 'AAPL', payload: { origin: 'agent', actionId: 'act_test', proceeded: false } });
-        expect(await (await call(CONFLICT, { userId: DEMO_USER.id, symbol: 'NOPE' }, TOKEN)).json()).toEqual({ error: expect.stringContaining('not in the app') });
+        expect(await (await call(CONFLICT, { userId: TEST_SCOPE.scopeId, symbol: 'NOPE' }, TOKEN)).json()).toEqual({ error: expect.stringContaining('not in the app') });
     });
 
     it('conflict-check writes each detail in the locale the agent passes, English when none is given', async () => {
         market.signals.AAPL = { volatility1y: sourced(0.387, { source: 'derived' }) };
-        const fr = await (await call(CONFLICT, { userId: DEMO_USER.id, symbol: 'AAPL', locale: 'fr' }, TOKEN)).json();
+        const fr = await (await call(CONFLICT, { userId: TEST_SCOPE.scopeId, symbol: 'AAPL', locale: 'fr' }, TOKEN)).json();
         expect(fr.conflicts[0]).toMatchObject({ filter: 'volatility', detail: 'volatilité de 38,7\u00a0%, au-dessus du plafond de 35,0\u00a0% pour un profil de risque Moyen', textRef: { key: 'filter.volatility' } });
-        const en = await (await call(CONFLICT, { userId: DEMO_USER.id, symbol: 'AAPL' }, TOKEN)).json();
+        const en = await (await call(CONFLICT, { userId: TEST_SCOPE.scopeId, symbol: 'AAPL' }, TOKEN)).json();
         expect(en.conflicts[0].detail).toBe('volatility 38.7% is above the 35.0% cap for Medium risk');
-        expect(await (await call(CONFLICT, { userId: DEMO_USER.id, symbol: 'AAPL', locale: 'de' }, TOKEN)).json()).toHaveProperty('error');
+        expect(await (await call(CONFLICT, { userId: TEST_SCOPE.scopeId, symbol: 'AAPL', locale: 'de' }, TOKEN)).json()).toHaveProperty('error');
     });
 
     it('validate-rule and profile-preview save nothing', async () => {
         const rule = { text: 'x', symbol: 'AAPL', trigger: { type: 'price_below', value: 90 }, action: { side: 'buy', amountCad: 200 }, once: true };
-        expect(await (await call(VALIDATE, { userId: DEMO_USER.id, rule }, TOKEN)).json()).toMatchObject({ ok: true, rule: { symbol: 'AAPL' }, currentPrice: { value: 100 } });
-        const preview = await (await call(PROFILE_PREVIEW, { userId: DEMO_USER.id, changes: { drop20: 'buy_more', echeance: '5+ yrs' } }, TOKEN)).json();
+        expect(await (await call(VALIDATE, { userId: TEST_SCOPE.scopeId, rule }, TOKEN)).json()).toMatchObject({ ok: true, rule: { symbol: 'AAPL' }, currentPrice: { value: 100 } });
+        const preview = await (await call(PROFILE_PREVIEW, { userId: TEST_SCOPE.scopeId, changes: { drop20: 'buy_more', echeance: '5+ yrs' } }, TOKEN)).json();
         expect(preview).toMatchObject({ before: { risk: 'Medium' }, after: { risk: 'High' }, riskResult: { ruleVersion: 'risk-v1' } });
-        expect(await listDecisions(DEMO_USER.id, { kind: 'profile_change' })).toEqual([]);
+        expect(await listScopeDecisions(TEST_SCOPE, { kind: 'profile_change' })).toEqual([]);
     });
 });

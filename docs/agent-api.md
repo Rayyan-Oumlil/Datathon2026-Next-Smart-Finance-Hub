@@ -13,7 +13,7 @@ Request:
 ```json
 {
   "actionId": "act_…",            // created by the web app, one per user request
-  "userId": "demo-user",
+  "userId": "3f0c…-uuid:p0:f0",
   "message": "why is ENB on my list?",
   "history": [{ "role": "user" | "assistant", "text": "…" }],   // last turns, at most 10
   "context": {
@@ -58,7 +58,7 @@ Response (`AgentReply` plus a trace):
 
 `logComplete` is `false` when a row of this request could not be written to the agent action log, even after one retry. The reply is still returned (the demo stays available) and the later rows are still tried; the errors are in `trace.logErrors`. The web app passes `logComplete` on in its `/api/agent` response and records it as `agentLogComplete` in its own `result` row.
 
-`/api/agent` (the web app's own route) accepts 10 requests a minute for the demo user, since each one costs several model calls. Over the limit it answers `429` with `{ "error": "Too many requests. Wait a minute and try again." }` (in French: `"Trop de demandes. Attendez une minute, puis réessayez."`).
+`/api/agent` (the web app's own route) accepts 10 requests a minute per visitor session (and 30 per address), since each one costs several model calls. Over the limit it answers `429` with `{ "error": "Too many requests. Wait a minute and try again." }` (in French: `"Trop de demandes. Attendez une minute, puis réessayez."`).
 
 The agent service never applies anything. `proposed` is a request; the web app's action router checks it against the whitelist, shows a before/after preview, and applies it only after the user confirms.
 
@@ -74,6 +74,13 @@ Proposed action types and their `params`:
 | `rule_pause` | `{ ruleId, status: "paused" | "active" }` | yes |
 | `profile_change` | `{ changes: { level?, risk?, sectors?, … } }` | yes |
 | `simulated_trade` | `{ symbol, side, amountCad? , quantity? }` | yes |
+| `strategy_propose` | `{ strategy: StrategyInput ({ name, rules }), replaceId? }` | yes |
+
+`strategy_propose` (lib/agent/strategy-propose.ts). The strategy is checked by the strict schema of `lib/strategy` (`parseStrategy`): an unknown field or a value out of its range is refused; the refusal is shown in the reply's language (the issues' own sentences) and the action log keeps the issue codes (`code@path`). The agent service checks the same schema first through `/api/internal/tools/strategies` (`validate`), so a refused strategy comes back to the model with its codes and is corrected once (a second refusal is final). The preview (`preview.strategy`) holds the rules as sentences (lib/agent/strategy-words.ts, in the request's language), a 5-year history preview computed by `runReplay` on the visitor's current simulated portfolio from 2021-01-04 (final value, total return, largest fall and volatility, without rules and with the strategy; how many times each rule fired; replay id and snapshot id), the profile conflicts with their actual values (lib/agent/strategy-conflict.ts, below) and the label « Rejeu illustratif sur données historiques. Ce n'est pas une prédiction. ». Apply = `saveStrategy` (`replaceId` updates the stored strategy, its version goes up); the result carries `strategy` and `timeMachine: /time-machine?strategy=<id>`. Undo restores the replaced version, or moves a new strategy from `strategies` to `strategiesRemoved` in the visitor's app-state document; no log row is deleted (`user_action` rows `strategy_remove` / `strategy_restore`). The single `rule_create` action is unchanged.
+
+Profile conflicts of a strategy (lib/agent/strategy-conflict.ts, deterministic): every symbol a rule could acquire (allocation targets new to the portfolio or above their current weight by more than 0.5 point, the drawdown guard's defensive symbol, the weight cap's proceeds symbol, a price threshold that adds) goes through the per-asset profile-conflict check (lib/watchlist/conflict.ts). Two strategy-level notes: more than 10 % of an allocation target's weights in assets whose 1-year volatility is above the profile's volatility cap (this app's threshold, `HIGH_VOL_SHARE_MAX_PCT`), and crypto in a profile other than High. Conflicts never block: the user may confirm in simulation. A preview with conflicts logs a `profile_conflict` decision (`proceeded: false`, `context: "strategy_propose"`), and a confirmation logs another (`proceeded: true`).
+
+`context.strategies` (left out when there is none): the visitor's stored strategies as `{ id, name, version, rules, kinds: { <rule kind>: count } }`. `context.page.name` may also be `strategy` (`/strategy`) or `time_machine` (`/time-machine`).
 
 ### Streaming
 
@@ -90,7 +97,7 @@ The web app's `POST /api/agent/stream` takes the same body as `/api/agent`, runs
 
 ## 2. Agent service → web app (tools)
 
-Base URL `WEB_INTERNAL_URL` (default `http://localhost:3000`). Every call sends `x-internal-token: $INTERNAL_API_TOKEN` and `x-action-id`. All are `POST` with a JSON body containing `userId`. Every number in a response is a `Sourced` object.
+Base URL `WEB_INTERNAL_URL` (default `http://localhost:3000`). Every call sends `x-internal-token: $INTERNAL_API_TOKEN` and `x-action-id`. All are `POST` with a JSON body containing `userId`: the scope id `<sessionId>:p<n>:f<m>` the agent received (lib/session/scope.ts). Only the current generation of an existing session is accepted; an old one is refused. Every number in a response is a `Sourced` object.
 
 | Endpoint | Body | Returns | Used by subagent |
 |---|---|---|---|
@@ -102,8 +109,12 @@ Base URL `WEB_INTERNAL_URL` (default `http://localhost:3000`). Every call sends 
 | `/api/internal/tools/conflict-check` | `{ symbol, locale?: "en" \| "fr" }` | `{ symbol, conflicts: FilterCheck[] (each `detail` in the given language, English when left out; `textRef` renders it in either), sources: { volatility1y?, marketCapUsd?, avgDailyTradedValueUsd?, fxUsdCad?: Sourced }, level, risk }` (only the values behind the conflicts; the full signal set stays in the decision log) | orchestrator |
 | `/api/internal/tools/validate-rule` | `{ rule: { text, symbol, trigger, action, once } }` | `{ ok: boolean, rule?: InvestmentRule, errors?: string[], currentPrice?: Sourced }` | Rules |
 | `/api/internal/tools/rules` | `{}` | `{ rules: InvestmentRule[] }` | Rules |
+| `/api/internal/tools/strategies` | `{ locale?, makeRoomFor?: { symbol, weightPct }, validate?: StrategyInput }` | `{ strategies: [{ id, name, version, updatedAt, rules, sentences }], currentWeights: [{ symbol, weightPct }], portfolioValueCad, targetsWithRoom? (current weights scaled down by the app so `symbol` takes `weightPct`), validation? ({ ok: true, strategy, sentences } or { ok: false, errors, issues: [{ code, path, values }] }) }`. Read-only | Strategy |
+| `/api/internal/tools/replay` | `{ portfolio?: "current" \| [{ symbol, weightPct }] \| "amira" \| "mateo" \| "robert", strategy?: StrategyInput \| strategyId \| null, startDate? (default 2021-01-04), feePerOrderCad? (default 0), locale? }` | `replayDigest(result, locale)` (lib/services/replay.ts) plus `replayId`, `portfolio`, `capitalCad` and a `note`; `worstFall*` fields are renamed `largestFall*` and `worstDay` `largestDailyFall` so the reply never echoes a judgement word; `summary.endedHigher` is left out (no winner). A refused strategy is `200 { error, issues }`. The run is logged (`replay_run`) | Strategy |
 | `/api/internal/tools/layout` | `{ locale?: "en" \| "fr" }` | `{ current: string[], library: [{ id, title, fixed: boolean, minLevel? }] }`, titles in the given language as the Portfolio tab shows them | Layout |
 | `/api/internal/tools/profile-preview` | `{ changes }` | `{ before: { level, risk }, after: { level, risk }, levelResult, riskResult }` | Profile |
+
+The strategy subagent (Haiku, `agent/app/prompts/strategy.md`) owns `list_strategies`, `validate_strategy`, `run_replay`, `validate_rule` and `list_rules`. The replay informs, it never recommends: the prompts say the agent explains only from the digest's figures, states both series even when the strategy ended lower, names no winner, and labels it an illustrative replay on historical data, not a prediction. The digest's figures are tool results, so the numbers check counts them as grounded. When a user adds a hyped, volatile stock (TSLA, NVDA...), the reply speaks in risk figures (volatility against the cap from the conflict check, largest fall without and with from the digest), never in past return without the survivorship-bias label.
 
 The orchestrator holds no data tools. Its `check_profile_conflict` tool calls `conflict-check` and gives the model only `{ symbol, conflicts, level, risk }`; each conflict keeps its `detail` text, `value` and `limit`. The tool sends the request's `context.locale` as `locale`, so the details the model reads and the reply's `conflict.checks[].detail` are in the reply's language. The full response, `sources` included, is kept in plain code so the reply's `sources` list still cites the source and time of each conflict's value.
 

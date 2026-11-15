@@ -74,6 +74,10 @@ export const SERVICE_TEXT = defineCatalog({
         en: () => 'Too many requests',
         fr: () => 'Trop de requêtes',
     },
+    'svc.http.reset_refused': {
+        en: () => 'Only the visitor can reset the session, from the app.',
+        fr: () => 'Seul le visiteur peut réinitialiser la session, depuis l’application.',
+    },
     'svc.http.give_symbol': {
         en: () => 'Give a symbol.',
         fr: () => 'Indiquez un symbole.',

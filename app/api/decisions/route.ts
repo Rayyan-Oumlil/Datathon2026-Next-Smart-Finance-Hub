@@ -1,13 +1,12 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { DEMO_USER } from '@/lib/demo-user';
 import { requestLocale, respond } from '@/lib/services/http';
 import { renderDecision } from '@/lib/services/decision-text';
-import { listDecisions } from '@/lib/store';
+import { listScopeDecisions, requestScope } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
-const KINDS = ['watchlist_run', 'pick', 'user_action', 'simulated_trade', 'profile_conflict', 'profile_change'] as const;
+const KINDS = ['watchlist_run', 'pick', 'user_action', 'simulated_trade', 'profile_conflict', 'profile_change', 'session_reset'] as const;
 const schema = z.object({
     kind: z.enum(KINDS).optional(),
     symbol: z.string().trim().min(1).max(20).optional(),
@@ -20,10 +19,12 @@ const BULKY = ['snapshot', 'candidates', 'signals'];
 
 // The sentences of each row (filter checks, factor details, reasons, trade reasons) are shown in the request's
 // language, re-rendered from the values logged beside them; the stored rows themselves are never changed.
+// Only the visitor's current generation is listed (lib/session listScopeDecisions); earlier generations stay logged.
 export const GET = (req: NextRequest) => respond(async () => {
     const { kind, symbol, limit, full } = schema.parse(Object.fromEntries(req.nextUrl.searchParams));
     const locale = await requestLocale(req);
-    const decisions = (await listDecisions(DEMO_USER.id, { kind, symbol: symbol?.toUpperCase(), limit, newestFirst: true })).map((row) => renderDecision(row, locale));
+    const scope = await requestScope(req);
+    const decisions = (await listScopeDecisions(scope, { kind, symbol: symbol?.toUpperCase(), limit, newestFirst: true })).map((row) => renderDecision(row, locale));
     if (full === '1') return { decisions };
     return {
         decisions: decisions.map((decision) => {

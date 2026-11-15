@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
+import { listScopeDecisions } from '@/lib/session';
 import type { UniverseEntry } from '@/lib/domain/types';
 import { RULE_VERSIONS } from '@/lib/rules';
 import { getProfile, listDecisions, readState, updateState } from '@/lib/store';
@@ -22,7 +23,7 @@ beforeEach(async () => {
     vi.mocked(loadDailySignals).mockClear();
 });
 
-const runs = () => listDecisions(DEMO_USER.id, { kind: 'watchlist_run' });
+const runs = () => listScopeDecisions(TEST_SCOPE, { kind: 'watchlist_run' });
 const built = async () => {
     await buildStatus().promise;
     return getWatchlist();
@@ -72,14 +73,14 @@ describe('watchlist service', () => {
         expect(payload.result.picks).toHaveLength(9);
         expect(payload.candidates.filter((candidate) => ['IVV', 'SPY', 'VOO', 'VTI', 'VCN.TO', 'VFV.TO', 'XIC.TO', 'XIU.TO'].includes(candidate.symbol))).toHaveLength(8);    // every blue-chip ETF, both markets
 
-        const picks = await listDecisions(DEMO_USER.id, { kind: 'pick', snapshotId: run.snapshotId });
+        const picks = await listScopeDecisions(TEST_SCOPE, { kind: 'pick', snapshotId: run.snapshotId });
         expect(picks.map((pick) => pick.symbol)).toEqual(view.result!.picks.map((pick) => pick.symbol));
         const aapl = picks.find((pick) => pick.symbol === 'AAPL')!.payload as { reason: { templateId: string; text: string; sources: string[] }; sources: Array<{ signal: string; source: string; fetchedAt: string }> };
         expect(aapl.reason.text).toBeTruthy();
         expect(aapl.reason.sources.length).toBeGreaterThan(0);
         expect(aapl.sources).toEqual(expect.arrayContaining([expect.objectContaining({ signal: 'volatility1y', source: 'derived', fetchedAt: expect.any(String) })]));
 
-        const state = await readState();
+        const state = await readState(TEST_SCOPE);
         expect(state.watchlist.previousPicks).toEqual(view.result!.picks.map((pick) => pick.symbol));
         expect(Object.keys(state.watchlist.listedSince).sort()).toEqual([...state.watchlist.previousPicks].sort());
     });
@@ -108,10 +109,10 @@ describe('watchlist service', () => {
     });
 
     it('refresh does nothing when today\'s run for the current profile exists, and builds after a profile change', async () => {
-        const first = await refreshWatchlist();
+        const first = await refreshWatchlist('en');
         expect(first).toEqual({ started: true });
         await buildStatus().promise;
-        const again = await refreshWatchlist();
+        const again = await refreshWatchlist('en');
         expect(again.started).toBe(false);
         expect(again).toMatchObject({ reasonCode: 'already_current' });
         expect(again.started === false && again.reason).toContain('once a day');
@@ -125,7 +126,7 @@ describe('watchlist service', () => {
     });
 
     it('refresh rebuilds the same day after a simulated trade changes the holdings', async () => {
-        await refreshWatchlist();
+        await refreshWatchlist('en');
         await buildStatus().promise;
         expect(await refreshWatchlist()).toMatchObject({ started: false, reasonCode: 'already_current' });
 
@@ -137,7 +138,7 @@ describe('watchlist service', () => {
     });
 
     it('refresh answers a reason code while a build is running', async () => {
-        await refreshWatchlist();
+        await refreshWatchlist('en');
         const during = await refreshWatchlist('fr');
         expect(during).toMatchObject({ started: false, reasonCode: 'building', reason: 'Un calcul est déjà en cours.' });
         await buildStatus().promise;
@@ -200,7 +201,7 @@ describe('watchlist service', () => {
         expect((await userAction(top, 'add')).state.dismissed).toEqual([]);
         expect((await userAction(second, 'unpin')).state.pinned).toEqual([]);
         await expect(userAction('NOPE', 'pin')).rejects.toMatchObject({ status: 404 });
-        const actions = await listDecisions(DEMO_USER.id, { kind: 'user_action' });
+        const actions = await listScopeDecisions(TEST_SCOPE, { kind: 'user_action' });
         expect(actions.map((entry) => [entry.symbol, (entry.payload as { action: string }).action])).toEqual([[top, 'dismiss'], [second, 'pin'], [top, 'add'], [second, 'unpin']]);
         expect(actions[0].snapshotId).toBe(view.result!.snapshotId);
     });
@@ -211,13 +212,13 @@ describe('watchlist service', () => {
         for (const symbol of ['COP', 'XOM', 'IVV', 'VCN.TO', 'VTI', 'XIC.TO', 'XIU.TO', 'SPY', 'VOO', 'VFV.TO']) market.signals[symbol] = { volatility1y: sourced(0.15, { source: 'derived' }) };
         await getWatchlist();
         const medium = await built();
-        const mediumHash = profileHash((await getProfile(DEMO_USER.id))!);
+        const mediumHash = profileHash((await getProfile(TEST_SCOPE.profileUserId))!);
         await editProfile({ risk: 'Low' });
         await getWatchlist();
         const low = await built();
-        const lowHash = profileHash((await getProfile(DEMO_USER.id))!);
+        const lowHash = profileHash((await getProfile(TEST_SCOPE.profileUserId))!);
         expect(symbols(low)).not.toEqual(symbols(medium));
-        expect((await readState()).watchlist).toMatchObject({ previousPicks: symbols(low), stateProfileHash: lowHash });
+        expect((await readState(TEST_SCOPE)).watchlist).toMatchObject({ previousPicks: symbols(low), stateProfileHash: lowHash });
 
         await editProfile({ risk: 'Medium' });
         await getWatchlist();
@@ -231,13 +232,13 @@ describe('watchlist service', () => {
         expect(logged[1].incumbentsReset).toEqual({ reason: 'profile_changed', fromProfileHash: mediumHash, toProfileHash: lowHash, dropped: symbols(medium) });
         expect(logged[2].incumbentsReset).toEqual({ reason: 'profile_changed', fromProfileHash: lowHash, toProfileHash: mediumHash, dropped: symbols(low) });
         expect(logged[2].previous).toEqual({ listedSince: {}, previousPicks: [] });
-        expect((await readState()).watchlist).toMatchObject({ previousPicks: symbols(medium), stateProfileHash: mediumHash });
+        expect((await readState(TEST_SCOPE)).watchlist).toMatchObject({ previousPicks: symbols(medium), stateProfileHash: mediumHash });
     });
 
     it('a same-profile run on the next day keeps the incumbents', async () => {
         await getWatchlist();
         const first = await built();
-        const listedSince = (await readState()).watchlist.listedSince;
+        const listedSince = (await readState(TEST_SCOPE)).watchlist.listedSince;
         vi.useFakeTimers({ toFake: ['Date'] });
         vi.setSystemTime(Date.now() + 86_400_000);
         try {
@@ -251,7 +252,7 @@ describe('watchlist service', () => {
         const [, second] = await runs();
         expect(second.payload).not.toHaveProperty('incumbentsReset');
         expect((second.payload as { previous: unknown }).previous).toEqual({ listedSince, previousPicks: first.result!.picks.map((pick) => pick.symbol) });
-        expect((await readState()).watchlist.listedSince).toEqual(listedSince);       // they stay, so their dates do not move
+        expect((await readState(TEST_SCOPE)).watchlist.listedSince).toEqual(listedSince);       // they stay, so their dates do not move
     });
 
     it('names the incumbents that kept a passing candidate out, with the minimum stay and the margin from the rules file', async () => {
@@ -261,7 +262,7 @@ describe('watchlist service', () => {
         market.signals.MSFT = weak;
         market.signals.NVDA = weak;
         const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
-        await updateState((state) => {
+        await updateState(TEST_SCOPE, (state) => {
             state.watchlist.previousPicks = ['MSFT', 'NVDA', 'VTI'];
             state.watchlist.listedSince = { MSFT: daysAgo(2), NVDA: daysAgo(2), VTI: daysAgo(10) };
         });
@@ -271,7 +272,7 @@ describe('watchlist service', () => {
         expect(view.result!.picks.map((pick) => pick.symbol)).not.toContain('XIU.TO');
         expect(view.result!.picks.filter((pick) => pick.kept === 'incumbent').map((pick) => [pick.symbol, pick.total])).toEqual([['VTI', 50], ['MSFT', 46.6], ['NVDA', 46.6]]);
 
-        const why = await explainSymbol('XIU.TO');
+        const why = await explainSymbol('XIU.TO', 'en');
         expect(why).toMatchObject({ listed: false, candidate: { symbol: 'XIU.TO', passed: true, total: 50 } });
         expect(why.note).toBe('XIU.TO passed every filter with a total of 50, and was not selected: the list was full (10 picks) and these picks with a total no higher kept their places: '
             + 'VTI (total 50) was already listed, and a newcomer takes a listed pick\'s place only with a total more than 5 points higher (the difference here is 0 points); '
@@ -282,7 +283,7 @@ describe('watchlist service', () => {
         expect(fr).toContain('MSFT (pointage total de 46,6) était inscrit depuis 2 jours, à l’intérieur de la durée minimale de 7 jours');
 
         // An Energy candidate: the sector cap applies too, so no single rule is named and the limits are listed
-        const capped = (await explainSymbol('COP')).note!;
+        const capped = (await explainSymbol('COP', 'en')).note!;
         expect(capped).toContain('other picks ranked ahead of it');
         expect(capped).toContain('at most 2 per sector; a listed pick keeps its place for at least 7 days, and after that a newcomer takes its place only with a total more than 5 points higher');
     });
@@ -300,21 +301,21 @@ describe('watchlist service', () => {
     });
 
     it('explains a pick, a rejected candidate, and a symbol outside the candidates', async () => {
-        await expect(explainSymbol('AAPL')).rejects.toMatchObject({ status: 404 });
+        await expect(explainSymbol('AAPL', 'en')).rejects.toMatchObject({ status: 404 });
         await getWatchlist();
         const view = await built();
         const [run] = await runs();
 
-        const listed = await explainSymbol('aapl');
+        const listed = await explainSymbol('aapl', 'en');
         expect(listed).toMatchObject({ listed: true, pick: { symbol: 'AAPL' }, snapshotId: view.result!.snapshotId, computedAt: view.result!.computedAt, ruleVersions: run.ruleVersions });
         expect(listed.decisionIds).toHaveLength(2);
         expect(listed.decisionIds[0]).toBe(run.id);
 
-        const crypto = await explainSymbol('BTC');
+        const crypto = await explainSymbol('BTC', 'en');
         expect(crypto.listed).toBe(false);
         expect(crypto.rejected).toEqual([expect.objectContaining({ filter: 'crypto_risk', pass: false })]);
 
-        const outside = await explainSymbol('JPM');
+        const outside = await explainSymbol('JPM', 'en');
         expect(outside).toMatchObject({ listed: false, decisionIds: [run.id] });
         expect(outside.note).toContain('not among the');
     });

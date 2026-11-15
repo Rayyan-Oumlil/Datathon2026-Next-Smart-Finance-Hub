@@ -7,12 +7,12 @@ export type XrayWindowId = (typeof XRAY_WINDOWS)[number];
 
 export type PageInput = { path: string; xrayWindow?: string };
 export type AgentPage = {
-    name: 'portfolio' | 'xray' | 'overview' | 'profile' | 'stock';
+    name: 'portfolio' | 'xray' | 'overview' | 'profile' | 'stock' | 'strategy' | 'time_machine';
     symbol?: string;                     // a stock page
     xrayWindow?: XrayWindowId;           // the X-ray page: the period shown
 };
 
-const NAMES: Record<string, AgentPage['name']> = { '/portfolio': 'portfolio', '/portfolio/xray': 'xray', '/overview': 'overview', '/profile': 'profile' };
+const NAMES: Record<string, AgentPage['name']> = { '/portfolio': 'portfolio', '/portfolio/xray': 'xray', '/overview': 'overview', '/profile': 'profile', '/strategy': 'strategy', '/time-machine': 'time_machine' };
 const SYMBOL = /^[A-Za-z0-9.:-]{1,20}$/;
 
 /** The page as the agent is told, or null for a path the app does not know. */

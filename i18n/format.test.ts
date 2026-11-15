@@ -33,7 +33,7 @@ describe('format helpers', () => {
         expect(formatDateTime('not a date', 'en')).toBe('not a date');
     });
 
-    it('falls back to English for an unknown locale', () => {
-        expect(formatNumber(1234.5, 'pl')).toBe('1,234.5');
+    it('falls back to French for an unknown locale', () => {
+        expect(formatNumber(1234.5, 'pl')).toBe(formatNumber(1234.5, 'fr'));
     });
 });

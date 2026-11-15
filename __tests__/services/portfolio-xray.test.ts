@@ -1,3 +1,4 @@
+import '@/__tests__/test-user';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DailyClose } from '@/lib/sources/types';
 import { ServiceError } from '@/lib/services/errors';

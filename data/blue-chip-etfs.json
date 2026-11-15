@@ -115,6 +115,66 @@
       "index": "S&P/TSX Composite High Dividend Index",
       "issuerUrl": "https://www.blackrock.com/ca/investors/en/products/239846/ishares-canadian-select-dividend-index-etf",
       "blueChipEtf": false
+    },
+    {
+      "symbol": "XBB.TO",
+      "name": "iShares Core Canadian Universe Bond Index ETF",
+      "market": "Canada",
+      "issuer": "BlackRock Canada (iShares)",
+      "index": "FTSE Canada Universe Bond Index",
+      "issuerUrl": "https://www.blackrock.com/ca/investors/en/products/239493/ishares-canadian-bond-index-etf",
+      "blueChipEtf": false,
+      "addedFor": "example portfolios (docs/v2-plan.md, docs/v2-brief.md B7); not blue-chip: bond, gold or ESG-screened fund"
+    },
+    {
+      "symbol": "AGG",
+      "name": "iShares Core U.S. Aggregate Bond ETF",
+      "market": "US",
+      "issuer": "BlackRock (iShares)",
+      "index": "Bloomberg US Aggregate Bond Index",
+      "issuerUrl": "https://www.ishares.com/us/products/239458/ishares-core-total-us-bond-market-etf",
+      "blueChipEtf": false,
+      "addedFor": "example portfolios (docs/v2-plan.md, docs/v2-brief.md B7); not blue-chip: bond, gold or ESG-screened fund"
+    },
+    {
+      "symbol": "TLT",
+      "name": "iShares 20+ Year Treasury Bond ETF",
+      "market": "US",
+      "issuer": "BlackRock (iShares)",
+      "index": "ICE US Treasury 20+ Year Bond Index",
+      "issuerUrl": "https://www.ishares.com/us/products/239454/ishares-20-year-treasury-bond-etf",
+      "blueChipEtf": false,
+      "addedFor": "example portfolios (docs/v2-plan.md, docs/v2-brief.md B7); not blue-chip: bond, gold or ESG-screened fund"
+    },
+    {
+      "symbol": "ESGV",
+      "name": "Vanguard ESG U.S. Stock ETF",
+      "market": "US",
+      "issuer": "Vanguard",
+      "index": "FTSE US All Cap Choice Index",
+      "issuerUrl": "https://investor.vanguard.com/investment-products/etfs/profile/esgv",
+      "blueChipEtf": false,
+      "addedFor": "example portfolios (docs/v2-plan.md, docs/v2-brief.md B7); not blue-chip: bond, gold or ESG-screened fund"
+    },
+    {
+      "symbol": "GLD",
+      "name": "SPDR Gold Shares",
+      "market": "US",
+      "issuer": "World Gold Trust Services (SPDR Gold Shares)",
+      "index": "Gold bullion",
+      "issuerUrl": "https://www.spdrgoldshares.com/usa/gld/",
+      "blueChipEtf": false,
+      "addedFor": "example portfolios (docs/v2-plan.md, docs/v2-brief.md B7); not blue-chip: bond, gold or ESG-screened fund"
+    },
+    {
+      "symbol": "ZST.TO",
+      "name": "BMO Ultra Short-Term Bond ETF",
+      "market": "Canada",
+      "issuer": "BMO Global Asset Management",
+      "index": "Actively managed, ultra short-term Canadian bonds (no index)",
+      "issuerUrl": "https://www.bmogam.com/ca-en/products/exchange-traded-fund/bmo-ultra-short-term-bond-etf-zst/",
+      "blueChipEtf": false,
+      "addedFor": "example portfolios (docs/v2-plan.md); entered by hand: the issuer page could not be read automatically"
     }
   ]
 }

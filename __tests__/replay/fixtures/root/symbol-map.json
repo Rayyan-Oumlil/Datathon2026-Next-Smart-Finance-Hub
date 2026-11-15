@@ -1,0 +1,8 @@
+{
+  "description": "fixture",
+  "map": {
+    "BTC": "BTC-USD"
+  },
+  "replayClass": {},
+  "extras": []
+}

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getAppLocale } from '@/i18n/locale';
 import { NEUTRAL_REPLY, chat, resetReplyCache } from '@/lib/agent/chat';
 import { callAgent, type AgentProgress } from '@/lib/agent/client';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
 import { listAgentActions } from '@/lib/store';
 import { freshWorld } from '../services/helpers';
 
@@ -20,7 +20,7 @@ const glossaryReply = (over: object = {}) => ({
     text: 'An ETF is a fund whose units trade on an exchange.', sources: [{ label: 'Glossary: ETF', source: 'agent/glossary/etf.md', fetchedAt: null }],
     refused: false, promptVersion: 'p1', modelCalls: [{ actor: 'orchestrator', awsRequestId: 'req-1' }], ...over,
 });
-const resultRow = async (actionId: string) => (await listAgentActions(DEMO_USER.id, { actionId })).find((row) => row.step === 'result')!;
+const resultRow = async (actionId: string) => (await listAgentActions(TEST_SCOPE.scopeId, { actionId })).find((row) => row.step === 'result')!;
 
 beforeEach(async () => {
     await freshWorld();

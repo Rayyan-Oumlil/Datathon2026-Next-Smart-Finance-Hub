@@ -1,4 +1,4 @@
-# AlphaForge
+# Next Smart Finance Hub
 
 **Market information that a beginner can actually use, and that an expert can check.**
 

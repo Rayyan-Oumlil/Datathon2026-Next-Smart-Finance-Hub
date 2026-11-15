@@ -48,9 +48,9 @@ const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/
 const forbidden = new RegExp(`(?<![\\p{L}\\p{N}])(?:${FORBIDDEN.map(escape).join('|')})(?![\\p{L}\\p{N}])`, 'iu');
 
 describe('message files', () => {
-    it('ships exactly English and French, English by default', () => {
+    it('ships exactly English and French, French by default', () => {
         expect([...LOCALES].sort()).toEqual(['en', 'fr']);
-        expect(DEFAULT_LOCALE).toBe('en');
+        expect(DEFAULT_LOCALE).toBe('fr');
         expect(readdirSync(ROOT).filter((f) => !f.startsWith('.')).sort()).toEqual(['en', 'fr']);
     });
 

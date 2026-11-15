@@ -1,11 +1,12 @@
+import '@/__tests__/test-user';
 import { NextRequest } from 'next/server';
 import { describe, expect, it, vi } from 'vitest';
 import { readAgentRequest } from '@/lib/agent/request';
 
 vi.mock('@/i18n/locale', () => ({ getAppLocale: vi.fn(async () => 'en'), resolveLocale: vi.fn(async () => 'en') }));
-vi.mock('@/lib/rate-limit', () => ({ isRateLimited: vi.fn(async () => false) }));
+vi.mock('@/lib/rate-limit', () => ({ isRateLimited: vi.fn(async () => false), clientIp: vi.fn(() => '127.0.0.1') }));
 
-const read = (body: unknown) => readAgentRequest(new NextRequest('http://localhost/api/agent', { method: 'POST', body: JSON.stringify(body) }));
+const read = (body: unknown) => readAgentRequest(new NextRequest('http://localhost/api/agent', { method: 'POST', body: JSON.stringify(body) }), { sessionId: 'demo-user' });
 
 describe('readAgentRequest page field', () => {
     it('keeps a well-formed page', async () => {

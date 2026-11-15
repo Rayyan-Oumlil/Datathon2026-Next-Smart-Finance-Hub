@@ -3,8 +3,8 @@
 // layout (the Overview tab is fixed), so the library holds only the modules that tab renders.
 
 import { getAppLocale } from '@/i18n/locale';
-import { DEMO_USER } from '@/lib/demo-user';
 import type { Level } from '@/lib/domain/types';
+import { currentScope, type Scope } from '@/lib/session';
 import { getProfile, readState, updateState } from '@/lib/store';
 import type { Locale } from '@/lib/watchlist/text';
 import { ServiceError } from './errors';
@@ -55,27 +55,28 @@ export function validateLayout(layout: unknown, locale: Locale = 'en'): string[]
     return layoutProblems(layout).map((ref) => renderText(ref, locale));
 }
 
-/** The saved layout (or the level template) and the widget library, its titles in `locale` (default: the request's). */
-export async function getLayout(locale?: Locale): Promise<{ layout: string[]; library: Widget[]; saved: boolean }> {
+/** The saved layout of the scope's generation (or the level template) and the widget library, its titles in `locale` (default: the request's). */
+export async function getLayout(locale?: Locale, scope?: Scope): Promise<{ layout: string[]; library: Widget[]; saved: boolean }> {
+    const s = scope ?? await currentScope();
     const library = widgetLibrary(locale ?? await getAppLocale());
-    const { layout } = await readState();
+    const { layout } = await readState(s);
     if (layout) {
         // A layout saved before a widget left the library keeps its other widgets; the removed id is dropped.
         const known = new Set(WIDGET_LIBRARY.map((widget) => widget.id));
         const ids = [...new Set(layout.widgets.map((widget) => widget.widget).filter((id) => known.has(id)))];
         return { layout: ids, library, saved: true };
     }
-    const profile = await getProfile(DEMO_USER.id);
+    const profile = await getProfile(s.profileUserId);
     return { layout: defaultLayout(profile?.level ?? 'Novice'), library, saved: false };
 }
 
-export async function putLayout(layout: unknown): Promise<{ layout: string[] }> {
+export async function putLayout(layout: unknown, scope?: Scope): Promise<{ layout: string[] }> {
     const errors = layoutProblems(layout);
     if (errors.length > 0) throw new ServiceError(400, serviceRef('svc.joined', { items: errors }));
     const ids = layout as string[];
     const tabOf = new Map(WIDGET_LIBRARY.map((widget) => [widget.id, widget.tab]));
     const count: Record<string, number> = {};
-    await updateState((state) => {
+    await updateState(scope ?? await currentScope(), (state) => {
         state.layout = {
             widgets: ids.map((id) => {
                 const tab = tabOf.get(id)!;

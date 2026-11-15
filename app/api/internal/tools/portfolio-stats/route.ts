@@ -12,8 +12,8 @@ const schema = z.object({
 
 // Fixed calculators on daily closes. Without symbols, the held positions are used, one result per symbol:
 // no calculator exists for the simulated portfolio as a whole, so no such figure is returned.
-export const POST = internalTool(schema, async ({ metric, symbols, period }) => {
-    const wanted = symbols?.length ? symbols : (await getPortfolioState()).positions.map((position) => position.symbol);
+export const POST = internalTool(schema, async ({ metric, symbols, period }, _actionId, scope) => {
+    const wanted = symbols?.length ? symbols : (await getPortfolioState(scope)).positions.map((position) => position.symbol);
     if (metric === 'correlation') return computeStat({ metric, symbols: wanted, period });
     if (wanted.length === 0) throw new ServiceError(400, 'The simulated portfolio holds no position; name a symbol.');
     if (wanted.length === 1) return computeStat({ metric, symbols: wanted, period });

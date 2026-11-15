@@ -6,6 +6,7 @@ import { readAgentRequest } from '@/lib/agent/request';
 import { encodeEvent } from '@/lib/agent/sse';
 import { ServiceError } from '@/lib/services/errors';
 import { renderText, serviceRef } from '@/lib/services/text';
+import { requestScope } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 150;
@@ -20,7 +21,8 @@ const HEADERS = { 'content-type': 'text/event-stream; charset=utf-8', 'cache-con
  * A bad request or a request over the limit is answered as JSON before the stream starts, like /api/agent.
  */
 export const POST = (req: NextRequest) => respond(async () => {
-    const input = await readAgentRequest(req);
+    const scope = await requestScope(req);
+    const input = await readAgentRequest(req, scope);
     const locale = await getAppLocale();
     const encoder = new TextEncoder();
     let open = true;
@@ -30,7 +32,7 @@ export const POST = (req: NextRequest) => respond(async () => {
             // A browser that left cannot receive more; the request still runs to its end so its log stays complete
             const send = (event: unknown) => { if (open) controller.enqueue(encoder.encode(encodeEvent(event))); };
             try {
-                send({ type: 'final', reply: await chat(input, send) });
+                send({ type: 'final', reply: await chat(input, send, scope) });
             } catch (error) {
                 const known = error instanceof ServiceError;
                 if (!known) console.error('agent stream error:', error instanceof Error ? error.message : error);

@@ -1,4 +1,5 @@
 import { Clock } from "lucide-react";
+import { sourceLabel } from "@/lib/source-label";
 import { useLocale, useTranslations } from "next-intl";
 import type { EsgTag, Sourced } from "@/lib/domain/types";
 import { esgLabel, formatTime } from "./format";
@@ -36,7 +37,7 @@ export function SourceLine({ sourced, stale, label }: { sourced: Sourced<unknown
         <span className="text-[11.5px] leading-snug text-faint">
             {label && t('source.labelled', { label })}
             {t('source.line', {
-                source: sourced.source,
+                source: sourceLabel(sourced.source, locale),
                 time: formatTime(sourced.fetchedAt, t, locale),
                 hasProvider: String(Boolean(sourced.asOf)),
                 providerTime: sourced.asOf ? formatTime(sourced.asOf, t, locale) : '',

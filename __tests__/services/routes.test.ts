@@ -1,3 +1,4 @@
+import '@/__tests__/test-user';
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PATCH, POST } from '@/app/api/profile/route';
@@ -7,7 +8,7 @@ import { answers, freshWorld, market, sourced } from './helpers';
 
 vi.mock('@/lib/services/quotes', async (original) => (await import('./market-stub')).quotesMock(await original()));
 
-const request = (method: string, body: unknown) => new NextRequest('http://localhost/api', { method, body: JSON.stringify(body) });
+const request = (method: string, body: unknown) => new NextRequest('http://localhost/api', { method, headers: { cookie: 'NEXT_LOCALE=en' }, body: JSON.stringify(body) });
 
 beforeEach(() => freshWorld(false));
 

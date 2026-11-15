@@ -14,6 +14,70 @@
   "working": "Traitement en cours. Une réponse peut prendre jusqu’à une minute : chaque chiffre est récupéré et vérifié.",
   "stop": "Arrêter",
   "stopped": "Arrêté. Rien n’a été modifié.",
+  "logsLink": "Journaux de l’agent",
+  "timeline": {
+    "title": "Étapes suivies par l’agent",
+    "expand": "Afficher les étapes",
+    "collapse": "Masquer les étapes",
+    "loading": "Chargement des étapes…",
+    "unavailable": "Les étapes ne sont pas disponibles pour le moment.",
+    "empty": "Aucune étape lisible pour l’instant. Le journal peut accuser un retard de quelques secondes.",
+    "note": "Phrases écrites par du code à partir des lignes du journal, sans modèle de langage.",
+    "rawLink": "Voir le journal brut",
+    "reload": "Recharger les étapes",
+    "type": "{type, select, layout_change {modification de la disposition} rule_create {nouvelle règle} rule_propose {nouvelle règle} rule_pause {pause d’une règle} profile_change {modification du profil} simulated_trade {opération simulée} module_propose {nouveau module} explain_pick {explication d’un titre} lookup {consultation de données} reply {réponse} other {autre action}}",
+    "tools": {
+      "market-data": "les cours et les signaux",
+      "explain-pick": "le journal de décision de la liste",
+      "portfolio": "le portefeuille simulé",
+      "portfolio-stats": "les chiffres du portefeuille",
+      "portfolio-xray": "la radiographie du portefeuille",
+      "validate-rule": "la validation de la règle",
+      "rules": "vos règles",
+      "layout": "la disposition du tableau de bord",
+      "profile-preview": "l’aperçu de la modification du profil",
+      "conflict-check": "vos filtres de profil"
+    },
+    "agents": {
+      "market_data": "le spécialiste des données de marché",
+      "watchlist_explainer": "le spécialiste de la liste de surveillance",
+      "portfolio": "le spécialiste du portefeuille",
+      "rules": "le spécialiste des règles",
+      "layout": "le spécialiste de la disposition",
+      "profile": "le spécialiste du profil",
+      "glossary": "le spécialiste du glossaire"
+    },
+    "steps": {
+      "chat_input": "J’ai reçu votre message ({turns, plural, =0 {aucun échange précédent} one {# échange précédent} other {# échanges précédents}})",
+      "context_built": "J’ai vérifié votre profil (risque {risk, select, Low {faible} Medium {moyen} High {élevé} other {{risk}}}, niveau {level, select, Novice {Novice} Intermediate {Intermédiaire} Expert {Expert} other {non défini}}) : {holdings, plural, =0 {aucune position} one {# position} other {# positions}}, {picks, plural, =0 {aucun titre suivi} one {# titre suivi} other {# titres suivis}}",
+      "context_built_noProfile": "J’ai lu vos données, sans profil de risque : {holdings, plural, =0 {aucune position} one {# position} other {# positions}}, {picks, plural, =0 {aucun titre suivi} one {# titre suivi} other {# titres suivis}}",
+      "prompt_built": "J’ai préparé les instructions du modèle",
+      "orchestrator_call": "J’ai appelé le modèle {model} ({input, number} jetons en entrée, {output, number} en sortie)",
+      "subagent_call": "J’ai fait appel à {agent} (modèle {model})",
+      "tool_call": "J’ai consulté {tool} ({time})",
+      "tool_call_symbols": "J’ai consulté {tool} ({symbols}, {time})",
+      "guardrail_passed": "Garde-fou : aucun problème relevé dans les chiffres et le vocabulaire",
+      "guardrail_failed": "Garde-fou : un problème a été relevé à l’essai {attempt}, la réponse a été reprise",
+      "action_preview": "J’ai préparé une proposition ({type}) qui attend votre confirmation",
+      "action_info": "J’ai préparé une information ({type}), sans modification",
+      "action_dropped": "La proposition ({type}) a été écartée par la validation de l’application",
+      "action_none": "Aucune modification proposée",
+      "preview_shown": "Je vous ai présenté un aperçu ({type}){conflicts, plural, =0 {} one {, avec # conflit de profil} other {, avec # conflits de profil}}",
+      "confirmed": "Vous avez confirmé l’aperçu",
+      "cancelled": "Vous avez annulé l’aperçu : rien n’a été modifié",
+      "applied": "La modification a été appliquée dans la simulation",
+      "result_error": "La demande n’a pas abouti",
+      "result_notApplied": "La modification n’a pas été appliquée",
+      "result_cache": "Réponse reprise d’une réponse précédente qui avait passé toutes les vérifications",
+      "result_refused": "La réponse a été remplacée par une phrase neutre",
+      "result_reply": "J’ai rédigé la réponse ({sources, plural, =0 {aucune source citée} one {# source citée} other {# sources citées}})",
+      "undo": "Retour en arrière effectué",
+      "undo_failed": "Le retour en arrière n’a pas été possible",
+      "error_tool": "L’appel à {tool} a échoué",
+      "error": "Une étape a échoué",
+      "unknown": "Étape consignée : {step}"
+    }
+  },
   "stages": {
     "title": "Ce que fait l’agent",
     "orchestrator": "Lecture de votre demande",
@@ -60,6 +124,14 @@
     "rule": {
       "label": "Créer une règle",
       "message": "Créer une règle : lorsque "
+    },
+    "strategy": {
+      "label": "Construire une stratégie",
+      "message": "Construis-moi une stratégie : "
+    },
+    "testStrategy": {
+      "label": "Tester ma stratégie sur l’historique",
+      "message": "Teste ma stratégie sur l’historique des 5 dernières années"
     }
   },
   "inputLabel": "Message à l’agent",
@@ -125,7 +197,21 @@
     "applied": "Appliquée",
     "undone": "Retour effectué",
     "cancelled": "Annulée",
-    "undo": "Revenir en arrière"
+    "undo": "Revenir en arrière",
+    "strategy": {
+      "rules": "Règles",
+      "replaces": "Remplace la version actuelle",
+      "history": "Aperçu historique, environ 5 ans",
+      "window": "Du {from} au {to} · {days} jours de bourse",
+      "metric": "Mesure",
+      "without": "Sans règles",
+      "with": "Avec la stratégie",
+      "fired": "Déclenchements des règles",
+      "firedCount": "{label} : {count, plural, =0 {jamais déclenchée} one {déclenchée une fois} other {déclenchée # fois}}",
+      "conflicts": "Conflits avec le profil",
+      "ids": "Rejeu {replayId} · instantané {snapshotId}",
+      "openTimeMachine": "Ouvrir dans la machine à remonter le temps"
+    }
   },
   "sourceNames": {
     "demodata": "données de démonstration",

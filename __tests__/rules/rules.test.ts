@@ -29,6 +29,7 @@ describe('rules file', () => {
         expect(RULES_VERSION).toBe('v1');
         expect(RULE_VERSIONS).toEqual({
             level: 'level-v1', risk: 'risk-v1', filters: 'filters-v1', score: RULES.score.version, selection: 'selection-v1', reasons: 'reasons-v1',
+            strategy: 'strategy-v1', model_portfolios: 'model-portfolios-v1',
         });
     });
 

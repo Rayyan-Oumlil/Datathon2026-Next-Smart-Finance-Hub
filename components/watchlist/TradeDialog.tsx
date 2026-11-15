@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from "react";
+import { sourceLabel } from "@/lib/source-label";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -76,7 +77,7 @@ export default function TradeDialog({ symbol, name, onClose }: { symbol: string;
                         </p>
                         <p className="text-[12.5px] text-faint">
                             {t('trade.fill', {
-                                source: done.trade.price.source,
+                                source: sourceLabel(done.trade.price.source, locale),
                                 time: formatTime(done.trade.price.fetchedAt, t, locale),
                                 hasProvider: String(Boolean(done.trade.price.asOf)),
                                 providerTime: done.trade.price.asOf ? formatTime(done.trade.price.asOf, t, locale) : '',

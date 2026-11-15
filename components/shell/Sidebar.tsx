@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { LayoutDashboard, Search, UserRound, Wallet } from "lucide-react";
+import { Clock, Compass, LayoutDashboard, ScrollText, Search, UserRound, Wallet } from "lucide-react";
 import { openSearch } from "@/components/SearchCommand";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,8 @@ type SidebarProps = {
 const NAV = [
     { href: '/portfolio', label: 'portfolio', icon: Wallet },
     { href: '/overview', label: 'overview', icon: LayoutDashboard },
+    { href: '/strategy', label: 'strategy', icon: Compass },
+    { href: '/time-machine', label: 'timeMachine', icon: Clock },
     { href: '/profile', label: 'profile', icon: UserRound },
 ] as const;
 
@@ -27,7 +29,7 @@ const Sidebar = ({ user }: SidebarProps) => {
     return (
         <aside className="sidebar">
             <Link href="/portfolio" className="px-2 pt-1 pb-2 text-[19px] font-bold tracking-[-0.03em] text-foreground" aria-label={ts('logoLabel')}>
-                Alpha<span className="text-brand-ink">Forge</span>
+                Smart <span className="text-brand-ink">Finance Hub</span>
             </Link>
 
             <button type="button" onClick={openSearch} className="side-cta">
@@ -38,13 +40,16 @@ const Sidebar = ({ user }: SidebarProps) => {
 
             <nav className="flex flex-col gap-0.5">
                 {NAV.map(({ href, label, icon: Icon }) => (
-                    <Link key={href} href={href} className={cn('side-item', pathname === href && 'is-active')}>
-                        <Icon /> {ts(`nav.${label}`)}
+                    <Link key={href} href={href} className={cn('side-item h-auto min-h-9 py-1.5 leading-tight', pathname === href && 'is-active')}>
+                        <Icon /> <span className="min-w-0">{ts(`nav.${label}`)}</span>
                     </Link>
                 ))}
             </nav>
 
             <div className="mt-auto flex flex-col gap-2">
+                <Link href="/logs" className={cn('side-item', pathname === '/logs' && 'is-active')}>
+                    <ScrollText /> {ts('nav.logs')}
+                </Link>
                 <p className="rounded-[11px] px-3 py-2.5 text-[12px] leading-snug text-faint shadow-[inset_0_0_0_1px_var(--line)]">
                     {ts('disclaimer')}
                 </p>

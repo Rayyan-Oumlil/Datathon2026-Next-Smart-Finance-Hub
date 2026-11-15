@@ -125,7 +125,37 @@ def portfolio_xray(body):
             "conflicts": [], "simulated": True}
 
 
+def strategies(body):
+    """Accepts a strategy whose rules all have a kind and refuses an unknown field, like lib/strategy's schema."""
+    out = {"strategies": [], "currentWeights": [{"symbol": "AAPL", "weightPct": 10.38}], "portfolioValueCad": 10042.5}
+    strategy = body.get("validate")
+    if strategy is not None:
+        extra = [k for k in strategy if k not in ("name", "rules")]
+        if extra or not strategy.get("name"):
+            issues = [{"code": "unknown_field", "path": k, "values": {"field": k}} for k in extra] or \
+                     [{"code": "required", "path": "name", "values": {}}]
+            out["validation"] = {"ok": False, "errors": [f"{i['path']}: refused." for i in issues], "issues": issues}
+        else:
+            rules = [{**r, "id": f"{r.get('kind')}_{n + 1}", "version": 1} for n, r in enumerate(strategy.get("rules", []))]
+            out["validation"] = {"ok": True, "strategy": {"name": strategy["name"], "rules": rules},
+                                 "sentences": ["Target weights: XIU.TO 60%; rebalanced every quarter."]}
+    return out
+
+
+REPLAY_DIGEST = {
+    "replayId": "rpl_stub", "snapshotId": "yf-2026-11-15", "simulated": True,
+    "window": {"from": "2021-01-04", "to": "2026-11-13", "tradingDays": 1477},
+    "metrics": {"without": {"finalValueCad": 13456.78, "totalReturnPct": 34.5678, "volatilityPct": 9.8765,
+                            "largestFall": {"pct": -18.234, "peakDate": "2022-01-04", "troughDate": "2022-10-12"}},
+                "with": {"finalValueCad": 12987.65, "totalReturnPct": 29.8765, "volatilityPct": 7.6543,
+                         "largestFall": {"pct": -12.345, "peakDate": "2022-01-04", "troughDate": "2022-09-30"}}},
+    "ruleStats": [{"ruleId": "allocation_target_1", "kind": "allocation_target", "fired": 23}],
+}
+
+
 ROUTES = {
+    "strategies": strategies,
+    "replay": lambda b: REPLAY_DIGEST,
     "market-data": lambda b: {"items": [SIGNALS[s] for s in b.get("symbols", []) if s in SIGNALS]},
     "explain-pick": explain_pick,
     "conflict-check": conflict_check,

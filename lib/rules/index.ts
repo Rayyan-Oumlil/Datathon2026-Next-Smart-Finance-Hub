@@ -14,6 +14,8 @@ export const RULE_VERSIONS = {
     score: file.score.version,
     selection: file.selection.version,
     reasons: file.reasons.version,
+    strategy: file.strategy.version,
+    model_portfolios: file.model_portfolios.version,
 };
 
 /**

@@ -6,7 +6,7 @@ import { POST as UNDO } from '@/app/api/agent/undo/route';
 import { getAppLocale } from '@/i18n/locale';
 import { NEUTRAL_REPLY, NEUTRAL_REPLY_FR, chat, confirm, resetReplyCache, undoAction } from '@/lib/agent/chat';
 import { callAgent, runtimeSessionId } from '@/lib/agent/client';
-import { DEMO_USER } from '@/lib/demo-user';
+import { TEST_SCOPE } from '@/__tests__/test-user';
 import { getLayout } from '@/lib/services/layout';
 import { ServiceError } from '@/lib/services/errors';
 import { listAgentActions } from '@/lib/store';
@@ -26,7 +26,7 @@ vi.mock('@/i18n/locale', () => ({ getAppLocale: vi.fn(async () => 'en'), resolve
 const agent = vi.mocked(callAgent);
 const locale = vi.mocked(getAppLocale);
 const answer = (over: object = {}) => ({ text: 'An ETF is a fund whose units trade on an exchange.', sources: [{ label: 'Glossary: ETF', source: 'agent/glossary/etf.md', fetchedAt: null }], refused: false, promptVersion: 'p1', modelCalls: [{ actor: 'orchestrator', awsRequestId: 'req-1' }], ...over });
-const steps = async (actionId: string) => (await listAgentActions(DEMO_USER.id, { actionId })).map((row) => row.step);
+const steps = async (actionId: string) => (await listAgentActions(TEST_SCOPE.scopeId, { actionId })).map((row) => row.step);
 
 beforeEach(async () => {
     await freshWorld();
@@ -40,7 +40,7 @@ describe('chat', () => {
         agent.mockResolvedValue(answer());
         const reply = await chat({ message: 'What is an ETF?', history: Array.from({ length: 14 }, (_, i) => ({ role: 'user' as const, text: `turn ${i}` })) });
         const payload = agent.mock.calls[0][0];
-        expect(payload).toMatchObject({ actionId: reply.actionId, userId: DEMO_USER.id, message: 'What is an ETF?' });
+        expect(payload).toMatchObject({ actionId: reply.actionId, userId: TEST_SCOPE.scopeId, message: 'What is an ETF?' });
         expect(payload.history).toHaveLength(10);
         expect(Object.keys(payload.context).sort()).toEqual(['agentStyle', 'holdings', 'layout', 'level', 'locale', 'profile', 'risk', 'watchlist']);
         expect(payload.context.locale).toBe('en');
@@ -59,7 +59,7 @@ describe('chat', () => {
             expect(reply).not.toHaveProperty('proposed');
             expect(reply).not.toHaveProperty('preview');
             expect(reply).not.toHaveProperty('conflict');
-            const rows = await listAgentActions(DEMO_USER.id, { actionId: reply.actionId });
+            const rows = await listAgentActions(TEST_SCOPE.scopeId, { actionId: reply.actionId });
             expect(rows.at(-1)).toMatchObject({ step: 'result', result: { withheldByWordCheck: true, refused: true } });
         }
     });
@@ -69,7 +69,7 @@ describe('chat', () => {
         const reply = await chat({ message: 'hello' });
         expect(reply.notice).toContain('not an action the app allows');
         expect(reply).not.toHaveProperty('proposed');
-        const routed = (await listAgentActions(DEMO_USER.id, { actionId: reply.actionId })).find((row) => row.step === 'action_routed');
+        const routed = (await listAgentActions(TEST_SCOPE.scopeId, { actionId: reply.actionId })).find((row) => row.step === 'action_routed');
         expect(routed).toMatchObject({ result: { outcome: 'dropped', type: 'wire_transfer' }, dataUsed: { proposed: { type: 'wire_transfer' } } });
     });
 
@@ -78,7 +78,7 @@ describe('chat', () => {
         const reply = await chat({ message: 'hello' });
         expect(reply.notice).toContain('its parameters are not valid');
         expect(containsNeverWord(reply.notice!)).toBe(false);
-        const routed = (await listAgentActions(DEMO_USER.id, { actionId: reply.actionId })).find((row) => row.step === 'action_routed');
+        const routed = (await listAgentActions(TEST_SCOPE.scopeId, { actionId: reply.actionId })).find((row) => row.step === 'action_routed');
         expect(routed!.statedReason).toContain('side');
     });
 
@@ -96,7 +96,7 @@ describe('chat', () => {
         expect(await undoAction(reply.actionId)).toMatchObject({ restored: true });
         expect((await getLayout()).layout).toEqual(before);
         expect(await steps(reply.actionId)).toEqual(['chat_input', 'context_built', 'action_routed', 'preview_shown', 'result', 'confirmed', 'applied', 'result', 'undo']);
-        const applied = (await listAgentActions(DEMO_USER.id, { actionId: reply.actionId })).find((row) => row.step === 'applied');
+        const applied = (await listAgentActions(TEST_SCOPE.scopeId, { actionId: reply.actionId })).find((row) => row.step === 'applied');
         expect(applied).toMatchObject({ actor: 'web', before, after: layout });
     });
 
@@ -113,7 +113,7 @@ describe('chat', () => {
         agent.mockResolvedValue(answer({ logComplete: false }));
         const reply = await chat({ message: 'hello' });
         expect(reply.logComplete).toBe(false);
-        const rows = await listAgentActions(DEMO_USER.id, { actionId: reply.actionId });
+        const rows = await listAgentActions(TEST_SCOPE.scopeId, { actionId: reply.actionId });
         expect(rows.at(-1)).toMatchObject({ step: 'result', result: { agentLogComplete: false } });
         agent.mockResolvedValue(answer({ logComplete: true }));
         expect((await chat({ message: 'hello' })).logComplete).toBe(true);
@@ -122,7 +122,7 @@ describe('chat', () => {
     it('logs a failed agent call and passes the refusal on', async () => {
         agent.mockRejectedValue(new ServiceError(503, 'The agent service is not reachable right now. Nothing was changed.'));
         await expect(chat({ message: 'hello' })).rejects.toMatchObject({ status: 503 });
-        const rows = await listAgentActions(DEMO_USER.id);
+        const rows = await listAgentActions(TEST_SCOPE.scopeId);
         expect(rows.map((row) => row.step)).toEqual(['chat_input', 'context_built', 'result']);
     });
 });
@@ -135,7 +135,7 @@ describe('chat in French', () => {
         const reply = await chat({ message: 'Qu’est-ce qu’un FNB?' });
         expect(agent.mock.calls[0][0].context.locale).toBe('fr');
         expect(reply).toMatchObject({ refused: false, text: 'Un FNB est un fonds dont les parts se négocient en bourse.' });
-        const built = (await listAgentActions(DEMO_USER.id, { actionId: reply.actionId })).find((row) => row.step === 'context_built');
+        const built = (await listAgentActions(TEST_SCOPE.scopeId, { actionId: reply.actionId })).find((row) => row.step === 'context_built');
         expect(built).toMatchObject({ dataUsed: { locale: 'fr' } });
     });
 
@@ -171,7 +171,7 @@ describe('chat in French', () => {
         agent.mockResolvedValue(answer({ proposed: { type: 'simulated_trade', summary: 's', params: { symbol: 'AAPL', side: 'hold', amountCad: 100 } } }));
         const dropped = await chat({ message: 'bonjour' });
         expect(dropped.notice).toBe('Une modification proposée n’a pas été affichée : Les paramètres de la modification proposée ne sont pas valides.');
-        const routed = (await listAgentActions(DEMO_USER.id, { actionId: dropped.actionId })).find((row) => row.step === 'action_routed');
+        const routed = (await listAgentActions(TEST_SCOPE.scopeId, { actionId: dropped.actionId })).find((row) => row.step === 'action_routed');
         expect(routed!.statedReason).toContain('side');                 // the schema's detail stays in the log
 
         agent.mockResolvedValue(answer({ proposed: { type: 'layout_change', summary: 's', params: { layout: ['total_value'] } } }));
@@ -182,7 +182,7 @@ describe('chat in French', () => {
 describe('reply language', () => {
     const layout = ['total_value', 'holdings'];
     const proposal = { type: 'layout_change', summary: 's', params: { layout } };
-    const context = async (actionId: string) => (await listAgentActions(DEMO_USER.id, { actionId })).find((row) => row.step === 'context_built');
+    const context = async (actionId: string) => (await listAgentActions(TEST_SCOPE.scopeId, { actionId })).find((row) => row.step === 'context_built');
 
     it('answers a French message in French even when the app is set to English', async () => {
         locale.mockResolvedValue('en');
@@ -288,7 +288,7 @@ describe('agent client', () => {
         const url = process.env.AGENT_URL;
         process.env.AGENT_URL = 'http://127.0.0.1:9';           // nothing listens there
         try {
-            const payload = { actionId: 'a', userId: DEMO_USER.id, message: 'm', history: [], context: { locale: 'fr' as const, holdings: [], watchlist: [], layout: [] } };
+            const payload = { actionId: 'a', userId: TEST_SCOPE.scopeId, message: 'm', history: [], context: { locale: 'fr' as const, holdings: [], watchlist: [], layout: [] } };
             await expect(realCall(payload)).rejects.toMatchObject({ status: 503, message: 'Le service de l’agent est injoignable pour le moment. Rien n’a été modifié.' });
             await expect(realCall({ ...payload, context: { ...payload.context, locale: 'en' } })).rejects.toMatchObject({ message: 'The agent service is not reachable right now. Nothing was changed.' });
         } finally {
@@ -322,7 +322,7 @@ describe('page awareness', () => {
         agent.mockResolvedValue(answer());
         const reply = await chat({ message: 'hi', page: { path: '/stocks/aapl' } });
         expect(agent.mock.calls[0][0].context.page).toEqual({ name: 'stock', symbol: 'AAPL' });
-        const rows = await listAgentActions(DEMO_USER.id, { actionId: reply.actionId });
+        const rows = await listAgentActions(TEST_SCOPE.scopeId, { actionId: reply.actionId });
         expect(JSON.stringify(rows.find((row) => row.step === 'context_built'))).toContain('"page":{"name":"stock","symbol":"AAPL"}');
     });
 });

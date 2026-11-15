@@ -1,8 +1,8 @@
 import { getAppLocale } from '@/i18n/locale';
-import { DEMO_USER } from '@/lib/demo-user';
 import type { Level, OnboardingAnswers, ProfileConfig, Risk } from '@/lib/domain/types';
 import { buildProfile } from '@/lib/rules/profile';
 import { localizeCappedBy, overrideCapRefusalRef } from '@/lib/rules/risk';
+import { currentScope, type Scope } from '@/lib/session';
 import { appendDecision, getProfile as readProfile, putProfile } from '@/lib/store';
 import type { Locale } from '@/lib/watchlist/text';
 import { ServiceError } from './errors';
@@ -25,9 +25,12 @@ export function localizeProfile(profile: ProfileConfig, locale: Locale): Profile
     return { ...profile, riskResult: { ...profile.riskResult, cappedBy: localizeCappedBy(cappedBy, locale) } };
 }
 
-/** The stored profile, its display text in `locale` (default: the request's language). */
-export async function getProfile(locale?: Locale): Promise<ProfileConfig | null> {
-    const profile = await readProfile(DEMO_USER.id);
+// Every function here takes the visitor's scope last; without one it uses the current request's session.
+const scopeOr = async (scope?: Scope): Promise<Scope> => scope ?? currentScope();
+
+/** The stored profile of the scope's generation, its display text in `locale` (default: the request's language). */
+export async function getProfile(locale?: Locale, scope?: Scope): Promise<ProfileConfig | null> {
+    const profile = await readProfile((await scopeOr(scope)).profileUserId);
     return profile && localizeProfile(profile, locale ?? await getAppLocale());
 }
 
@@ -54,9 +57,10 @@ async function save(profile: ProfileConfig, action: string, before: { level: Lev
 }
 
 /** Onboarding result: the Level and Risk rules run here, on the server, on the answers as given. */
-export async function saveOnboarding(answers: OnboardingAnswers): Promise<ProfileConfig> {
-    const existing = await readProfile(DEMO_USER.id);
-    const profile = buildProfile(DEMO_USER.id, answers, new Date().toISOString(), { createdAt: existing?.createdAt });
+export async function saveOnboarding(answers: OnboardingAnswers, scope?: Scope): Promise<ProfileConfig> {
+    const { profileUserId } = await scopeOr(scope);
+    const existing = await readProfile(profileUserId);
+    const profile = buildProfile(profileUserId, answers, new Date().toISOString(), { createdAt: existing?.createdAt });
     await save(profile, 'onboarding', existing && levelAndRisk(existing), { answers });
     return profile;
 }
@@ -65,8 +69,9 @@ export async function saveOnboarding(answers: OnboardingAnswers): Promise<Profil
  * What an edit would give, without saving it. The rules always re-run on the merged answers. A level or risk
  * chosen by hand stays in place through later answer edits until another value, or null, is given.
  */
-export async function previewProfileEdit(patch: ProfilePatch): Promise<ProfileEdit> {
-    const existing = await readProfile(DEMO_USER.id);
+export async function previewProfileEdit(patch: ProfilePatch, scope?: Scope): Promise<ProfileEdit> {
+    const { profileUserId } = await scopeOr(scope);
+    const existing = await readProfile(profileUserId);
     if (!existing) throw new ServiceError(404, serviceRef('svc.no_profile', {}));
     const answers = { ...existing.answers, ...patch.answers };
     // Someone who has not traded was not asked about experience or tools
@@ -80,7 +85,7 @@ export async function previewProfileEdit(patch: ProfilePatch): Promise<ProfileEd
     // The risk caps hold for a risk chosen by hand too
     const refusal = risk && overrideCapRefusalRef(risk, answers);
     if (refusal) throw new ServiceError(400, refusal);
-    const profile = buildProfile(DEMO_USER.id, answers, new Date().toISOString(), {
+    const profile = buildProfile(profileUserId, answers, new Date().toISOString(), {
         level: keep(patch.level, existing.levelOverridden, existing.level),
         risk,
         createdAt: existing.createdAt,
@@ -88,8 +93,8 @@ export async function previewProfileEdit(patch: ProfilePatch): Promise<ProfileEd
     return { profile, before: levelAndRisk(existing), after: levelAndRisk(profile) };
 }
 
-export async function editProfile(patch: ProfilePatch): Promise<ProfileEdit> {
-    const edit = await previewProfileEdit(patch);
+export async function editProfile(patch: ProfilePatch, scope?: Scope): Promise<ProfileEdit> {
+    const edit = await previewProfileEdit(patch, scope);
     await save(edit.profile, 'edit', edit.before, patch);
     return edit;
 }

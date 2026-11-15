@@ -4,7 +4,7 @@ import { profileChangesSchema, toProfilePatch } from '@/lib/agent/profile-change
 import { previewProfileEdit } from '@/lib/services/profile';
 
 // Re-runs the Level and Risk rules on the changed answers. Nothing is saved.
-export const POST = internalTool(z.object({ changes: profileChangesSchema }), async ({ changes }) => {
-    const { profile, before, after } = await previewProfileEdit(toProfilePatch(changes));
+export const POST = internalTool(z.object({ changes: profileChangesSchema }), async ({ changes }, _actionId, scope) => {
+    const { profile, before, after } = await previewProfileEdit(toProfilePatch(changes), scope);
     return { before, after, levelResult: profile.levelResult, riskResult: profile.riskResult, levelOverridden: profile.levelOverridden, riskOverridden: profile.riskOverridden };
 });

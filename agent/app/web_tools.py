@@ -34,6 +34,14 @@ def call_web(name: str, body: dict | None = None) -> Any:
             headers={"x-internal-token": config.env("INTERNAL_API_TOKEN"), "x-action-id": current.action_id},
         )
         status = response.status_code
+        if status == 404 and "text/html" in response.headers.get("content-type", ""):
+            # The Next dev server sometimes answers a route it is recompiling with its HTML 404 page: asked again once
+            response = _client().post(
+                config.web_url() + endpoint,
+                json={**(body or {}), "userId": current.user_id},
+                headers={"x-internal-token": config.env("INTERNAL_API_TOKEN"), "x-action-id": current.action_id},
+            )
+            status = response.status_code
         if status >= 400:
             result = {"error": f"HTTP {status}", "endpoint": endpoint}
         else:
@@ -176,6 +184,77 @@ def validate_rule(text: str, symbol: str, trigger_type: str, trigger_value: floa
 def list_rules() -> dict:
     """The user's simulated rules with their ids and status."""
     return call_web("rules")
+
+
+# ---- strategies and the time machine
+REPLAY_PORTFOLIOS = ("current", "amira", "mateo", "robert")
+
+
+@tool
+def list_strategies(make_room_for_symbol: str | None = None, make_room_for_weight_pct: float | None = None) -> dict:
+    """The user's stored strategies (id, name, version, each rule with its sentence), the simulated portfolio's
+    current weights in percent and its value. With make_room_for_symbol and make_room_for_weight_pct together: also
+    targetsWithRoom, the current weights scaled down (computed by the app) so that symbol takes that weight; use it
+    as the targets of an allocation_target rule. Read-only.
+
+    Args:
+        make_room_for_symbol: optional symbol to add as a target, for example "TSLA".
+        make_room_for_weight_pct: its target weight in percent (0.1 to 100), for example 20.
+    """
+    body: dict = {"locale": trace.current().locale}
+    if (make_room_for_symbol is None) != (make_room_for_weight_pct is None):
+        return {"error": "make_room_for_symbol and make_room_for_weight_pct must be given together"}
+    if make_room_for_symbol is not None:
+        body["makeRoomFor"] = {"symbol": str(make_room_for_symbol).strip(), "weightPct": make_room_for_weight_pct}
+    return call_web("strategies", body)
+
+
+@tool
+def validate_strategy(strategy: dict) -> dict:
+    """Checks a strategy against the app's strict schema. Nothing is saved. Returns validation.ok with the
+    normalised strategy and one sentence per rule, or validation.ok false with errors and issues (code, path,
+    values): correct exactly those fields once and check again.
+
+    Args:
+        strategy: {"name": "...", "rules": [ ...rules, see your instructions for each kind... ]}.
+    """
+    result = call_web("strategies", {"locale": trace.current().locale, "validate": strategy})
+    validation = result.get("validation") if isinstance(result, dict) else None
+    if isinstance(validation, dict) and validation.get("ok"):
+        trace.current().validated_strategy = validation.get("strategy")
+        return {"validation": validation}
+    return {"validation": validation} if validation else result
+
+
+@tool
+def run_replay(portfolio: str = "current", strategy: dict | None = None, strategy_id: str | None = None,
+               start_date: str | None = None, fee_per_order_cad: float | None = None) -> dict:
+    """Replays a portfolio on the app's frozen historical snapshot, without rules and with a strategy, same capital,
+    fees and data. Returns a digest: final value, total and annualised return, volatility, largest fall (with dates),
+    fees, how many times each rule fired, the first rule events as sentences, reference portfolios, the replay id and
+    the snapshot id. Illustrative replay on historical data, never a prediction. Read-only; the run is logged.
+
+    Args:
+        portfolio: "current" (the simulated portfolio as it stands) or an example profile: "amira", "mateo", "robert".
+        strategy: a strategy {"name", "rules"} to test (not saved). Give this or strategy_id, or neither (no rule).
+        strategy_id: the id of a stored strategy (from list_strategies or the context).
+        start_date: YYYY-MM-DD, default 2021-01-04 (about five years).
+        fee_per_order_cad: fee per order in CAD, default 0.
+    """
+    if portfolio not in REPLAY_PORTFOLIOS:
+        return {"error": 'portfolio must be "current", "amira", "mateo" or "robert"'}
+    if strategy is not None and strategy_id is not None:
+        return {"error": "give strategy or strategy_id, not both"}
+    body: dict = {"locale": trace.current().locale, "portfolio": portfolio,
+                  "strategy": strategy if strategy is not None else strategy_id}
+    if start_date:
+        body["startDate"] = start_date
+    if fee_per_order_cad is not None:
+        body["feePerOrderCad"] = fee_per_order_cad
+    result = call_web("replay", body)
+    if isinstance(result, dict) and "replayId" in result:
+        trace.current().replays.append(result["replayId"])
+    return result
 
 
 # ---- layout

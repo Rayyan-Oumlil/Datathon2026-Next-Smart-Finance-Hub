@@ -101,6 +101,24 @@ The portfolio X-ray replays up to five years of daily closes. The watchlist's 1-
 - **Kraken:** `/OHLC` returns 720 daily bars at most (about two years), so a crypto holding is left out of a window it does not cover, and the window's coverage says so.
 - **Bank of Canada Valet:** `FXUSDCAD/json?start_date=YYYY-MM-DD` for the USD/CAD history (1,246 daily rows from 2021-11-12). There is no rate on Canadian holidays, so the last rate on or before the day is used.
 
+## Replay snapshot (time machine)
+
+The time machine never reads live data. It replays portfolios on a **frozen snapshot** of Yahoo Finance daily data, fetched once with the yfinance Python library and committed to the repo.
+
+- **What:** `data/replay/<snapshot-id>/` with `prices.csv` (date, symbol, open, high, low, close, adj_close, volume, currency), `actions.csv` (dividends and splits, reference only), `fx.csv` (USD/CAD from `USDCAD=X`) and `manifest.json` (source, yfinance version, extraction time, window, per-symbol first date, last date and row count, SHA-256 of each file, quality warnings, excluded symbols with the reason). The first snapshot is `yf-2026-11-15`: 212 Yahoo symbols (213 app symbols, GOLD being replayed through GLD), 2020-12-01 to 2026-11-13 for stocks and funds (2026-11-14 for crypto), 315,268 price rows, prices.csv 24.4 MB.
+- **Symbols:** every tradable entry of `data/universe.json`, the bond and extra funds XBB.TO, ZST.TO, AGG, TLT, QQQ, ESGV, GLD, the benchmarks XIU.TO and SPY, and USDCAD=X. App symbols are mapped to Yahoo symbols in one file, `data/replay/symbol-map.json` (BTC to BTC-USD, ETH to ETH-USD, GOLD to GLD, BRK.B to BRK-B). The bond yields CA2Y, CA5Y and CA10Y are not replayed: a yield is not a price.
+- **How it is built:** `scripts/build_replay_dataset.py`, an offline tool never run by the web app (`uv venv scripts/.venv --python 3.13`, `uv pip install --python scripts/.venv/bin/python yfinance pandas`, then `scripts/.venv/bin/python scripts/build_replay_dataset.py`). It calls `history(auto_adjust=False, actions=True)` from 2020-12-01 to the day before extraction, one symbol at a time with pauses, retries with backoff on rate limits, and a resumable cache (`scripts/.cache/`, not committed). A snapshot folder is never overwritten: the script refuses if it exists.
+- **Quality checks**, recorded in the manifest and never corrected: missing trading days against the symbol's own exchange calendar (derived from the snapshot), day-to-day moves over 25% in adj_close, zero-volume days, incomplete history (starts late or ends early), unknown currency. A hard failure (download failed, unknown currency, history ending early, many missing days) excludes the symbol with its reason; a soft warning keeps it. In `yf-2026-11-15` no symbol was excluded; soft warnings cover late starts (for example GEV from 2024-03-27, SPCX from 2026-06-12, BAM.TO from 2022-12-01), a few large one-day moves and two zero-volume days.
+- **How the app reads it:** `lib/replay` (`SnapshotProvider`, through `getReplayProvider()`) reads the snapshot named by `REPLAY_SNAPSHOT_ID`, or the newest one, checks every file against the manifest's SHA-256 and row counts, and makes no network call. Returns use adj_close (dividends reinvested); USD amounts are converted to CAD with the day's USD/CAD close, or the last one known. `YahooLiveProvider` exists only as an option, off unless `REPLAY_ALLOW_LIVE=1`, and is labelled "données non figées".
+- **Why yfinance and a frozen snapshot:** it covers the whole universe (anyone can replay their own portfolio), it is the same source as the live quotes, adj_close gives total return, and freezing it makes runs reproducible (a new extraction changes past adjusted values) with no network during the demo. The snapshot id is shown and logged with every replay. The target storage is S3 (read-only role); the demo keeps it in the repo.
+- **Limits:**
+  - unofficial source, not certified by the exchanges;
+  - demonstration use only, not commercial: yfinance reads Yahoo data meant for personal and research use;
+  - survivorship bias: the universe is today's list of large companies, replayed into the past;
+  - no fees and no taxes by default;
+  - currency effect included: U.S. assets and crypto are converted to CAD at the day's rate;
+  - the window starts in December 2020, close to the 2021 market top that preceded the 2022 decline.
+
 ## Derived values
 
 Computed by our code from the values above; source label "derived", with the inputs and formula in the note.

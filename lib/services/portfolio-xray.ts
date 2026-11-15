@@ -3,10 +3,10 @@
 // nothing is written and no trade is placed, not even by the what-if.
 
 import { getAppLocale } from '@/i18n/locale';
-import { DEMO_USER } from '@/lib/demo-user';
 import type { FilterCheck, Position, ProfileConfig, Risk, Sourced } from '@/lib/domain/types';
 import { RULES } from '@/lib/rules';
 import type { DailyClose } from '@/lib/sources/types';
+import { currentScope, type Scope } from '@/lib/session';
 import { getProfile } from '@/lib/store';
 import { getEntry } from '@/lib/universe';
 import { checkProfileConflict } from '@/lib/watchlist/conflict';
@@ -72,8 +72,8 @@ function describeSeries(label: string, series: Sourced<Array<{ date: string }>>,
 }
 
 /** The held positions with their daily closes, the cash, and the USD/CAD history when a USD close needs it. */
-async function gather(locale: Locale): Promise<Gathered> {
-    const view = await getPortfolio(locale);
+async function gather(locale: Locale, scope: Scope): Promise<Gathered> {
+    const view = await getPortfolio(locale, scope);
     const priced = view.positions.filter((position) => position.valueCad !== null);
     const fx = await fxUsdCadHistory(fxStart()).catch(() => null);
     const sources: Array<Sourced<string>> = [];
@@ -106,7 +106,7 @@ async function gather(locale: Locale): Promise<Gathered> {
         input: { holdings, cashCad: view.cashCad, fx: fx?.value ?? [] },
         unpriced: view.unpriced,
         sources,
-        profile: await getProfile(DEMO_USER.id),
+        profile: await getProfile(scope.profileUserId),
     };
 }
 
@@ -129,8 +129,8 @@ function assemble(out: EngineOutput, gathered: Gathered, sources: Array<Sourced<
 }
 
 /** The X-ray of the simulated portfolio as it stands, valued now. Text it carries (group names) is in `locale`. */
-export async function getPortfolioXray(locale?: Locale): Promise<XrayView> {
-    const gathered = await gather(locale ?? await getAppLocale());
+export async function getPortfolioXray(locale?: Locale, scope?: Scope): Promise<XrayView> {
+    const gathered = await gather(locale ?? await getAppLocale(), scope ?? await currentScope());
     return assemble(computeEngine(gathered.input), gathered);
 }
 
@@ -141,8 +141,9 @@ const EPSILON = 0.005;
  * cannot exceed it), a reduction cannot exceed the position. For an addition, the profile conflicts the watchlist
  * filters would name, with their actual values. Nothing is traded or stored.
  */
-export async function getXrayWhatIf(change: XrayChange, locale?: Locale): Promise<XrayWhatIf> {
+export async function getXrayWhatIf(change: XrayChange, locale?: Locale, scope?: Scope): Promise<XrayWhatIf> {
     const lang = locale ?? await getAppLocale();
+    const s = scope ?? await currentScope();
     const entry = getEntry(change.symbol);
     if (!entry) throw new ServiceError(404, serviceRef('svc.not_in_universe', { symbol: change.symbol }));
     if (!isTradable(entry)) throw new ServiceError(400, serviceRef('svc.reference_value', { name: entry.name }));
@@ -151,7 +152,7 @@ export async function getXrayWhatIf(change: XrayChange, locale?: Locale): Promis
     }
     const amount = round2(change.amountCad);
 
-    const gathered = await gather(lang);
+    const gathered = await gather(lang, s);
     const { input } = gathered;
     // The series the before side reads; an asset not held yet adds its own to the after side only
     const beforeSources = [...gathered.sources];

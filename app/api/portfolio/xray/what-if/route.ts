@@ -1,16 +1,17 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { DEMO_USER } from '@/lib/demo-user';
-import { isRateLimited } from '@/lib/rate-limit';
+import { clientIp, isRateLimited } from '@/lib/rate-limit';
 import { ServiceError } from '@/lib/services/errors';
 import { requestLocale, respond } from '@/lib/services/http';
 import { getXrayWhatIf } from '@/lib/services/portfolio-xray';
 import { renderText, serviceRef } from '@/lib/services/text';
+import { requestScope } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const MAX_PER_MINUTE = 20;
+const MAX_PER_MINUTE_PER_IP = 60;
 
 const whatIfSchema = z.object({
     symbol: z.string().trim().min(1).max(20),
@@ -23,8 +24,10 @@ const whatIfSchema = z.object({
 export const POST = (req: NextRequest) => respond(async () => {
     const locale = await requestLocale(req);
     const change = whatIfSchema.parse(await req.json());
-    if (await isRateLimited(`xray-what-if:user:${DEMO_USER.id}`, MAX_PER_MINUTE, 60)) {
+    const scope = await requestScope(req);
+    if (await isRateLimited(`xray-what-if:session:${scope.sessionId}`, MAX_PER_MINUTE, 60)
+        || await isRateLimited(`xray-what-if:ip:${clientIp(req)}`, MAX_PER_MINUTE_PER_IP, 60)) {
         throw new ServiceError(429, renderText(serviceRef('svc.http.too_many', {}), locale));
     }
-    return getXrayWhatIf(change, locale);
+    return getXrayWhatIf(change, locale, scope);
 }, req);
