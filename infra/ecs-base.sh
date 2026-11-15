@@ -79,6 +79,10 @@ fi
 aws logs create-log-group --region "$REGION" --log-group-name "/ecs/${NAME}-web" 2>/dev/null || true
 DNS=$(aws elbv2 describe-load-balancers --region "$REGION" --load-balancer-arns "$ALB_ARN" --query 'LoadBalancers[0].DNSName' --output text)
 
+# The AgentCore runtime is created once by hand (see README); look its ARN up so a re-run keeps it
+AGENT_RUNTIME_ARN=$(aws bedrock-agentcore-control list-agent-runtimes --region "$REGION" --query "agentRuntimes[?agentRuntimeName=='datathon_agent'].agentRuntimeArn | [0]" --output text 2>/dev/null || true)
+[ "$AGENT_RUNTIME_ARN" = "None" ] && AGENT_RUNTIME_ARN=""
+
 cat > infra/outputs.env <<OUT
 REGION=$REGION
 ACCOUNT=$ACCOUNT
@@ -90,5 +94,6 @@ ALB_ARN=$ALB_ARN
 TG_ARN=$TG_ARN
 SECRET_ARN=$SECRET_ARN
 WEB_URL=http://$DNS
+AGENT_RUNTIME_ARN=$AGENT_RUNTIME_ARN
 OUT
 echo "done: http://$DNS"
