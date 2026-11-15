@@ -18,6 +18,8 @@ const schemaFor = (emptyMessage: string) => z.object({
     message: z.string().trim().min(1, emptyMessage).max(2000),
     history: z.array(z.object({ role: z.enum(['user', 'assistant']), text: z.string() })).max(40).optional(),
     conversationId: z.string().min(1).max(80).optional(),
+    // The page the user is on; the server turns it into a name from a fixed list (lib/agent/page.ts)
+    page: z.object({ path: z.string().max(120), xrayWindow: z.string().max(20).optional() }).optional(),
 });
 
 // The web side of one agent request. The reply never applies anything: a change comes back as a preview.

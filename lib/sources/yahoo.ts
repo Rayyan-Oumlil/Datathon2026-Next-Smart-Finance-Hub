@@ -31,7 +31,7 @@ async function chart(symbol: string, range: string) {
 }
 
 /** Daily closes, oldest first; days Yahoo leaves empty are skipped. `source` lets gold.ts say what the symbol is. */
-export function dailyCloses(symbol: string, range: '1y' | '1mo' = '1y', source = YAHOO): Promise<Sourced<DailyClose[]>> {
+export function dailyCloses(symbol: string, range: '1y' | '5y' | '1mo' = '1y', source = YAHOO): Promise<Sourced<DailyClose[]>> {
     return remember(`yahoo-closes-${symbol}-${range}`, DAY_MS, async () => {
         const { result, endpoint } = await chart(symbol, range);
         const offset = result.meta?.gmtoffset ?? 0;   // seconds; turns the bar time into the exchange's own date

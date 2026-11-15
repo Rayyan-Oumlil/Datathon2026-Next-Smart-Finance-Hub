@@ -13,8 +13,9 @@ const STORAGE_KEY = 'openstock-tabs';
 const MAX_TABS = 12;
 
 // Message keys of the Shell namespace (nav.*)
-const PAGE_LABELS: Record<string, 'portfolio' | 'overview' | 'profile'> = {
+const PAGE_LABELS: Record<string, 'portfolio' | 'overview' | 'profile' | 'xray'> = {
     '/portfolio': 'portfolio',
+    '/portfolio/xray': 'xray',
     '/overview': 'overview',
     '/profile': 'profile',
 };

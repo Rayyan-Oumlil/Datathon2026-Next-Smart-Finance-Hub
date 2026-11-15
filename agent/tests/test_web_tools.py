@@ -1,4 +1,5 @@
 import httpx
+import pytest
 
 from app import orchestrator, web_tools
 from tests.stub_web import TSLA
@@ -30,14 +31,74 @@ def test_each_tool_posts_to_its_endpoint(stub, current):
     web_tools.get_layout()
     web_tools.preview_profile_change(changes={"risk": "High"})
     orchestrator.check_profile_conflict(symbol="tsla")
+    web_tools.get_portfolio_xray()
     assert [r["path"].rsplit("/", 1)[-1] for r in stub.requests] == [
         "market-data", "explain-pick", "portfolio", "portfolio-stats", "validate-rule", "rules", "layout",
-        "profile-preview", "conflict-check"]
+        "profile-preview", "conflict-check", "portfolio-xray"]
     assert stub.requests[4]["body"]["rule"] == {
         "text": "t", "symbol": "AAPL", "trigger": {"type": "price_below", "value": 200},
         "action": {"side": "buy", "quantity": 2}, "once": True}
     assert current.validated_rule["id"] == "rule_stub1"
     assert current.conflict_checks["TSLA"]["conflicts"][0]["filter"] == "volatility"
+
+
+def test_xray_without_change_sends_the_locale_and_the_whole_history_window(stub, current):
+    result = web_tools.get_portfolio_xray()
+    assert stub.requests[-1]["path"] == "/api/internal/tools/portfolio-xray"
+    assert stub.requests[-1]["body"] == {"locale": "en", "window": "full", "userId": "demo-user"}
+    assert result["version"] == "xray-v1" and result["windows"]["last1y"]["available"] is False
+    assert current.tool_results[-1]["endpoint"] == "/api/internal/tools/portfolio-xray"
+
+
+def test_xray_with_change_sends_the_change_and_locale(stub, current):
+    current.context = {**current.context, "locale": "fr"}
+    result = web_tools.get_portfolio_xray(symbol="AAPL", amount_cad=500, direction="reduce")
+    assert stub.requests[-1]["body"] == {
+        "change": {"symbol": "AAPL", "amountCad": 500, "direction": "reduce"}, "locale": "fr", "window": "full", "userId": "demo-user"}
+    assert result["simulated"] is True and result["after"]["cashCad"] == 9500
+
+
+def test_xray_sends_the_one_window_asked_for_and_refuses_an_unknown_one_without_a_call(stub, current):
+    web_tools.get_portfolio_xray(window="last1y")
+    assert stub.requests[-1]["body"]["window"] == "last1y"
+    before = len(stub.requests)
+    assert "error" in web_tools.get_portfolio_xray(window="2022")
+    assert len(stub.requests) == before
+
+
+def test_the_model_reads_a_slim_xray_while_the_full_result_stays_in_the_trace(stub, current):
+    result = web_tools.get_portfolio_xray()
+    # the model: no repeated sourced figures, no series list; one source line instead
+    assert "figures" not in result and "sources" not in result and "assumptions" not in result
+    assert result["source"].startswith("derived (xray-v1)") and result["fetchedAt"] and result["asOf"] == "2026-11-13"
+    assert result["concentration"]["topHolding"]["symbol"] == "AAPL"
+    # the trace keeps the full result: the reply's sources are taken from it by plain code
+    full = current.tool_results[-1]["result"]
+    assert "figures" in full and "sources" in full
+    changed = web_tools.get_portfolio_xray(symbol="AAPL", amount_cad=500, direction="reduce")
+    assert "figures" not in changed["before"] and "figures" not in changed["after"] and changed["after"]["source"]
+
+
+def test_xray_refusal_is_not_data(stub, current):
+    result = web_tools.get_portfolio_xray(symbol="ZZZ", amount_cad=100, direction="add")
+    assert "error" in result and current.tool_results == []
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"symbol": "AAPL", "amount_cad": 100, "direction": "buy"},
+    {"symbol": "AAPL", "amount_cad": 100, "direction": "ADD"},
+    {"symbol": "AAPL", "amount_cad": 100},
+    {"symbol": "AAPL"},
+    {"amount_cad": 100, "direction": "add"},
+    {"direction": "reduce"},
+    {"symbol": "AAPL", "amount_cad": 0, "direction": "add"},
+    {"symbol": "AAPL", "amount_cad": -5, "direction": "add"},
+    {"symbol": "  ", "amount_cad": 5, "direction": "add"},
+])
+def test_xray_bad_input_makes_no_request(stub, current, kwargs):
+    result = web_tools.get_portfolio_xray(**kwargs)
+    assert set(result) == {"error"}
+    assert stub.requests == [] and current.tool_results == []
 
 
 def test_http_error_is_returned_not_raised(stub, current, table):

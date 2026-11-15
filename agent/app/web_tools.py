@@ -81,6 +81,67 @@ def get_portfolio_stats(metric: str, period: str, symbols: list[str] | None = No
     return call_web("portfolio-stats", body)
 
 
+XRAY_DIRECTIONS = ("add", "reduce")
+XRAY_WINDOWS = ("full", "last3y", "last1y")
+
+
+def _xray_for_model(result):
+    """What the portfolio specialist reads. The full result (every figure repeated as a sourced value, the list of
+    series) stays in the request's tool results, where plain code takes the reply's sources from it; the model
+    gets the figures once, with a single `source` line, so its report fits its output limit."""
+    if not isinstance(result, dict) or "error" in result:
+        return result
+    if "before" in result and "after" in result:
+        return {**result, "before": _xray_for_model(result["before"]), "after": _xray_for_model(result["after"])}
+    figures = result.get("figures") or {}
+    first = next((v for v in figures.values() if isinstance(v, dict) and "source" in v), None)
+    slim = {k: v for k, v in result.items() if k not in ("figures", "sources", "assumptions")}
+    if first:
+        slim["source"] = first["source"]
+        slim["fetchedAt"] = first["fetchedAt"]
+        if first.get("asOf"):
+            slim["asOf"] = first["asOf"]
+    return slim
+
+
+@tool
+def get_portfolio_xray(window: str = "full", symbol: str | None = None, amount_cad: float | None = None,
+                       direction: str | None = None) -> dict:
+    """The X-ray of the simulated portfolio. Read-only: nothing is traded or stored.
+
+    Without arguments: concentration (largest holding, top 3, effective holdings, groups, asset classes,
+    currencies), each holding's share of the risk, and three replay windows (full period of up to 5 years, last 3 years, last
+    1 year) with volatility, maximum drawdown, worst day, worst twenty-trading-day span (worstSpan20) and correlations, plus the
+    user's risk band and answer to the profile's market-drop question. The replay is a scenario: today's proportions applied
+    to past days. It is not what the portfolio earned and never a forecast.
+
+    With symbol, amount_cad and direction (all three together): the X-ray before and after that hypothetical
+    change, and the profile conflicts an addition would raise, with their values.
+
+    Args:
+        window: the one replay period to report: "full" (up to 5 years), "last3y" (3 years) or "last1y" (1 year).
+        symbol: the asset to add or reduce.
+        amount_cad: the amount of the change in CAD, greater than 0.
+        direction: "add" or "reduce".
+    """
+    if window not in XRAY_WINDOWS:
+        return {"error": 'window must be "full", "last3y" or "last1y"'}
+    given = [value is not None for value in (symbol, amount_cad, direction)]
+    body: dict = {"locale": trace.current().locale, "window": window}
+    if not any(given):
+        return _xray_for_model(call_web("portfolio-xray", body))
+    if not all(given):
+        return {"error": "symbol, amount_cad and direction must be given together, or none of them"}
+    if direction not in XRAY_DIRECTIONS:
+        return {"error": 'direction must be "add" or "reduce"'}
+    if isinstance(amount_cad, bool) or not isinstance(amount_cad, (int, float)) or not amount_cad > 0:
+        return {"error": "amount_cad must be a number greater than 0"}
+    if not str(symbol).strip():
+        return {"error": "symbol must not be empty"}
+    change = {"symbol": str(symbol).strip(), "amountCad": amount_cad, "direction": direction}
+    return _xray_for_model(call_web("portfolio-xray", {"change": change, **body}))
+
+
 # ---- rules
 @tool
 def validate_rule(text: str, symbol: str, trigger_type: str, trigger_value: float, side: str,

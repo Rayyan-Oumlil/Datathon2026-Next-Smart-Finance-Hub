@@ -32,5 +32,7 @@ export async function freshWorld(withProfile = true): Promise<void> {
     market.prices = { AAPL: { value: 100, currency: 'USD', change: 10 }, 'RY.TO': { value: 50, currency: 'CAD', change: 0 }, BTC: { value: 90000, currency: 'CAD' } };
     market.fx = 1.42;
     market.signals = {};
+    market.closes = {};
+    market.fxHistory = [];
     if (withProfile) await putProfile(buildProfile(DEMO_USER.id, answers(), NOW));
 }

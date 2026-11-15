@@ -9,6 +9,7 @@ from . import checks, config, orchestrator, prompts, sources, trace
 app = BedrockAgentCoreApp()
 
 LEVELS = ("Novice", "Intermediate", "Expert")
+PAGES = ("portfolio", "xray", "overview", "profile", "stock")
 
 
 def parse_request(payload) -> trace.RequestTrace:
@@ -24,6 +25,9 @@ def parse_request(payload) -> trace.RequestTrace:
         raise ValueError("context must be an object")
     if context.get("level") is not None and context["level"] not in LEVELS:
         raise ValueError("context.level must be Novice, Intermediate or Expert")
+    page = context.get("page")
+    if page is not None and not (isinstance(page, dict) and page.get("name") in PAGES):
+        raise ValueError("context.page.name must be portfolio, xray, overview, profile or stock")
     if context.get("locale") is not None and context["locale"] not in config.LOCALES:
         raise ValueError("context.locale must be en or fr")
     if not isinstance(history, list) or not all(

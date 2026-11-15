@@ -72,3 +72,25 @@ export const fxUsdCad = (): Promise<Sourced> => remember('boc-fx-usdcad', DAY_MS
 
 /** Target for the overnight rate, in percent. */
 export const policyRate = (): Promise<Sourced> => remember('boc-policy-rate', DAY_MS, () => single('V39079', '%', 'policy rate'));
+
+export type FxRow = { date: string; rate: number };
+
+/**
+ * Daily USD/CAD observations from `startDate` (YYYY-MM-DD) to the latest, oldest first. The Bank publishes no
+ * rate on Canadian holidays, so a consumer takes the last rate on or before a day.
+ */
+export function fxUsdCadHistory(startDate: string): Promise<Sourced<FxRow[]>> {
+    const endpoint = `${BASE_URL}/FXUSDCAD/json?start_date=${startDate}`;
+    return remember(`boc-fx-usdcad-history-${startDate}`, DAY_MS, async () => {
+        const json = await fetchJson<Observations>(endpoint);
+        const rows: FxRow[] = [];
+        for (const observation of json.observations ?? []) {
+            const cell = observation.FXUSDCAD;
+            const rate = typeof cell === 'object' && typeof cell.v === 'string' && cell.v.trim() !== '' ? Number(cell.v) : NaN;
+            if (Number.isFinite(rate) && rate > 0) rows.push({ date: observation.d, rate });
+        }
+        rows.sort((a, b) => a.date.localeCompare(b.date));
+        if (rows.length === 0) throw new Error('Bank of Canada returned no USD/CAD history');
+        return { value: rows, unit: 'CAD per USD', source: BANK_OF_CANADA, endpoint, fetchedAt: new Date().toISOString(), asOf: rows[rows.length - 1].date };
+    });
+}

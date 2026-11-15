@@ -82,7 +82,7 @@ export function chartBox(points: HistoryPoint[], baseline: number) {
 // ---------------------------------------------------------------- layout
 
 /** The modules this tab draws. 'price_alerts' is in the library but has no module here. */
-export const PORTFOLIO_MODULES = ['total_value', 'performance', 'holdings', 'sector_allocation', 'investment_rules'] as const;
+export const PORTFOLIO_MODULES = ['total_value', 'performance', 'holdings', 'sector_allocation', 'xray', 'investment_rules'] as const;
 export type ModuleId = (typeof PORTFOLIO_MODULES)[number];
 const isModule = (id: string): id is ModuleId => (PORTFOLIO_MODULES as readonly string[]).includes(id);
 

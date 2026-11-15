@@ -17,6 +17,7 @@ const WIDGET_FR: Record<string, string> = {
     holdings: 'Positions détenues',
     sector_allocation: 'Répartition par secteur',
     investment_rules: 'Règles de placement (simulées)',
+    xray: 'Radiographie du portefeuille',
 };
 const WIDGET_EN: Record<string, string> = {
     total_value: 'Total value (simulated)',
@@ -24,6 +25,7 @@ const WIDGET_EN: Record<string, string> = {
     holdings: 'Holdings',
     sector_allocation: 'Sector allocation',
     investment_rules: 'Investment rules (simulated)',
+    xray: 'Portfolio X-ray',
 };
 const own = (table: Record<string, string>, key: string) => (Object.prototype.hasOwnProperty.call(table, key) ? table[key] : key);
 /** A quantity of units, up to 6 decimals (fractional units exist in the simulation). */
@@ -244,6 +246,20 @@ export const SERVICE_TEXT = defineCatalog({
     'svc.stats.no_closes': {
         en: (p: Symbol) => `Daily closes for ${p.symbol} are not available right now.`,
         fr: (p: Symbol) => `Les cours de clôture quotidiens de ${p.symbol} ne sont pas disponibles en ce moment.`,
+    },
+
+    // ---- portfolio X-ray
+    'svc.xray.bad_amount': {
+        en: () => 'The amount must be a number above zero, in CAD.',
+        fr: () => 'Le montant doit être un nombre supérieur à zéro, en dollars canadiens.',
+    },
+    'svc.xray.not_held': {
+        en: (p: Symbol) => `The simulated portfolio holds no position in ${p.symbol}, so there is nothing to reduce.`,
+        fr: (p: Symbol) => `Le portefeuille simulé ne détient aucune position en ${p.symbol}; il n’y a rien à réduire.`,
+    },
+    'svc.xray.reduce_too_large': {
+        en: (p: { symbol: string; held: number; amount: number }, f) => `The simulated position in ${p.symbol} is worth ${f.num(p.held, 2)} CAD; ${f.num(p.amount, 2)} CAD cannot be removed.`,
+        fr: (p: { symbol: string; held: number; amount: number }, f) => `La position simulée en ${p.symbol} vaut ${f.cad(p.held)}; ${f.cad(p.amount)} ne peuvent pas être retirés.`,
     },
 
     // ---- simulated investment rules

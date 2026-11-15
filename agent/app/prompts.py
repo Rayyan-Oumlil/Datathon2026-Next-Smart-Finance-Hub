@@ -45,7 +45,7 @@ TRADE_WORDS = {
 CONTEXT_SLICE = {
     "market_data": ["level", "locale"],
     "watchlist_explainer": ["level", "risk", "watchlist", "locale"],
-    "portfolio": ["level", "holdings", "locale"],
+    "portfolio": ["level", "holdings", "page", "locale"],
     "rules": ["level", "holdings", "locale"],
     "layout": ["level", "layout", "locale"],
     "profile": ["level", "risk", "profile", "locale"],

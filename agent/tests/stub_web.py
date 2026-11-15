@@ -78,6 +78,53 @@ def validate_rule(body):
             "currentPrice": SIGNALS.get(rule["symbol"], AAPL)["price"]}
 
 
+def xray_view(aapl_value, cash):
+    total = aapl_value + cash
+    window = {"id": "full", "available": True, "from": "2021-11-12", "to": "2026-11-13", "observations": 1255,
+              "coverage": {"sharePct": 100.0, "included": ["AAPL"], "excluded": []},
+              "volatilityPct": 27.81, "maxDrawdown": {"pct": -30.91, "peakDate": "2022-01-03",
+                                                      "troughDate": "2023-01-03", "recoveredDate": "2023-06-05"},
+              "worstDay": {"pct": -5.87, "date": "2022-09-13"},
+              "worstSpan20": {"pct": -18.42, "from": "2022-04-21", "to": "2022-05-19"},
+              "diversificationRatio": None,
+              "risk": [{"symbol": "AAPL", "weightPct": 100.0, "volatilityPct": 27.81, "riskSharePct": 100.0}],
+              "pairs": []}
+    share = round(aapl_value / total * 100, 2)
+    return {
+        "version": "xray-v1", "simulated": True, "computedAt": FETCHED, "asOf": "2026-11-13",
+        "holdings": [{"symbol": "AAPL", "name": "Apple Inc.", "group": "Information Technology",
+                      "assetClass": "stock", "currency": "USD", "valueCad": aapl_value, "sharePct": share}],
+        "cashCad": cash, "cashSharePct": round(100 - share, 2), "totalValueCad": total,
+        "concentration": {"topHolding": {"symbol": "AAPL", "sharePct": share}, "top3SharePct": share,
+                          "effectiveHoldings": 1.0, "groups": [{"name": "Information Technology", "sharePct": share}],
+                          "assetClasses": [{"name": "stock", "sharePct": share}],
+                          "currencies": [{"name": "USD", "sharePct": share}]},
+        "windows": {"full": window, "last3y": {**window, "id": "last3y", "from": "2022-01-04", "to": "2022-12-30",
+                                              "observations": 250},
+                    "last1y": {"id": "last1y", "available": False, "reason": "not_enough_history"}},
+        "noHistory": [], "band": {"risk": "Medium", "volatilityLimitPct": 35.0}, "dropAnswer": "wait",
+        "unpriced": [],
+        "method": "xray-v1: constant-weights replay: today's proportions applied to every past day",
+        "assumptions": ["Scenario: today's proportions are applied to every past day."],
+        "sources": [{"value": "AAPL: 1256 daily values, 2021-11-12 to 2026-11-13", "unit": "USD",
+                     "source": "TMX Money getTimeSeriesData", "fetchedAt": FETCHED}],
+        "figures": {"topShare": {"value": share, "unit": "%", "source": "derived (xray-v1) from daily closes: TMX Money",
+                                 "fetchedAt": FETCHED, "asOf": "2026-11-13", "note": "share of the whole portfolio"}},
+    }
+
+
+def portfolio_xray(body):
+    change = body.get("change")
+    if not change:
+        return xray_view(1042.5, 9000)
+    if change.get("symbol") != "AAPL":
+        return {"error": f"{change.get('symbol')} is not in the universe"}
+    sign = 1 if change["direction"] == "add" else -1
+    return {"change": change, "before": xray_view(1042.5, 9000),
+            "after": xray_view(1042.5 + sign * change["amountCad"], 9000 - sign * change["amountCad"]),
+            "conflicts": [], "simulated": True}
+
+
 ROUTES = {
     "market-data": lambda b: {"items": [SIGNALS[s] for s in b.get("symbols", []) if s in SIGNALS]},
     "explain-pick": explain_pick,
@@ -95,6 +142,7 @@ ROUTES = {
     "portfolio-stats": lambda b: {"metric": b.get("metric"), "period": b.get("period"),
                                   "result": sourced(-4.2, source="derived", unit="%"),
                                   "method": "largest peak-to-trough fall of daily portfolio value", "sources": []},
+    "portfolio-xray": portfolio_xray,
     "layout": lambda b: {"current": ["total_value", "performance", "holdings"],
                          "library": [{"id": "total_value", "title": "Total value", "fixed": True},
                                      {"id": "performance", "title": "Performance chart", "fixed": False},

@@ -5,6 +5,7 @@
 import type { Locale } from '@/i18n/config';
 import { getAppLocale } from '@/i18n/locale';
 import type { Level, OnboardingAnswers, Risk } from '@/lib/domain/types';
+import type { AgentPage } from './page';
 import { getLayout } from '@/lib/services/layout';
 import { getPortfolioState } from '@/lib/services/portfolio';
 import { getProfile } from '@/lib/services/profile';
@@ -19,6 +20,7 @@ export type AgentContext = {
     holdings: Array<{ symbol: string; quantity: number; sector?: string }>;
     watchlist: Array<{ rank: number; symbol: string; name: string; total: number }>;
     layout: string[];
+    page?: AgentPage;               // the page the user is looking at, when it is one the app knows
 };
 
 export async function buildContext(): Promise<{ context: AgentContext; snapshotId: string | null }> {

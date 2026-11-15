@@ -85,7 +85,7 @@ def orchestrator_model() -> BedrockModel:
 
 @lru_cache(maxsize=None)
 def subagent_model() -> BedrockModel:
-    return _model(config.subagent_model_id(), 2000)
+    return _model(config.subagent_model_id(), 3000)
 
 
 @lru_cache(maxsize=None)

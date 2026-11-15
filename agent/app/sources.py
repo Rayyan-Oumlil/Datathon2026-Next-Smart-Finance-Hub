@@ -18,6 +18,26 @@ LABELS_FR = {
     "sectorLabel": "secteur", "closes1m": "cours de clôture sur 1 mois", "newsCount7d": "nombre de nouvelles (7 jours)",
     "valueCad": "valeur ($ CA)", "currentPrice": "cours", "fxUsdCad": "taux de change USD/CAD",
 }
+
+# The portfolio X-ray's figures (lib/xray/figures.ts): each key ends with its window, so the label says which period.
+_XRAY_WINDOWS = {"full": ("up to 5 years", "jusqu’à 5 ans"), "last3y": ("3 years", "3 ans"), "last1y": ("1 year", "1 an")}
+_XRAY_FIGURES = {
+    "volatility": ("volatility", "volatilité"), "maxDrawdown": ("maximum drawdown", "baisse maximale"),
+    "worstDay": ("worst day", "pire journée"), "weight": ("weight", "poids"), "riskShare": ("share of the risk", "part du risque"),
+}
+LABELS.update({"topShare": "largest holding share", "top3Share": "top-3 share", "effectiveHoldings": "effective holdings",
+               "cashShare": "cash share"})
+LABELS_FR.update({"topShare": "part de la plus grande position", "top3Share": "part des trois plus grandes positions",
+                  "effectiveHoldings": "positions effectives", "cashShare": "part des liquidités"})
+for _window, (_en, _fr) in _XRAY_WINDOWS.items():
+    for _figure, (_label_en, _label_fr) in _XRAY_FIGURES.items():
+        LABELS[f"{_figure}_{_window}"] = f"{_label_en} ({_en})"
+        LABELS_FR[f"{_figure}_{_window}"] = f"{_label_fr} ({_fr})"
+
+# The X-ray repeats one source line for a dozen figures; the reply lists it once, naming the figures it covers.
+XRAY_GROUP_LABEL = {"en": "X-ray figures", "fr": "Chiffres de la radiographie"}
+XRAY_SOURCE_PREFIX = "derived (xray-v1)"
+XRAY_NAMED = 3
 GLOSSARY_LABEL = {"en": "Glossary: {title}", "fr": "Glossaire : {title}"}
 VALUE_LABEL = {"en": "value", "fr": "valeur"}
 
@@ -93,4 +113,28 @@ def relevant(collected: list[dict], reply: str, locale: str = "en") -> list[dict
                 if item.get(field):
                     entry[field] = item[field]
             kept.append(entry)
-    return kept
+    return _group_xray(kept, locale)
+
+
+def _group_xray(kept: list[dict], locale: str) -> list[dict]:
+    """One entry for all the X-ray figures that share a source line and a time: its label names the first few
+    figures and counts the rest. Every other source is left as it is."""
+    groups: dict[tuple, list[dict]] = {}
+    for item in kept:
+        if item["source"].startswith(XRAY_SOURCE_PREFIX):
+            groups.setdefault((item["source"], item.get("fetchedAt"), item.get("asOf")), []).append(item)
+    if all(len(items) < 2 for items in groups.values()):
+        return kept
+    out, done = [], set()
+    for item in kept:
+        key = (item["source"], item.get("fetchedAt"), item.get("asOf"))
+        members = groups.get(key, [])
+        if len(members) < 2:
+            out.append(item)
+        elif key not in done:
+            done.add(key)
+            names = [m["label"] for m in members]
+            more = f" +{len(names) - XRAY_NAMED}" if len(names) > XRAY_NAMED else ""
+            label = f"{XRAY_GROUP_LABEL.get(locale, XRAY_GROUP_LABEL['en'])} ({', '.join(names[:XRAY_NAMED])}{more})"
+            out.append({**item, "label": label})
+    return out

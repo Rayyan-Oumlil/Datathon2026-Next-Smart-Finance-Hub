@@ -15,9 +15,11 @@ SUBAGENTS = {
         "description": "Why one symbol is, or is not, on the user's smart watchlist, from the decision log.",
     },
     "portfolio": {
-        "tools": [web_tools.get_portfolio, web_tools.get_portfolio_stats],
+        "tools": [web_tools.get_portfolio, web_tools.get_portfolio_stats, web_tools.get_portfolio_xray],
         "description": "The simulated portfolio: holdings, value, sector split; return, drawdown or correlation "
-                       "over 1m, 3m or 1y.",
+                       "over 1m, 3m or 1y; the X-ray: concentration, each holding's share of the risk, a replay "
+                       "of past periods (up to 5 years, 3 years, 1 year) as a scenario, and 'what if I add/reduce X' "
+                       "before and after, with profile conflicts.",
     },
     "rules": {
         "tools": [web_tools.validate_rule, web_tools.list_rules],

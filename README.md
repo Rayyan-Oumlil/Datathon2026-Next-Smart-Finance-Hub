@@ -11,6 +11,7 @@ Built on [OpenStock](https://github.com/Open-Dev-Society/OpenStock) by Open Dev 
 - **Onboarding** asks a few questions and computes an experience level (Novice, Intermediate, Expert) and a risk profile (Low, Medium, High) with versioned rules.
 - **Smart watchlist** ranks assets for that profile with fixed rules: filters, a four-factor score, a selection step. No model takes part in filtering, scoring or ranking. "Why?" on each card shows the score, every filter check with its actual values, and every input with its source and time.
 - **Simulated portfolio** starts with $10,000 CAD of pretend money. Trades are filled at the last price we hold and written to an append-only log; the portfolio is a replay of that log.
+- **Portfolio X-ray** (its own tab, opened from a summary card; results checked against an independent computation in `__tests__/xray/validation.test.ts`) shows concentration and each holding's share of the risk, replays today's proportions over past periods (up to five years, three years, one year) as a scenario, and shows "what if I add or reduce X" before and after, with any profile conflicts. Read-only; also available to the agent.
 - **Investment rules** ("when AAPL is below 150, simulate a purchase of 200 CAD") are checked against live quotes and fill in simulation only.
 - **Agent panel** answers questions, explains picks, and proposes changes (layout, rules, profile, simulated trades). It never applies anything itself: each change shows a before/after preview, waits for confirmation and can be undone. When a request conflicts with the user's profile, it names the conflict with the actual values and still lets the user proceed in simulation.
 
@@ -118,6 +119,7 @@ Details, endpoints and terms of use are in [docs/data-sources.md](docs/data-sour
 - Some state lives in a file inside the web container and is lost when the task restarts or is redeployed: the saved layout, investment rules, pins and dismissals, pending agent previews with their undo data, and the slow-moving state of the watchlist (which symbols were listed and since when). After a restart the next watchlist run starts without incumbents. The profile, both logs and therefore the portfolio are in DynamoDB and persist.
 - The interface is in English only. Privacy consent and legal disclaimers have not had a legal review.
 - The site has no sign-in, runs over plain HTTP, and every visitor shares the one demo user. The agent route is limited to 10 requests a minute. Do not share the link widely; set a new `DEMO_USER_ID` before a presentation to start from a clean history.
+- The X-ray replay counts price changes only (no dividends). Crypto history is about two years (Kraken's 720 daily bars), so a window it does not cover leaves it out and says so.
 - Price alerts and the earnings calendar from the board are not built. The Overview tab has a fixed layout; only the Portfolio tab's modules can be rearranged.
 
 ## Licence and credits

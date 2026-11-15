@@ -11,6 +11,7 @@
     "performance": "Graphique de rendement",
     "holdings": "Positions détenues",
     "sector_allocation": "Répartition par secteur",
+    "xray": "Radiographie du portefeuille",
     "investment_rules": "Règles de placement (simulées)"
   },
   "assetClass": {
