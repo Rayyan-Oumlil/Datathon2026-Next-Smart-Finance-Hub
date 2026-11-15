@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { AssetLogo } from '@/components/AssetLogo';
 import { RuleSentence } from '@/components/strategy';
 import type { ReplayOrder, ReplayResult } from '@/lib/replay/engine/types';
 import { conditionText, ruleById, ruleColor, ruleDescription, ruleIndex, ruleName } from './rules';
@@ -75,10 +76,10 @@ export default function EventDetail({ result, eventIndex, ordersById, onSelect }
                     <p className="text-[12px] font-bold text-muted-foreground">{t('event.orders', { count: orders.length })}</p>
                     <ul className="row-list mt-1 max-h-56 overflow-auto pe-1 text-[12.5px]" data-lenis-prevent>
                         {orders.map((o) => (
-                            <li key={o.id} className="py-1.5 text-foreground">{o.sentence[f.locale]}</li>
+                            <li key={o.id} className="flex items-start gap-2 py-1.5 text-foreground"><AssetLogo symbol={o.symbol} size={20} className="mt-px flex-none" /><span className="min-w-0">{o.sentence[f.locale]}</span></li>
                         ))}
                         {event.notPlaced.map((np, k) => (
-                            <li key={`np-${k}`} className="py-1.5 text-faint">{np.sentence[f.locale]}</li>
+                            <li key={`np-${k}`} className="flex items-start gap-2 py-1.5 text-faint"><AssetLogo symbol={np.symbol} size={20} className="mt-px flex-none opacity-60" /><span className="min-w-0">{np.sentence[f.locale]}</span></li>
                         ))}
                     </ul>
                 </div>

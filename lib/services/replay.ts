@@ -8,6 +8,7 @@ import { ReplayError, loadReplayData, runReplayOn, runSensitivityOn, type Portfo
 import { RULES_VERSION } from '@/lib/rules';
 import { currentScope, type Scope } from '@/lib/session';
 import { appendDecision } from '@/lib/store';
+import { getEntry } from '@/lib/universe';
 import { STRATEGY_CONFIG } from '@/lib/strategy/config';
 import { strategyRef } from '@/lib/strategy/text';
 import { parseStrategy, strategySymbols, type Strategy } from '@/lib/strategy/types';
@@ -178,5 +179,138 @@ export function replayDigest(result: ReplayResult, locale: 'fr' | 'en' = 'fr', m
         unreplayable: result.unreplayable.map((u) => ({ symbol: u.symbol, role: u.role, reason: u.reason })),
         firstEvents: result.ruleEvents.slice(0, maxEvents).map((event) => event.sentence[locale]),
         eventCount: result.ruleEvents.length,
+    };
+}
+
+// ---------------------------------------------------------------- comparison of several scenarios
+
+const MAX_SCENARIOS = 5;
+
+export const compareInputSchema = z.strictObject({
+    scenarios: z.array(z.strictObject({
+        label: z.string().trim().min(1).max(40),
+        portfolio: replayInputSchema.shape.portfolio,
+        strategy: replayInputSchema.shape.strategy,
+    })).min(1).max(MAX_SCENARIOS),
+    capitalCad: replayInputSchema.shape.capitalCad,
+    startDate: replayInputSchema.shape.startDate,
+    feePerOrderCad: replayInputSchema.shape.feePerOrderCad,
+});
+export type CompareReplayInput = z.input<typeof compareInputSchema>;
+
+export type CompareFiring = { ruleId: string; kind: ReplayResult['ruleEvents'][number]['kind']; n: number; executionDay: string; sentence: { fr: string; en: string } };
+
+export type CompareScenarioOk = {
+    ok: true;
+    label: string;
+    replayId: string;
+    window: ReplayResult['window'];
+    strategyName: string;
+    ruleCount: number;
+    holdings: Array<{ symbol: string; weightPct: number; name: string | null; assetClass: string | null }>;
+    /** The "with" series on the common dates: CAD value, and the index rebased to 100 on the first common date. */
+    series: { valueCad: number[]; index: number[] };
+    /** Measured by the engine on the scenario's own window (equal to the common one unless a symbol started later). */
+    metrics: ReplayResult['series']['with']['metrics'];
+    ruleStats: Array<{ ruleId: string; kind: string; n: number; fired: number }>;
+    firings: CompareFiring[];
+    unreplayable: Array<{ symbol: string; reason: string; sentence: { fr: string; en: string } }>;
+};
+export type CompareScenarioFailed = { ok: false; label: string; error: string };
+
+export type CompareResult = {
+    simulated: true;
+    snapshotId: string | null;
+    capitalCad: number;
+    requestedStartDate: string;
+    feePerOrderCad: number;
+    /** Dates every replayed scenario covers. */
+    dates: string[];
+    window: { from: string; to: string; tradingDays: number } | null;
+    scenarios: Array<CompareScenarioOk | CompareScenarioFailed>;
+    /** The shared benchmarks once, on the common dates. */
+    benchmarks: Array<{ id: string; available: boolean; valueCad: number[]; index: number[]; metrics: ReplayResult['series']['with']['metrics'] | null }>;
+};
+
+const rebased = (index: number[]) => {
+    const first = index[0];
+    return first > 0 ? index.map((v) => Math.round((v / first) * 100 * 1e4) / 1e4) : index;
+};
+
+/**
+ * Replays up to five portfolio + strategy pairs with the same amount, start date and fee, each through runReplay
+ * (same engine, same cache, same decision log), and lines the "with" series up on the dates they all cover. A
+ * scenario that cannot be replayed comes back with its reason; the others are still returned.
+ */
+export async function compareReplays(input: unknown, options: ReplayOptions & { locale?: 'fr' | 'en' } = {}): Promise<CompareResult> {
+    const parsed = compareInputSchema.parse(input);
+    const locale = options.locale ?? 'fr';
+    const runs: Array<{ label: string; result: ReplayResult } | { label: string; error: string }> = [];
+    for (const scenario of parsed.scenarios) {
+        try {
+            const result = await runReplay({ portfolio: scenario.portfolio, strategy: scenario.strategy ?? null, capitalCad: parsed.capitalCad, startDate: parsed.startDate, feePerOrderCad: parsed.feePerOrderCad }, options);
+            runs.push({ label: scenario.label, result });
+        } catch (error) {
+            if (error instanceof ServiceError) runs.push({ label: scenario.label, error: error.messageIn(locale) });
+            else if (error instanceof z.ZodError) runs.push({ label: scenario.label, error: error.issues.map((i) => i.message).join('; ') });
+            else throw error;
+        }
+    }
+
+    const done = runs.filter((r): r is { label: string; result: ReplayResult } => 'result' in r);
+    // the dates every replayed scenario covers (they share the calendar of the snapshot)
+    let dates: string[] = [];
+    if (done.length) {
+        const sets = done.slice(1).map((r) => new Set(r.result.dates));
+        dates = done[0].result.dates.filter((d) => sets.every((s) => s.has(d)));
+    }
+    const pick = (result: ReplayResult, values: number[]) => {
+        const at = new Map(result.dates.map((d, i) => [d, i]));
+        return dates.map((d) => values[at.get(d) ?? 0]);
+    };
+
+    const scenarios = runs.map((run): CompareScenarioOk | CompareScenarioFailed => {
+        if (!('result' in run)) return { ok: false, label: run.label, error: run.error };
+        const r = run.result;
+        const rules = r.params.strategy.rules;
+        const position = new Map(rules.map((rule, i) => [rule.id, i + 1]));
+        const kept = new Set(dates);
+        return {
+            ok: true,
+            label: run.label,
+            replayId: r.replayId,
+            window: r.window,
+            strategyName: rules.length ? r.params.strategy.name : '',
+            ruleCount: rules.length,
+            holdings: r.params.portfolio.map((p) => {
+                const entry = getEntry(p.symbol);
+                return { symbol: p.symbol, weightPct: p.weightPct, name: entry?.name ?? null, assetClass: entry?.assetClass ?? null };
+            }),
+            series: { valueCad: pick(r, r.series.with.valueCad), index: rebased(pick(r, r.series.with.index)) },
+            metrics: r.series.with.metrics,
+            ruleStats: r.ruleStats.map((s) => ({ ruleId: s.ruleId, kind: s.kind, n: position.get(s.ruleId) ?? 0, fired: s.fired })),
+            firings: r.ruleEvents
+                .filter((e) => e.series === 'with' && kept.has(e.executionDay))
+                .map((e) => ({ ruleId: e.ruleId, kind: e.kind, n: position.get(e.ruleId) ?? 0, executionDay: e.executionDay, sentence: e.sentence })),
+            unreplayable: r.unreplayable.map((u) => ({ symbol: u.symbol, reason: u.reason, sentence: u.sentence })),
+        };
+    });
+
+    const first = done[0]?.result;
+    return {
+        simulated: true,
+        snapshotId: first?.snapshotId ?? null,
+        capitalCad: parsed.capitalCad,
+        requestedStartDate: parsed.startDate,
+        feePerOrderCad: parsed.feePerOrderCad,
+        dates,
+        window: dates.length ? { from: dates[0], to: dates[dates.length - 1], tradingDays: dates.length } : null,
+        scenarios,
+        benchmarks: first
+            ? first.benchmarks.map((b) => {
+                const usable = b.available && b.valueCad.length === first.dates.length;
+                return { id: b.id, available: usable, valueCad: usable ? pick(first, b.valueCad) : [], index: usable ? rebased(pick(first, b.index)) : [], metrics: usable ? b.metrics : null };
+            })
+            : [],
     };
 }

@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { AssetLogo } from '@/components/AssetLogo';
 import type { ReplayOrder, ReplayResult } from '@/lib/replay/engine/types';
 import { ruleColor, ruleIndex, ruleName } from './rules';
 import { useReplayFmt } from './useReplayFmt';
@@ -57,7 +58,9 @@ export default function Journal({ result, eventOfOrder, selected, onSelect }: Pr
                     </span>
                 </td>
                 <td className={`!h-auto py-2 align-top ${isOn ? '!bg-brand-soft' : ''}`}>{f.date(o.executionDay)}</td>
-                <td className={`!h-auto min-w-[320px] !whitespace-normal py-2 align-top text-foreground ${isOn ? '!bg-brand-soft' : ''}`}>{o.sentence[f.locale]}</td>
+                <td className={`!h-auto min-w-[320px] !whitespace-normal py-2 align-top text-foreground ${isOn ? '!bg-brand-soft' : ''}`}>
+                    <span className="flex items-start gap-2"><AssetLogo symbol={o.symbol} size={20} className="mt-px flex-none" /><span className="min-w-0">{o.sentence[f.locale]}</span></span>
+                </td>
                 <td className={`is-num !h-auto py-2 align-top ${isOn ? '!bg-brand-soft' : ''}`}>{f.qty(o.quantity)}</td>
                 <td className={`is-num !h-auto py-2 align-top ${isOn ? '!bg-brand-soft' : ''}`}>{f.money(o.priceCad, 2)}</td>
                 <td className={`is-num !h-auto py-2 align-top ${isOn ? '!bg-brand-soft' : ''}`}>{f.money(o.feeCad, 2)}</td>

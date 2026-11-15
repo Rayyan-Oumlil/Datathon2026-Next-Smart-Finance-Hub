@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Copy, History, Info, MessageSquareText, TriangleAlert } from 'lucide-react';
+import { GitCompareArrows, History, Info, MessageSquareText, Rewind, TriangleAlert } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Panel from '@/components/Panel';
 import { StrategySummary } from '@/components/strategy';
@@ -11,6 +11,8 @@ import type { ReplayOrder, ReplayResult } from '@/lib/replay/engine/types';
 import { strategyRef } from '@/lib/strategy/text';
 import { renderText } from '@/lib/watchlist/text';
 import Comparison, { GapChart } from './Comparison';
+import CompareMode from './CompareMode';
+import CopyId from './CopyId';
 import Controls, { type ControlsValue, type ModelOption, type StrategyOption } from './Controls';
 import DatasetPanel, { type DatasetInfo } from './DatasetPanel';
 import EventDetail from './EventDetail';
@@ -44,28 +46,12 @@ function parseModels(json: unknown): ModelOption[] {
     return out;
 }
 
-function CopyId({ label, value }: { label: string; value: string }) {
-    const t = useTranslations('Replay');
-    const [done, setDone] = useState(false);
-    return (
-        <button
-            type="button"
-            onClick={() => { void navigator.clipboard?.writeText(value).then(() => { setDone(true); setTimeout(() => setDone(false), 1400); }); }}
-            className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-line bg-card px-2.5 py-1 text-[11.5px] text-faint transition-colors hover:text-foreground"
-            aria-label={t('ids.copy', { label, value })}
-        >
-            <span>{label}</span>
-            <span className="mono truncate text-muted-foreground">{value}</span>
-            {done ? <Check className="size-3 flex-none text-up" /> : <Copy className="size-3 flex-none" />}
-        </button>
-    );
-}
-
-type Props = { initialStrategyId?: string; replayId?: string };
+type Mode = 'single' | 'compare';
+type Props = { initialStrategyId?: string; replayId?: string; initialMode?: Mode };
 
 // The time machine: replays a portfolio on the frozen snapshot without and with a strategy, side by side.
 // Everything shown comes from the engine's result; this component only lays it out.
-export default function TimeMachine({ initialStrategyId, replayId }: Props) {
+export default function TimeMachine({ initialStrategyId, replayId, initialMode }: Props) {
     const t = useTranslations('Replay');
     const f = useReplayFmt();
     const player = usePlayer();
@@ -80,6 +66,10 @@ export default function TimeMachine({ initialStrategyId, replayId }: Props) {
     const [lastBody, setLastBody] = useState<Record<string, unknown> | null>(null);
     const [selected, setSelected] = useState<number | null>(null);
     const [benches, setBenches] = useState<BenchId[]>([]);
+    const [mode, setMode] = useState<Mode>(replayId ? 'single' : initialMode ?? 'single');
+
+    // a replay opened from the comparison (?replay=<id>) is shown in the single-run view
+    useEffect(() => { if (replayId) setMode('single'); }, [replayId]);
 
     // the visitor's strategies, the snapshot description, and the suggested portfolios of the visitor's profile
     useEffect(() => {
@@ -188,7 +178,7 @@ export default function TimeMachine({ initialStrategyId, replayId }: Props) {
                     </h1>
                     <p className="page-sub max-w-2xl">{t('page.sub')}</p>
                 </div>
-                {result && (
+                {mode === 'single' && result && (
                     <button type="button" className="btn btn-ghost h-9 px-3 text-[13px]" onClick={() => askAgent(t('page.askMessage', { id: result.replayId }))}>
                         <MessageSquareText /> {t('page.ask')}
                     </button>
@@ -201,6 +191,19 @@ export default function TimeMachine({ initialStrategyId, replayId }: Props) {
                 {t('page.label')}
             </p>
 
+            <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label={t('multi.modes')}>
+                {(['single', 'compare'] as const).map((m) => (
+                    <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}
+                        className={`btn btn-ghost h-9 gap-1.5 px-3.5 text-[13px] ${mode === m ? 'is-on' : ''}`}>
+                        {m === 'single' ? <Rewind /> : <GitCompareArrows />}
+                        {m === 'single' ? t('multi.tabSingle') : t('multi.tabCompare')}
+                    </button>
+                ))}
+            </div>
+
+            {mode === 'compare' && <CompareMode strategies={strategies} models={models} window={dataset?.window ?? null} />}
+
+            {mode === 'single' && <>
             <Panel title={t('controls.title')} sub={t('controls.sub')} bodyClassName="p-4">
                 <Controls
                     value={controls}
@@ -324,6 +327,8 @@ export default function TimeMachine({ initialStrategyId, replayId }: Props) {
                     </Panel>
                 </div>
             )}
+
+            </>}
 
             <DatasetPanel dataset={dataset} error={datasetError} />
         </div>
