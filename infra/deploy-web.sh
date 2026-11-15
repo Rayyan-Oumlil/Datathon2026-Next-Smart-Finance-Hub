@@ -15,6 +15,8 @@ aws ecr get-login-password --region "$REGION" | docker login --username AWS --pa
 docker buildx build --platform linux/amd64 -t "$IMAGE" --push .
 
 TMP=$(mktemp -d)
+# Git Bash on Windows: the AWS CLI (a Windows program) cannot open /tmp/... paths, so use the C:/... spelling there
+TMP=$(cygpath -m "$TMP" 2>/dev/null || echo "$TMP")
 cat > "$TMP/task.json" <<JSON
 {
   "family": "datathon-web",

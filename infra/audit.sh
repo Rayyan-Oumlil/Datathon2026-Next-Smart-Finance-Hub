@@ -12,6 +12,8 @@ CT_BUCKET="datathon-cloudtrail-${ACCOUNT}"
 IL_BUCKET="datathon-bedrock-invlogs-${ACCOUNT}"
 TRAIL=datathon-llm-audit
 TMP=$(mktemp -d)
+# Git Bash on Windows: the AWS CLI (a Windows program) cannot open /tmp/... paths, so use the C:/... spelling there
+TMP=$(cygpath -m "$TMP" 2>/dev/null || echo "$TMP")
 
 for B in "$CT_BUCKET" "$IL_BUCKET"; do
   aws s3api head-bucket --bucket "$B" 2>/dev/null || aws s3api create-bucket --bucket "$B" --region "$REGION" >/dev/null

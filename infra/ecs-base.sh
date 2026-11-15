@@ -8,6 +8,8 @@ ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 NAME=datathon
 set -a; . ./.env; set +a
 TMP=$(mktemp -d)
+# Git Bash on Windows: the AWS CLI (a Windows program) cannot open /tmp/... paths, so use the C:/... spelling there
+TMP=$(cygpath -m "$TMP" 2>/dev/null || echo "$TMP")
 
 echo "== secret"
 SECRET_JSON=$(python3 - <<PY
