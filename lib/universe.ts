@@ -90,6 +90,44 @@ export function themeBasis(symbol: string, theme: string): string | undefined {
         ?? rule.subIndustries.find((s) => s.name === entry.subIndustry)?.basis;
 }
 
+/** Filter families offered by the search palette. 'bond' and 'gold' also take the funds that hold them. */
+export const UNIVERSE_KINDS = ['stock', 'etf', 'bond', 'crypto', 'gold'] as const;
+export type UniverseKind = (typeof UNIVERSE_KINDS)[number];
+export type UniverseFilter = { kind?: UniverseKind; market?: 'US' | 'Canada'; sector?: string };
+
+const BOND_FUND = /\bbond|treasury/i;
+const GOLD_FUND = /\bgold\b/i;
+const fundText = (entry: UniverseEntry) => `${entry.name} ${entry.etf?.index ?? ''}`;
+
+/** Which palette family an entry belongs to; a bond fund is also an ETF, a gold fund is also an ETF. */
+export function matchesKind(entry: UniverseEntry, kind: UniverseKind): boolean {
+    switch (kind) {
+        case 'stock': return entry.assetClass === 'stock';
+        case 'etf': return entry.assetClass === 'etf';
+        case 'bond': return entry.assetClass === 'etf' && BOND_FUND.test(fundText(entry));
+        case 'crypto': return entry.assetClass === 'crypto';
+        case 'gold': return entry.assetClass === 'gold' || (entry.assetClass === 'etf' && GOLD_FUND.test(fundText(entry)));
+    }
+}
+
+export const hasUniverseFilter = (filter: UniverseFilter) => !!(filter.kind || filter.market || filter.sector);
+
+/**
+ * Search with filters. With text, the order of searchUniverse; without text, every matching entry sorted by name.
+ * A sector only matches stocks (funds carry no GICS sector).
+ */
+export function filterUniverse(q: string, filter: UniverseFilter, limit = 60): UniverseEntry[] {
+    if (!(limit > 0)) return [];
+    const keep = (entry: UniverseEntry) =>
+        (!filter.kind || matchesKind(entry, filter.kind))
+        && (!filter.market || entry.market === filter.market)
+        && (!filter.sector || entry.sector === filter.sector);
+    const pool = q.trim()
+        ? searchUniverse(q, ENTRIES.length)
+        : [...ENTRIES].sort((a, b) => byName(a.name, b.name));
+    return pool.filter(keep).slice(0, limit);
+}
+
 /** Search by symbol or name. Exact symbol first, then symbols starting with the text, then names containing it. */
 export function searchUniverse(q: string, limit = 10): UniverseEntry[] {
     const text = q.trim().toUpperCase();

@@ -13,5 +13,47 @@
   "addFailed": "Couldn’t add the symbol",
   "addTitle": "Add {symbol} to {list}",
   "add": "Add",
-  "adding": "Adding"
+  "adding": "Adding",
+  "noFilterMatch": "No asset matches these filters",
+  "filters": {
+    "type": "Asset type",
+    "kinds": {
+      "all": "All",
+      "stock": "Stocks",
+      "etf": "ETFs",
+      "bond": "Bonds",
+      "crypto": "Crypto",
+      "gold": "Gold"
+    },
+    "market": "Market",
+    "allMarkets": "All markets",
+    "sector": "Sector",
+    "allSectors": "All sectors",
+    "clear": "Clear filters"
+  },
+  "kinds": {
+    "stock": "Stock",
+    "etf": "ETF",
+    "bondEtf": "Bond ETF",
+    "crypto": "Crypto",
+    "gold": "Gold",
+    "bond_yield": "Bond yield"
+  },
+  "markets": {
+    "Canada": "Canada",
+    "US": "United States"
+  },
+  "sectors": {
+    "Communication Services": "Communication Services",
+    "Consumer Discretionary": "Consumer Discretionary",
+    "Consumer Staples": "Consumer Staples",
+    "Energy": "Energy",
+    "Financials": "Financials",
+    "Industrials": "Industrials",
+    "Information Technology": "Information Technology",
+    "Materials": "Materials",
+    "Real Estate": "Real Estate",
+    "Utilities": "Utilities",
+    "Health Care": "Health Care"
+  }
 }

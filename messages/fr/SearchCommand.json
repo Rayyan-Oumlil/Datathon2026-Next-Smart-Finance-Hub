@@ -13,5 +13,47 @@
   "addFailed": "Impossible d’ajouter le symbole",
   "addTitle": "Ajouter {symbol} à {list}",
   "add": "Ajouter",
-  "adding": "Ajout en cours"
+  "adding": "Ajout en cours",
+  "noFilterMatch": "Aucun titre ne correspond à ces filtres",
+  "filters": {
+    "type": "Type de titre",
+    "kinds": {
+      "all": "Tous",
+      "stock": "Actions",
+      "etf": "FNB",
+      "bond": "Obligations",
+      "crypto": "Cryptos",
+      "gold": "Or"
+    },
+    "market": "Marché",
+    "allMarkets": "Tous les marchés",
+    "sector": "Secteur",
+    "allSectors": "Tous les secteurs",
+    "clear": "Effacer les filtres"
+  },
+  "kinds": {
+    "stock": "Action",
+    "etf": "FNB",
+    "bondEtf": "FNB obligataire",
+    "crypto": "Cryptoactif",
+    "gold": "Or",
+    "bond_yield": "Rendement obligataire"
+  },
+  "markets": {
+    "Canada": "Canada",
+    "US": "États-Unis"
+  },
+  "sectors": {
+    "Communication Services": "Services de communication",
+    "Consumer Discretionary": "Consommation discrétionnaire",
+    "Consumer Staples": "Biens de consommation de base",
+    "Energy": "Énergie",
+    "Financials": "Finance",
+    "Industrials": "Industrie",
+    "Information Technology": "Technologies de l’information",
+    "Materials": "Matériaux",
+    "Real Estate": "Immobilier",
+    "Utilities": "Services publics",
+    "Health Care": "Soins de santé"
+  }
 }
