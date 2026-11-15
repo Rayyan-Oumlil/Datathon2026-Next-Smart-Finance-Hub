@@ -199,6 +199,24 @@ describe('preview, apply, undo', () => {
         expect(await getProfile()).toMatchObject({ risk: 'Medium', riskOverridden: false, level: start.level, answers: start.answers });
     });
 
+    it('profile_change with a persona switches to its onboarding answers, and the rules compute the level and risk', async () => {
+        const start = (await getProfile())!;
+        const routed = await preview('fp1', 'profile_change', { changes: { persona: 'amira' } });
+        expect(routed.preview.after).toMatchObject({ risk: 'High' });
+        expect(routed.preview.rows.some((r) => r.label === 'Experience' || r.before !== r.after)).toBe(true);
+        expect((await getProfile())!.risk).toBe(start.risk);                         // a preview changes nothing
+
+        await apply('fp1');
+        expect(await getProfile()).toMatchObject({ risk: 'High', riskOverridden: false, levelOverridden: false, answers: { investingGoal: 'growth', echeance: '5+ yrs', drop20: 'buy_more', selfRating: 'high' } });
+        await undo('fp1');
+        expect(await getProfile()).toMatchObject({ risk: start.risk, level: start.level, answers: start.answers });
+    });
+
+    it('profile_change refuses a persona that does not exist', async () => {
+        const routed = await route('fp2', propose('profile_change', { changes: { persona: 'nobody' } }), 'en', TEST_SCOPE);
+        expect(routed.outcome).not.toBe('preview');
+    });
+
     it('profile_change preview uses the onboarding wording, never the stored field names or values', async () => {
         const start = (await getProfile())!;
         const routed = await preview('f2', 'profile_change', { changes: { drop20: start.answers.drop20 === 'sell' ? 'buy_more' : 'sell' } });

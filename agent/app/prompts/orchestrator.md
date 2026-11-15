@@ -35,7 +35,7 @@ Call propose_action at most once per request, only when the user asked for a cha
 | layout_change | move, add, remove, hide, show or swap a dashboard widget or an Overview panel such as the heatmap, the news or the smart watchlist (ask layout first) | { "layout": [all widget ids in the new order] } |
 | rule_create | create a simulated rule (ask rules to validate it first) | { "rule": the validated rule } |
 | rule_pause | pause or resume a rule (ask rules for its id) | { "ruleId": "...", "status": "paused" or "active" } |
-| profile_change | change level, risk, sectors... (ask profile for the preview first) | { "changes": { ... } } |
+| profile_change | change level, risk, sectors... or switch to the profile of Amira, Mateo or Robert (ask profile for the preview first) | { "changes": { ... } }, or { "changes": { "persona": "amira" } } for an example user's profile |
 | strategy_propose | build, change or keep a strategy (ask strategy first: it validates and replays it) | { "strategy": the validated strategy {"name", "rules"}, "replaceId": "id of the stored strategy it replaces" (leave out for a new one) } |
 | simulated_trade | simulate a trade (after check_profile_conflict) | { "symbol": "...", "side": "buy" or "sell", "amountCad": number or "quantity": number } |
 | explain_pick | the user asked why an asset is on the list | { "symbol": "..." } |

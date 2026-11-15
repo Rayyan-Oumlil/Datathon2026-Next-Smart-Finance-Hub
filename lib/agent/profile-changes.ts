@@ -1,6 +1,7 @@
 // The shape of a profile change coming from the agent: { level?, risk?, sectors?, ... }, checked field by field.
 
 import { z } from 'zod';
+import { PERSONAS } from '@/lib/personas/presets';
 import type { ProfilePatch } from '@/lib/services/profile';
 
 const text = z.string().trim().min(1).max(80);
@@ -27,11 +28,16 @@ export const profileChangesSchema = answers.extend({
     level: z.enum(['Novice', 'Intermediate', 'Expert']).nullable().optional(),
     risk: z.enum(['Low', 'Medium', 'High']).nullable().optional(),
     answers: answers.optional(),        // the same fields, nested: both spellings are accepted
+    persona: z.enum(['amira', 'mateo', 'robert']).optional(),   // "switch to Amira's profile": her onboarding answers, level and risk recomputed by the rules
 }).strict();
 export type ProfileChanges = z.infer<typeof profileChangesSchema>;
 
 export function toProfilePatch(changes: ProfileChanges): ProfilePatch {
-    const { level, risk, answers: nested, ...flat } = changes;
-    const given = Object.fromEntries(Object.entries({ ...nested, ...flat }).filter(([, value]) => value !== undefined));
-    return { ...(level !== undefined ? { level } : {}), ...(risk !== undefined ? { risk } : {}), answers: given };
+    const { level, risk, answers: nested, persona, ...flat } = changes;
+    // A persona stands for its onboarding answers: the Level and Risk rules run on them like on anyone's, and a level
+    // or risk chosen by hand is dropped so the result is the rules' own. Fields given next to it still win.
+    const base = persona ? PERSONAS[persona].answers : {};
+    const given = Object.fromEntries(Object.entries({ ...base, ...nested, ...flat }).filter(([, value]) => value !== undefined));
+    const fromPersona = persona ? { level: null, risk: null } : {};
+    return { ...fromPersona, ...(level !== undefined ? { level } : {}), ...(risk !== undefined ? { risk } : {}), answers: given };
 }

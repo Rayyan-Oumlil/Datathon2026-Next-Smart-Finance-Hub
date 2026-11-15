@@ -275,7 +275,9 @@ def preview_profile_change(changes: dict) -> dict:
     Nothing is saved.
 
     Args:
-        changes: fields to change, for example {"risk": "High"} or {"sectors": ["Energy"]}.
+        changes: fields to change, for example {"risk": "High"} or {"sectors": ["Energy"]}. To switch to the
+            profile of an example user, give only {"persona": "amira"} (or "mateo", "robert"): the app applies that
+            example's onboarding answers and the rules compute the level and risk.
     """
     return call_web("profile-preview", {"changes": changes})
 

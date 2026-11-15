@@ -213,7 +213,7 @@ async function profilePreview(changes: ProfileChanges, locale: Locale, scope: Sc
     const now = worded(edit.profile.answers);
     const answerRows = [...new Set([...was.keys(), ...now.keys()])].filter((question) => was.get(question) !== now.get(question))
         .map((question) => ({ label: question, before: was.get(question) ?? words.notAsked, after: now.get(question) ?? words.notAsked }));
-    const named = [...answerRows.map((row) => row.label), ...(patch.level !== undefined ? [words.levelLabel] : []), ...(patch.risk !== undefined ? [words.riskLabel] : [])];
+    const named = [...answerRows.map((row) => row.label), ...(patch.level != null ? [words.levelLabel] : []), ...(patch.risk != null ? [words.riskLabel] : [])];
     const { levelResult, riskResult } = edit.profile;
     return {
         before: { ...edit.before, answers: pick(existing!.answers) },
