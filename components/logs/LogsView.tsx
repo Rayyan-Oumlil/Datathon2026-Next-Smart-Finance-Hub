@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { Copy, Download, RefreshCw } from 'lucide-react';
 import { formatDateTime, formatNumber } from '@/i18n/format';
+import { useDataChanged } from '@/hooks/useDataChanged';
 import { cn } from '@/lib/utils';
 import type { AgentActionLogEntry, DecisionLogEntry } from '@/lib/domain/types';
 
@@ -68,6 +69,8 @@ const LogsView = ({ initialActionId, initialTab }: { initialActionId: string; in
     const [agentRows, setAgentRows] = useState<AgentActionLogEntry[] | null>(null);
     const [decisions, setDecisions] = useState<DecisionLogEntry[] | null>(null);
     const [error, setError] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const request = useRef(0);   // only the answer to the latest request is shown
 
     useEffect(() => {
         fetch('/api/logs/generations', { cache: 'no-store' }).then((r) => r.json()).then((data) => setGenerations(data.generations ?? [])).catch(() => setGenerations([]));
@@ -79,19 +82,27 @@ const LogsView = ({ initialActionId, initialTab }: { initialActionId: string; in
         if (generation) { const [p, f] = generation.split('/'); params.set('p', p); params.set('f', f); }
         if (tab === 'agent' && actionId) params.set('actionId', actionId);
         if (tab === 'decisions' && kind) params.set('kind', kind);
-        if (tab === 'agent') setAgentRows(null); else setDecisions(null);
+        // The rows on screen stay (dimmed) while the filtered ones are read: an emptied table would shorten the page
+        setLoading(true);
+        const id = ++request.current;
         try {
             const response = await fetch(`/api/logs?${params}`, { cache: 'no-store' });
             const data = await response.json();
+            if (id !== request.current) return;
             if (!response.ok) throw new Error(data?.error);
             if (tab === 'agent') setAgentRows(data.rows ?? []); else setDecisions(data.decisions ?? []);
         } catch {
+            if (id !== request.current) return;
             setError(true);
             if (tab === 'agent') setAgentRows([]); else setDecisions([]);
+        } finally {
+            if (id === request.current) setLoading(false);
         }
     }, [tab, generation, actionId, kind]);
 
     useEffect(() => { void load(); }, [load]);
+    // A change saved by the agent adds rows
+    useDataChanged(() => void load());
 
     // The filter lives in the address too, so a timeline link and a copied address show the same rows
     const applyActionId = (value: string) => {
@@ -162,11 +173,11 @@ const LogsView = ({ initialActionId, initialTab }: { initialActionId: string; in
                 </div>
 
                 <p className="text-xs text-faint" aria-live="polite">
-                    {rows === null ? t('loading') : error ? t('error') : rows.length === 0 ? t('empty') : t('count', { count: rows.length })}
+                    {rows === null || loading ? t('loading') : error ? t('error') : rows.length === 0 ? t('empty') : t('count', { count: rows.length })}
                 </p>
 
                 {tab === 'agent' && agentRows && agentRows.length > 0 && (
-                    <div className="overflow-x-auto">
+                    <div aria-busy={loading} className={cn('overflow-x-auto transition-opacity', loading && 'opacity-60')}>
                         <table className="w-full text-start text-xs">
                             <thead className="text-faint">
                                 <tr className="border-b border-line">
@@ -202,7 +213,7 @@ const LogsView = ({ initialActionId, initialTab }: { initialActionId: string; in
                 )}
 
                 {tab === 'decisions' && decisions && decisions.length > 0 && (
-                    <div className="overflow-x-auto">
+                    <div aria-busy={loading} className={cn('overflow-x-auto transition-opacity', loading && 'opacity-60')}>
                         <table className="w-full text-start text-xs">
                             <thead className="text-faint">
                                 <tr className="border-b border-line">

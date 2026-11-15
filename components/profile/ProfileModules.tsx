@@ -86,6 +86,12 @@ export default function ProfileModules({ profile: initial, bands }: { profile: P
     const t = useTranslations('Profile');
     const locale = useLocale();
     const [profile, setProfile] = useState(initial);
+    // The server sends the profile again after a refresh (a change saved or undone by the agent): show it, in place
+    const [received, setReceived] = useState(initial);
+    if (received !== initial) {
+        setReceived(initial);
+        setProfile(initial);
+    }
     // A level or risk the agent proposed, still waiting for Save: marked on its card, with the buttons beside it
     const pending = usePendingProposal('/profile');
     const proposedLevel = pending?.profile?.level && pending.profile.level !== profile.level ? pending.profile.level : null;

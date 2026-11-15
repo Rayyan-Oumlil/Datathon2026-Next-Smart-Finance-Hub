@@ -7,6 +7,7 @@ import { ChevronDown, ListChecks, Rows3, RefreshCw, Search, TriangleAlert } from
 import { toast } from "sonner";
 import AssetLogo from "@/components/AssetLogo";
 import type { AssetClass, Level, SignalSet, Sourced, WatchlistResult } from "@/lib/domain/types";
+import { useDataChanged } from "@/hooks/useDataChanged";
 import { cn } from "@/lib/utils";
 import { formatPercent } from "@/i18n/format";
 import { FACTOR_KEYS, factorLabel, factorShort, notAvailable, formatSignal, formatTime, isStale, kindLabel, marketLabel, missingLabel, ruleIdLabel, type FactorKey, type SignalKey, type WatchlistRulesView } from "./format";
@@ -130,7 +131,10 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
             const res = await fetch('/api/watchlist', { cache: 'no-store' });
             const body = await res.json();
             if (!res.ok) throw new Error(typeof body.error === 'string' ? body.error : t('list.loadFailedFallback'));
-            setView(body);
+            // While a new list is being built, the one on screen stays (marked as recomputing) instead of an empty card
+            setView((previous) => (body.building && !body.result && !body.needsProfile && !body.error && previous?.result
+                ? { ...body, result: previous.result, signalsDate: previous.signalsDate, stale: previous.stale }
+                : body));
             setLoadError(null);
         } catch (error) {
             setLoadError(error instanceof Error && error.message ? error.message : t('list.loadFailedFallback'));
@@ -138,6 +142,8 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
     }, [t]);
 
     useEffect(() => { void load(); }, [load]);
+    // A change saved by the agent (profile, simulated portfolio): read the list again, keeping what is on screen meanwhile
+    useDataChanged(() => void load());
 
     useEffect(() => {
         try { setCompact(window.localStorage.getItem(COMPACT_KEY) === '1'); } catch { /* storage blocked: default view */ }
@@ -367,7 +373,7 @@ export default function SmartWatchlist({ rules }: { rules: WatchlistRulesView })
                                 </p>
                             </div>
                         ) : (
-                            <ul className={cn('grid gap-3', compact ? 'gap-1.5' : level === 'Expert' ? '@4xl:grid-cols-2' : '@2xl:grid-cols-2 @6xl:grid-cols-3')}>
+                            <ul aria-busy={building || busy === 'recompute'} className={cn('grid gap-3 transition-opacity', compact ? 'gap-1.5' : level === 'Expert' ? '@4xl:grid-cols-2' : '@2xl:grid-cols-2 @6xl:grid-cols-3', building && 'opacity-70')}>
                                 {picks.map((pick) => (
                                     <PickCard
                                         key={pick.symbol} pick={pick} level={level} rules={rules} ruleVersions={result.ruleVersions}

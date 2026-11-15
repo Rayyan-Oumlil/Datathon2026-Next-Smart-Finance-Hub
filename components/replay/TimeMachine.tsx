@@ -5,6 +5,7 @@ import { GitCompareArrows, History, Info, MessageSquareText, Rewind, TriangleAle
 import { useTranslations } from 'next-intl';
 import Panel from '@/components/Panel';
 import { RuleFlow, StrategySummary, ViewToggle, useRuleView } from '@/components/strategy';
+import { useDataChanged } from '@/hooks/useDataChanged';
 import { askAgent } from '@/lib/agent/page-detail';
 import { PERSONAS, isPersonaName } from '@/lib/personas/presets';
 import type { ReplayOrder, ReplayResult } from '@/lib/replay/engine/types';
@@ -72,12 +73,18 @@ export default function TimeMachine({ initialStrategyId, replayId, initialMode }
     // a replay opened from the comparison (?replay=<id>) is shown in the single-run view
     useEffect(() => { if (replayId) setMode('single'); }, [replayId]);
 
-    // the visitor's strategies, the snapshot description, and the suggested portfolios of the visitor's profile
-    useEffect(() => {
+    const loadStrategies = useCallback(() => {
         fetch('/api/strategy').then((r) => r.json()).then((json) => {
             const list = Array.isArray(json?.strategies) ? json.strategies as Array<{ id: string; name: string; rules?: unknown[] }> : [];
             setStrategies(list.map((s) => ({ id: s.id, name: s.name, ruleCount: s.rules?.length ?? 0 })));
-        }).catch(() => setStrategies([]));
+        }).catch(() => setStrategies((current) => current ?? []));
+    }, []);
+    // a strategy the agent created or changed appears in the list, without the page being mounted again
+    useDataChanged(loadStrategies);
+
+    // the visitor's strategies, the snapshot description, and the suggested portfolios of the visitor's profile
+    useEffect(() => {
+        loadStrategies();
         fetch('/api/replay/dataset').then(async (r) => {
             const json = await r.json().catch(() => ({}));
             if (!r.ok) throw new Error(typeof json.error === 'string' ? json.error : t('states.errorGeneric'));
@@ -85,7 +92,7 @@ export default function TimeMachine({ initialStrategyId, replayId, initialMode }
         }).catch((e: Error) => setDatasetError(e.message));
         // 409 = no profile yet: the suggested options are simply not offered
         fetch('/api/model-portfolios').then((r) => (r.ok ? r.json() : null)).then((json) => setModels(json ? parseModels(json) : [])).catch(() => setModels([]));
-    }, [t]);
+    }, [t, loadStrategies]);
 
     // a strategy id in the address that the visitor does not hold falls back to "no rule"
     useEffect(() => {
