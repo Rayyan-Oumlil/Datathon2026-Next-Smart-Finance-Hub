@@ -97,5 +97,21 @@
   "sourceNames": {
     "demodata": "demo data",
     "derived": "derived"
+  },
+  "voice": {
+    "start": "Talk to the agent",
+    "stop": "Stop and send",
+    "hint": "Hold Alt+V to talk",
+    "processing": "Finishing the transcription",
+    "listening": "Listening… release Alt+V or tap the microphone to send. Esc cancels.",
+    "starting": "Starting the microphone…",
+    "unsupported": "Voice input is not available in this browser. Use Chrome, Edge or Safari.",
+    "insecure": "Voice input needs a secure (HTTPS) connection.",
+    "errors": {
+      "denied": "Microphone access is blocked. Allow it in your browser's site settings.",
+      "noSpeech": "Nothing was heard. Try again.",
+      "unavailable": "The transcription service is not available right now. Type your message instead.",
+      "failed": "Voice input stopped working. Type your message instead."
+    }
   }
 }

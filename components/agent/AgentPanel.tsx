@@ -7,6 +7,8 @@ import { AlertTriangle, MessageSquareText, RotateCcw, SendHorizontal, Undo2, X }
 import { cn } from "@/lib/utils";
 import { formatNumber, formatDateTime } from "@/i18n/format";
 import { formatMoment, sourceLabel } from "@/components/agent/time";
+import { VoiceButton, VoiceStatus } from "@/components/agent/Voice";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
 
 type Source = { label: string; source: string; fetchedAt?: string; asOf?: string };
 type Check = { filter: string; pass: boolean; detail: string };
@@ -228,10 +230,28 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
     useEffect(() => {
         if (!open) return;
         inputRef.current?.focus();
-        const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onOpenChange(false); };
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') return;
+            if (voiceRef.current.active) { voiceRef.current.cancel(); setDraft(voiceBase.current); } else onOpenChange(false);
+        };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
     }, [open, onOpenChange]);
+
+    // Dictation: the live text fills the box after whatever was typed, and the finished text is sent like a typed message
+    const voiceBase = useRef('');
+    const withBase = (text: string) => [voiceBase.current, text].filter(Boolean).join(' ').slice(0, 2000);
+    const voice = useVoiceInput({
+        enabled: open,
+        onStart: () => { voiceBase.current = draft.trim(); },
+        onText: (text) => setDraft(withBase(text)),
+        // A reply still being written must not swallow the question: keep it in the box instead
+        onFinal: (text) => { if (waiting) setDraft(withBase(text)); else void send(withBase(text)); },
+    });
+    const voiceRef = useRef(voice);
+    voiceRef.current = voice;
+    // Send or Enter while dictating ends the dictation (which then sends); it never sends the half-heard text as well
+    const submit = () => { if (voiceRef.current.active) voiceRef.current.stop(); else void send(draft); };
 
     const patch = (id: string, change: Partial<Message>) => setMessages((list) => list.map((message) => (message.id === id ? { ...message, ...change } : message)));
     const notice = (text: string) => setMessages((list) => [...list, { id: newId(), role: 'assistant', text, failed: true }]);
@@ -382,24 +402,27 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
                                 <button key={id} type="button" className="btn btn-ghost h-8 px-2.5 text-xs" disabled={waiting} onClick={() => quick(id)}>{t(`quick.${id}.label`)}</button>
                             ))}
                         </div>
-                        <form className="flex items-end gap-2" onSubmit={(event) => { event.preventDefault(); void send(draft); }}>
+                        <VoiceStatus state={voice.state} error={voice.error} />
+                        <form className="flex items-end gap-2" onSubmit={(event) => { event.preventDefault(); submit(); }}>
                             <label htmlFor="agent-input" className="sr-only">{t('inputLabel')}</label>
                             <textarea
                                 id="agent-input"
                                 ref={inputRef}
                                 rows={2}
                                 maxLength={2000}
+                                readOnly={voice.active}
                                 value={draft}
                                 onChange={(event) => setDraft(event.target.value)}
                                 onKeyDown={(event) => {
                                     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
                                         event.preventDefault();
-                                        void send(draft);
+                                        submit();
                                     }
                                 }}
                                 placeholder={t('placeholder')}
                                 className="min-h-[44px] flex-1 resize-none rounded-xl border border-line bg-canvas px-3 py-2 text-sm text-foreground placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand"
                             />
+                            <VoiceButton state={voice.state} support={voice.support} onStart={() => void voice.start()} onStop={voice.stop} />
                             <button type="submit" className="btn btn-primary h-11 px-3" disabled={waiting || !draft.trim()} aria-label={t('send')}><SendHorizontal aria-hidden /></button>
                         </form>
                     </footer>
