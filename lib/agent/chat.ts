@@ -8,13 +8,14 @@ import type { AgentReply, FilterCheck } from '@/lib/domain/types';
 import { callAgent, type AgentServiceReply } from './client';
 import { buildContext } from './context';
 import { logStep } from './log';
+import { describePage, type PageInput } from './page';
 import { ServiceError } from '@/lib/services/errors';
 import { apply, cancel, getAction, route, undo, type Preview } from './router';
 import { agentText } from './text';
 import { failsWordCheck } from './wording';
 
 export type Turn = { role: 'user' | 'assistant'; text: string };
-export type ChatInput = { message: string; history?: Turn[]; conversationId?: string };
+export type ChatInput = { message: string; history?: Turn[]; conversationId?: string; page?: PageInput };
 export type ChatReply = AgentReply & {
     preview?: Preview;
     notice?: string;                // why a proposed action was not shown
@@ -36,16 +37,20 @@ export async function chat(input: ChatInput): Promise<ChatReply> {
     const history = (input.history ?? []).slice(-MAX_TURNS).map((turn) => ({ role: turn.role, text: turn.text.slice(0, MAX_TURN_CHARS) }));
     await logStep(actionId, 'chat_input', { dataUsed: { message: input.message, messageSha256: sha256(input.message), historyTurns: history.length } });
 
-    const { context, snapshotId } = await buildContext();
+    const built = await buildContext();
+    const { snapshotId } = built;
+    // Where the user is, from a fixed list of pages: "this X-ray", "here" and "this period" refer to it
+    const page = describePage(input.page);
+    const context = page ? { ...built.context, page } : built.context;
     const { locale } = context;
     const words = agentText(locale);
     await logStep(actionId, 'context_built', {
         dataUsed: {
             locale, level: context.level ?? null, risk: context.risk ?? null, agentStyle: context.agentStyle ?? null,
-            holdings: context.holdings, watchlist: context.watchlist, layout: context.layout, watchlistSnapshotId: snapshotId,
+            holdings: context.holdings, watchlist: context.watchlist, layout: context.layout, page: context.page ?? null, watchlistSnapshotId: snapshotId,
             contextSha256: sha256(JSON.stringify(context)),
         },
-        statedReason: 'Only data the app holds: profile, simulated holdings, watchlist picks, layout. No sentiment data and no news text.',
+        statedReason: 'Only data the app holds: profile, simulated holdings, watchlist picks, layout, and which page the user is on. No sentiment data and no news text.',
     });
 
     let reply: AgentServiceReply;

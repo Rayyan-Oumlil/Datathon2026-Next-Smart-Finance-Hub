@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, MessageSquareText, RotateCcw, SendHorizontal, Undo2, X } from "lucide-react";
@@ -187,6 +188,8 @@ const PreviewCard = ({ message, busy, onDecide, onUndo }: PreviewProps) => {
     );
 };
 
+import { AGENT_ASK_EVENT, getPageDetail } from "@/lib/agent/page-detail";
+
 type AgentPanelProps = { open: boolean; onOpenChange: (open: boolean) => void; onDataChanged?: () => void };
 
 // The agent: it explains data and proposes changes. A change is shown as a preview and runs only after Confirm.
@@ -194,6 +197,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
     const t = useTranslations('AgentPanel');
     const locale = useLocale();
     const router = useRouter();
+    const pathname = usePathname();
     const [messages, setMessages] = useState<Message[]>([]);
     const [conversationId, setConversationId] = useState('');
     const [draft, setDraft] = useState('');
@@ -244,7 +248,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
         setDraft('');
         setWaiting(true);
         try {
-            const reply = await post<Reply & { text: string; proposed?: { type: string } }>('/api/agent', { message, history, conversationId }, t('errors.request'));
+            const reply = await post<Reply & { text: string; proposed?: { type: string } }>('/api/agent', { message, history, conversationId, page: { path: pathname, ...getPageDetail() } }, t('errors.request'));
             setMessages((list) => [...list, {
                 id: newId(), role: 'assistant', text: reply.text, change: reply.preview ? 'pending' : undefined,
                 reply: { actionId: reply.actionId, sources: reply.sources ?? [], refused: reply.refused, notice: reply.notice, conflict: reply.conflict, preview: reply.preview, proposedType: reply.proposed?.type },
@@ -255,6 +259,20 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
             setWaiting(false);
         }
     };
+
+    // A page can ask the agent a ready-made question ("Explain this X-ray"): the panel opens and sends it
+    const sendRef = useRef(send);
+    sendRef.current = send;
+    useEffect(() => {
+        const onAsk = (event: Event) => {
+            const message = (event as CustomEvent<{ message?: string }>).detail?.message;
+            if (!message) return;
+            onOpenChange(true);
+            void sendRef.current(message);
+        };
+        window.addEventListener(AGENT_ASK_EVENT, onAsk);
+        return () => window.removeEventListener(AGENT_ASK_EVENT, onAsk);
+    }, [onOpenChange]);
 
     // Pages read their data on the server or on their own; both are told that something changed
     const dataChanged = () => {

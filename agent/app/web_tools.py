@@ -82,10 +82,11 @@ def get_portfolio_stats(metric: str, period: str, symbols: list[str] | None = No
 
 
 XRAY_DIRECTIONS = ("add", "reduce")
+XRAY_WINDOWS = ("full", "last3y", "last1y")
 
 
 @tool
-def get_portfolio_xray(symbol: str | None = None, amount_cad: float | None = None,
+def get_portfolio_xray(window: str = "full", symbol: str | None = None, amount_cad: float | None = None,
                        direction: str | None = None) -> dict:
     """The X-ray of the simulated portfolio. Read-only: nothing is traded or stored.
 
@@ -99,12 +100,15 @@ def get_portfolio_xray(symbol: str | None = None, amount_cad: float | None = Non
     change, and the profile conflicts an addition would raise, with their values.
 
     Args:
+        window: the one replay period to report: "full" (up to 5 years), "last3y" (3 years) or "last1y" (1 year).
         symbol: the asset to add or reduce.
         amount_cad: the amount of the change in CAD, greater than 0.
         direction: "add" or "reduce".
     """
+    if window not in XRAY_WINDOWS:
+        return {"error": 'window must be "full", "last3y" or "last1y"'}
     given = [value is not None for value in (symbol, amount_cad, direction)]
-    body: dict = {"locale": trace.current().locale}
+    body: dict = {"locale": trace.current().locale, "window": window}
     if not any(given):
         return call_web("portfolio-xray", body)
     if not all(given):

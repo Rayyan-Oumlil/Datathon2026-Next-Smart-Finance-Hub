@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, MessageSquareText } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { askAgent, setPageDetail } from '@/lib/agent/page-detail';
 import type { WindowId } from '@/lib/xray/types';
 import { useFmt } from '../useFmt';
 import BandBar from './BandBar';
@@ -36,6 +37,13 @@ export default function XrayPage() {
     const [wanted, setWanted] = useState<WindowId>('full');
     const [preset, setPreset] = useState<Preset | null>(null);
 
+    // The agent knows this is the X-ray page and which period is on screen
+    const shown = view ? pickWindow(view.windows, wanted) : wanted;
+    useEffect(() => {
+        setPageDetail({ xrayWindow: shown });
+        return () => setPageDetail({});
+    }, [shown]);
+
     const head = (picker?: React.ReactNode) => (
         <header className="page-head flex-wrap">
             <div>
@@ -43,7 +51,12 @@ export default function XrayPage() {
                 <h1 className="page-title">{t('page.title')} <span className="pill is-brand ms-1 align-middle">{t('simulated')}</span></h1>
                 <p className="page-sub">{t('sub')}</p>
             </div>
-            {picker}
+            <div className="flex flex-col items-end gap-3 self-end">
+                {picker}
+                <button type="button" className="btn btn-primary h-9 px-4 text-[13px]" onClick={() => askAgent(t('page.explainMessage'))}>
+                    <MessageSquareText /> {t('page.explain')}
+                </button>
+            </div>
         </header>
     );
 

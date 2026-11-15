@@ -165,7 +165,9 @@
     "back": "Back to the portfolio",
     "title": "Portfolio X-ray",
     "lab": "What-if lab",
-    "loading": "Reading the holdings and replaying them over their price history…"
+    "loading": "Reading the holdings and replaying them over their price history…",
+    "explain": "Explain this X-ray",
+    "explainMessage": "Explain this X-ray: what stands out over the period shown, and where each figure comes from."
   },
   "obs": {
     "title": "What stands out",

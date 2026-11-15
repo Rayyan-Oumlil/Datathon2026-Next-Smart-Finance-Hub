@@ -42,10 +42,10 @@ def test_each_tool_posts_to_its_endpoint(stub, current):
     assert current.conflict_checks["TSLA"]["conflicts"][0]["filter"] == "volatility"
 
 
-def test_xray_without_change_sends_only_the_locale(stub, current):
+def test_xray_without_change_sends_the_locale_and_the_whole_history_window(stub, current):
     result = web_tools.get_portfolio_xray()
     assert stub.requests[-1]["path"] == "/api/internal/tools/portfolio-xray"
-    assert stub.requests[-1]["body"] == {"locale": "en", "userId": "demo-user"}
+    assert stub.requests[-1]["body"] == {"locale": "en", "window": "full", "userId": "demo-user"}
     assert result["version"] == "xray-v1" and result["windows"]["last1y"]["available"] is False
     assert current.tool_results[-1]["endpoint"] == "/api/internal/tools/portfolio-xray"
 
@@ -54,8 +54,16 @@ def test_xray_with_change_sends_the_change_and_locale(stub, current):
     current.context = {**current.context, "locale": "fr"}
     result = web_tools.get_portfolio_xray(symbol="AAPL", amount_cad=500, direction="reduce")
     assert stub.requests[-1]["body"] == {
-        "change": {"symbol": "AAPL", "amountCad": 500, "direction": "reduce"}, "locale": "fr", "userId": "demo-user"}
+        "change": {"symbol": "AAPL", "amountCad": 500, "direction": "reduce"}, "locale": "fr", "window": "full", "userId": "demo-user"}
     assert result["simulated"] is True and result["after"]["cashCad"] == 9500
+
+
+def test_xray_sends_the_one_window_asked_for_and_refuses_an_unknown_one_without_a_call(stub, current):
+    web_tools.get_portfolio_xray(window="last1y")
+    assert stub.requests[-1]["body"]["window"] == "last1y"
+    before = len(stub.requests)
+    assert "error" in web_tools.get_portfolio_xray(window="2022")
+    assert len(stub.requests) == before
 
 
 def test_xray_refusal_is_not_data(stub, current):

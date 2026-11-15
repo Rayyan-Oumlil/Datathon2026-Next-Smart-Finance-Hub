@@ -17,7 +17,8 @@ function figure(value: number, unit: string, stamp: Stamp, asOf: string | undefi
     };
 }
 
-export function agentFigures(out: EngineOutput, stamp: Stamp): Record<string, unknown> {
+/** The figures of the concentration and of the one window the agent asked for (all of them when `only` is left out). */
+export function agentFigures(out: EngineOutput, stamp: Stamp, only?: WindowId): Record<string, unknown> {
     const c = out.concentration;
     const lastDay = (() => {
         const w = out.windows.full;
@@ -30,6 +31,7 @@ export function agentFigures(out: EngineOutput, stamp: Stamp): Record<string, un
         cashShare: figure(out.cashSharePct, '%', stamp, lastDay, 'cash as a share of the whole portfolio'),
     };
     for (const id of WINDOW_IDS as readonly WindowId[]) {
+        if (only && id !== only) continue;
         const w = out.windows[id];
         if (!w.available) continue;
         figures[`volatility_${id}`] = figure(w.volatilityPct, '%', stamp, w.to, `annualised volatility of the ${id} replay, ${w.from} to ${w.to}`);

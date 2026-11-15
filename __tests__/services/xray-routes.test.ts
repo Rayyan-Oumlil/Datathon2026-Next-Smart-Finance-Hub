@@ -93,6 +93,17 @@ describe('POST /api/internal/tools/portfolio-xray', () => {
         expect(body.figures.volatility_full).toMatchObject({ unit: '%', fetchedAt: expect.any(String), source: expect.stringContaining('derived (xray-v1)') });
         expect(body.figures.holdings_full[0]).toMatchObject({ symbol: 'RY.TO' });
     });
+    it('reports only the window asked for (whole history by default), figures included', async () => {
+        const whole = await (await tool({})).json();
+        expect(Object.keys(whole.windows)).toEqual(['full']);
+        expect(Object.keys(whole.figures).some((key) => key.endsWith('_last1y'))).toBe(false);
+        const year = await (await tool({ window: 'last1y' })).json();
+        expect(Object.keys(year.windows)).toEqual(['last1y']);
+        expect(year.figures.volatility_last1y).toBeDefined();
+        expect(year.figures.volatility_full).toBeUndefined();
+        expect((await tool({ window: '2022' })).status).toBe(200);
+        expect(await (await tool({ window: '2022' })).json()).toEqual({ error: expect.stringContaining('window') });
+    });
     it('answers a what-if with before and after, curve-free, and refuses a bad change as { error }', async () => {
         const body = await (await tool({ change: { symbol: 'RY.TO', amountCad: 500, direction: 'reduce' } })).json();
         expect(body.after.windows.full).not.toHaveProperty('curve');

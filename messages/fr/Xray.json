@@ -165,7 +165,9 @@
     "back": "Retour au portefeuille",
     "title": "Radiographie du portefeuille",
     "lab": "Laboratoire de simulations",
-    "loading": "Lecture des positions et rejeu sur leur historique de cours…"
+    "loading": "Lecture des positions et rejeu sur leur historique de cours…",
+    "explain": "Expliquez-moi cette radiographie",
+    "explainMessage": "Expliquez-moi cette radiographie : ce qui ressort sur la période affichée, et d’où vient chaque chiffre."
   },
   "obs": {
     "title": "Ce qui ressort",
