@@ -1,0 +1,69 @@
+{
+  "meta": {
+    "title": "Accueil — Next Smart Finance Hub",
+    "description": "Un carrefour de placement simulé avec un agent traçable. Simulation seulement : aucune transaction réelle, aucun conseil en placement."
+  },
+  "nav": {
+    "home": "Accueil de Next Smart Finance Hub",
+    "simulationOnly": "Simulation seulement",
+    "start": "Commencer"
+  },
+  "hero": {
+    "kicker": "Carrefour de placement simulé",
+    "title": "Testez vos idées de placement, sans argent réel.",
+    "lead": "Un profil calculé par des règles, des portefeuilles d’exemple, des stratégies rejouées sur le passé et un agent dont chaque étape est consignée. Simulation seulement : aucune transaction réelle, aucun conseil en placement.",
+    "cta": "Commencer",
+    "secondary": "Voir comment ça marche",
+    "note": "Aucun compte requis, aucun argent réel."
+  },
+  "visual": {
+    "title": "Rejeu illustratif",
+    "with": "Avec règles",
+    "without": "Sans règles",
+    "note": "Illustration, données fictives"
+  },
+  "stats": {
+    "label": "En chiffres",
+    "universe": "titres et FNB dans l’univers de démonstration",
+    "steps": "étapes, du profil au rejeu",
+    "preview": "des propositions de l’agent passent par un aperçu et une confirmation"
+  },
+  "features": {
+    "kicker": "Ce que vous pouvez faire",
+    "title": "Quatre outils, une seule trace",
+    "profile": {
+      "title": "Profil et portefeuilles suggérés",
+      "body": "Un court questionnaire calcule votre niveau et votre profil de risque selon des règles versionnées. Vous voyez ensuite quelques portefeuilles d’exemple, chaque ligne expliquée.",
+      "tag": "Exemple pédagogique, pas un conseil"
+    },
+    "strategy": {
+      "title": "Stratégie par règles",
+      "body": "Composez une stratégie à partir de cartes de règles : plafond de poids, rééquilibrage, garde-fou contre les baisses, versements périodiques. Chaque changement s’affiche d’abord en aperçu.",
+      "tag": "Aperçu, confirmation, annulation"
+    },
+    "timeMachine": {
+      "title": "Machine à remonter le temps",
+      "body": "Rejouez un portefeuille sur des données historiques figées, avec et sans votre stratégie, côte à côte. Le comparatif reste affiché même quand les règles font moins bien.",
+      "tag": "Données figées, résultat reproductible"
+    },
+    "agent": {
+      "title": "Agent traçable",
+      "body": "Posez vos questions en français ou en anglais. L’agent propose des changements structurés, et chaque étape, outil et source est consignée dans un journal qu’on ne peut pas réécrire.",
+      "tag": "Journal en ajout seulement"
+    }
+  },
+  "flow": {
+    "kicker": "Le parcours",
+    "title": "Du profil au rejeu en quatre étapes",
+    "profile": { "title": "Profil", "body": "Niveau et risque calculés par des règles." },
+    "portfolio": { "title": "Portefeuille", "body": "Un exemple choisi parmi quelques options." },
+    "strategy": { "title": "Stratégie", "body": "Des règles que vous confirmez une à une." },
+    "replay": { "title": "Rejeu", "body": "Avec et sans règles, sur le même graphique." }
+  },
+  "cta": {
+    "title": "Prêt à essayer?",
+    "body": "Quelques questions, puis votre tableau de bord simulé.",
+    "button": "Commencer"
+  },
+  "disclaimer": "Simulation à des fins éducatives seulement. Aucune transaction réelle n’est effectuée et rien ici ne constitue un conseil en placement. Chaque chiffre affiché dans l’application indique sa source et son heure."
+}

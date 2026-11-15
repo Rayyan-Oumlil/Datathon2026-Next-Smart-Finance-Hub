@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import OnboardingFlow, { type UniverseOptions } from '@/components/onboarding/OnboardingFlow';
 import { LanguageToggle } from '@/components/LanguageSwitcher';
+import SmoothScroll from '@/components/motion/SmoothScroll';
 import { ruleBands } from '@/components/profile/rule-bands';
 import { getProfile } from '@/lib/services/profile';
 import { listNiches, listSectors, listThemes } from '@/lib/universe';
@@ -31,8 +33,9 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
 
     return (
         <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-page px-3 py-6 sm:px-6">
-            <div className="flex w-full max-w-[600px] items-baseline justify-between gap-3 px-1">
-                <span className="text-[19px] font-bold tracking-[-0.03em] text-foreground">Next Smart Finance Hub</span>
+            <SmoothScroll />
+            <div className="flex w-full max-w-[600px] flex-wrap items-center justify-between gap-x-3 gap-y-2 px-1">
+                <Link href="/welcome" className="whitespace-nowrap text-[19px] font-bold tracking-[-0.03em] text-foreground">Next Smart <span className="text-brand-ink">Finance Hub</span></Link>
                 <div className="flex items-center gap-2">
                     <LanguageToggle />
                     <span className="pill">{t('simulationOnly')}</span>

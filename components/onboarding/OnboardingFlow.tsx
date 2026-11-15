@@ -166,7 +166,7 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
         const { profile, before } = result;
         const changed = before && (before.level !== profile.level || before.risk !== profile.risk);
         return (
-            <div className="flex flex-col gap-5 p-5 sm:p-7">
+            <div className="motion-step flex flex-col gap-5 p-5 sm:p-7">
                 <div>
                     <p className="kicker">{t('result.kicker')}</p>
                     <h1 ref={headingRef} tabIndex={-1} className="mt-1 text-[24px] font-bold leading-tight tracking-[-0.03em] text-foreground outline-none">
@@ -256,7 +256,8 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
                 })}
             </ol>
 
-            <div className="flex min-h-[250px] flex-col gap-4">
+            {/* Keyed by question so each one fades in (presentation only) */}
+            <div key={stepId} className="motion-step flex min-h-[250px] flex-col gap-4">
                 <div>
                     <p className="kicker">{t(step.skippable ? 'kickerOptional' : 'kicker', { part: t(`parts.${PARTS[step.part]}`), number: index + 1 })}</p>
                     <h1 id={titleId} ref={headingRef} tabIndex={-1} className="mt-1 text-[22px] font-bold leading-tight tracking-[-0.03em] text-foreground outline-none">

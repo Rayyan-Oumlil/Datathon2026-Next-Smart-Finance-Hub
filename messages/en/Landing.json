@@ -1,0 +1,69 @@
+{
+  "meta": {
+    "title": "Home — Next Smart Finance Hub",
+    "description": "A simulated investing hub with a traceable agent. Simulation only: no real transactions, no investment advice."
+  },
+  "nav": {
+    "home": "Next Smart Finance Hub home",
+    "simulationOnly": "Simulation only",
+    "start": "Get started"
+  },
+  "hero": {
+    "kicker": "Simulated investing hub",
+    "title": "Try out your investing ideas, with no real money.",
+    "lead": "A profile computed from rules, example portfolios, strategies replayed on past data, and an agent that logs every step. Simulation only: no real transactions, no investment advice.",
+    "cta": "Get started",
+    "secondary": "See how it works",
+    "note": "No account needed, no real money."
+  },
+  "visual": {
+    "title": "Illustrative replay",
+    "with": "With rules",
+    "without": "Without rules",
+    "note": "Illustration, made-up data"
+  },
+  "stats": {
+    "label": "In numbers",
+    "universe": "stocks and ETFs in the demo universe",
+    "steps": "steps, from profile to replay",
+    "preview": "of agent proposals go through a preview and a confirmation"
+  },
+  "features": {
+    "kicker": "What you can do",
+    "title": "Four tools, one audit trail",
+    "profile": {
+      "title": "Profile and suggested portfolios",
+      "body": "A short questionnaire computes your level and risk profile with versioned rules. You then see a few example portfolios, with every line explained.",
+      "tag": "Teaching example, not advice"
+    },
+    "strategy": {
+      "title": "Rule-based strategy",
+      "body": "Build a strategy from rule cards: weight cap, rebalancing, drawdown guard, periodic contributions. Every change shows as a preview first.",
+      "tag": "Preview, confirm, undo"
+    },
+    "timeMachine": {
+      "title": "Time machine",
+      "body": "Replay a portfolio on frozen historical data, with and without your strategy, side by side. The comparison stays on screen even when the rules do worse.",
+      "tag": "Frozen data, repeatable result"
+    },
+    "agent": {
+      "title": "Traceable agent",
+      "body": "Ask in French or English. The agent proposes structured changes, and every step, tool and source goes into a log that cannot be rewritten.",
+      "tag": "Append-only log"
+    }
+  },
+  "flow": {
+    "kicker": "The path",
+    "title": "From profile to replay in four steps",
+    "profile": { "title": "Profile", "body": "Level and risk computed by rules." },
+    "portfolio": { "title": "Portfolio", "body": "One example picked from a few options." },
+    "strategy": { "title": "Strategy", "body": "Rules you confirm one by one." },
+    "replay": { "title": "Replay", "body": "With and without rules, on the same chart." }
+  },
+  "cta": {
+    "title": "Ready to try it?",
+    "body": "A few questions, then your simulated dashboard.",
+    "button": "Get started"
+  },
+  "disclaimer": "Simulation for educational purposes only. No real transaction is made and nothing here is investment advice. Every figure shown in the app carries its source and time."
+}
