@@ -1,5 +1,7 @@
 // Stubbed market data for the service tests. Imports no service, so a vi.mock factory can load it safely.
 import type { SignalSet, Sourced, UniverseEntry } from '@/lib/domain/types';
+import type { FxRow } from '@/lib/sources/boc';
+import type { DailyClose } from '@/lib/sources/types';
 
 export const NOW = '2026-11-13T15:00:00.000Z';
 export const sourced = <T = number>(value: T, extra: Partial<Sourced<T>> = {}): Sourced<T> => ({ value, source: 'test stub', fetchedAt: NOW, ...extra });
@@ -9,6 +11,9 @@ export const market = {
     prices: {} as Record<string, { value: number; currency: string; change?: number } | undefined>,
     fx: 1.42 as number | null,
     signals: {} as Record<string, Partial<SignalSet>>,
+    /** Long daily-close series by app symbol (the X-ray); a symbol with none answers like a provider that failed. */
+    closes: {} as Record<string, Sourced<DailyClose[]> | undefined>,
+    fxHistory: [] as FxRow[],
 };
 
 /** A signal set that passes every filter of a Medium-risk Intermediate, unless overridden in market.signals. */
@@ -39,6 +44,15 @@ export function quotesMock(real: typeof import('@/lib/services/quotes')): typeof
         },
         dailyClosesFor: async (entry) => {
             throw new Error(`no closes for ${entry.symbol}`);
+        },
+        dailyClosesLongFor: async (entry) => {
+            const series = market.closes[entry.symbol];
+            if (!series) throw new Error(`no long closes for ${entry.symbol}`);
+            return series;
+        },
+        fxUsdCadHistory: async () => {
+            if (market.fxHistory.length === 0) throw new Error('no fx history');
+            return sourced(market.fxHistory, { source: 'Bank of Canada', unit: 'CAD per USD', asOf: market.fxHistory[market.fxHistory.length - 1].date });
         },
         fxUsdCad: async () => {
             if (market.fx === null) throw new Error('no rate');

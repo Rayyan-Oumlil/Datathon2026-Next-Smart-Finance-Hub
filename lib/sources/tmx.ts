@@ -66,26 +66,37 @@ const HISTORY_QUERY = `query getTimeSeriesData($symbol: String!, $freq: String, 
   getTimeSeriesData(symbol: $symbol, freq: $freq, start: $start) { dateTime close }
 }`;
 
+const HISTORY_YEARS_SHORT = 1;
+export const HISTORY_YEARS_LONG = 5;
+
+async function closesOver(symbol: string, years: number): Promise<Sourced<DailyClose[]>> {
+    const start = isoDate(new Date(Date.now() - (years * 365 + 1) * DAY_MS));
+    const data = await graphql<{ getTimeSeriesData: Array<{ dateTime?: string; close?: number | null }> | null }>(
+        'getTimeSeriesData', HISTORY_QUERY, { symbol, freq: 'day', start },
+    );
+    // dateTime is the close in Toronto time ('2026-11-13T16:00:00-05:00'): its first ten characters are the trading day
+    const rows: DailyClose[] = (data.getTimeSeriesData ?? [])
+        .filter((row): row is { dateTime: string; close: number } => typeof row.dateTime === 'string' && isNumber(row.close))
+        .map((row) => ({ date: row.dateTime.slice(0, 10), close: row.close }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    if (rows.length === 0) throw new Error(`TMX Money has no daily closes for ${symbol}`);
+    return {
+        value: rows,
+        source: TMX,
+        endpoint: `${TMX_ENDPOINT} getTimeSeriesData(symbol: "${symbol}", freq: "day", start: "${start}")`,
+        fetchedAt: new Date().toISOString(),
+        asOf: rows[rows.length - 1].date,
+    };
+}
+
 /** About one year of daily closes, oldest first. (getCompanyPriceHistory is capped at 25 rows, so it is not used.) */
 export function dailyCloses(symbolTO: string): Promise<Sourced<DailyClose[]>> {
     const symbol = tmxSymbol(symbolTO);
-    return remember(`tmx-closes-${symbol}`, DAY_MS, async () => {
-        const start = isoDate(new Date(Date.now() - 366 * DAY_MS));
-        const data = await graphql<{ getTimeSeriesData: Array<{ dateTime?: string; close?: number | null }> | null }>(
-            'getTimeSeriesData', HISTORY_QUERY, { symbol, freq: 'day', start },
-        );
-        // dateTime is the close in Toronto time ('2026-11-13T16:00:00-05:00'): its first ten characters are the trading day
-        const rows: DailyClose[] = (data.getTimeSeriesData ?? [])
-            .filter((row): row is { dateTime: string; close: number } => typeof row.dateTime === 'string' && isNumber(row.close))
-            .map((row) => ({ date: row.dateTime.slice(0, 10), close: row.close }))
-            .sort((a, b) => a.date.localeCompare(b.date));
-        if (rows.length === 0) throw new Error(`TMX Money has no daily closes for ${symbol}`);
-        return {
-            value: rows,
-            source: TMX,
-            endpoint: `${TMX_ENDPOINT} getTimeSeriesData(symbol: "${symbol}", freq: "day", start: "${start}")`,
-            fetchedAt: new Date().toISOString(),
-            asOf: rows[rows.length - 1].date,
-        };
-    });
+    return remember(`tmx-closes-${symbol}`, DAY_MS, () => closesOver(symbol, HISTORY_YEARS_SHORT));
+}
+
+/** Up to five years of daily closes, oldest first, for the portfolio X-ray. The watchlist's 1-year path is unchanged. */
+export function dailyClosesLong(symbolTO: string): Promise<Sourced<DailyClose[]>> {
+    const symbol = tmxSymbol(symbolTO);
+    return remember(`tmx-closes-${symbol}-${HISTORY_YEARS_LONG}y`, DAY_MS, () => closesOver(symbol, HISTORY_YEARS_LONG));
 }

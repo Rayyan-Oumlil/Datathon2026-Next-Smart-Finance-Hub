@@ -41,7 +41,28 @@ export async function dailyClosesFor(entry: UniverseEntry): Promise<Sourced<Dail
     throw new Error(`no daily closes source for ${entry.symbol}`);
 }
 
+/**
+ * Up to five years of daily closes (crypto: about two), for the portfolio X-ray only; the watchlist keeps the
+ * one-year series above. US names: TMX Money first, then the Yahoo chart.
+ */
+export async function dailyClosesLongFor(entry: UniverseEntry): Promise<Sourced<DailyClose[]>> {
+    const symbol = entry.symbol.toUpperCase();
+    if (entry.assetClass === 'crypto' && (symbol === 'BTC' || symbol === 'ETH')) return kraken.dailyClosesMax(symbol);
+    if (entry.market === 'Canada') return tmx.dailyClosesLong(entry.symbol);
+    if (entry.market === 'US') {
+        try {
+            return await tmx.dailyClosesLong(`${entry.symbol}:US`);
+        } catch {
+            return yahoo.dailyCloses(entry.symbol.replace('.', '-'), '5y');
+        }
+    }
+    throw new Error(`no daily closes source for ${entry.symbol}`);
+}
+
 export const fxUsdCad = (): Promise<Sourced> => boc.fxUsdCad();
+
+/** The daily USD/CAD rate from a date on (Bank of Canada). */
+export const fxUsdCadHistory = (startDate: string): Promise<Sourced<boc.FxRow[]>> => boc.fxUsdCadHistory(startDate);
 
 /** An amount in CAD. USD is multiplied by the Bank of Canada rate (CAD per USD); any other currency is not converted. */
 export function toCad(amount: number, currency: string | undefined, fx: Sourced | undefined): number | null {
