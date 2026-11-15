@@ -220,8 +220,8 @@ export default function OnboardingFlow({ options, bands, initial }: Props) {
                     >
                         {t('result.editAnswers')}
                     </button>
-                    <Link href="/portfolio" className="btn btn-primary">
-                        {t('result.openDashboard')} <ArrowRight aria-hidden />
+                    <Link href="/start" className="btn btn-primary">
+                        {t('result.seeSuggested')} <ArrowRight aria-hidden />
                     </Link>
                 </div>
             </div>

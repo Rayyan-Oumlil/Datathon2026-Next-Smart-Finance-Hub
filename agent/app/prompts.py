@@ -28,7 +28,7 @@ LANGUAGE = {
     "fr": "Write in French: Canadian French as used by Québec financial institutions, plain and factual, natural "
           "rather than word for word, and always address the user as \"vous\". Use these terms: portefeuille "
           "simulé, liste de suivi intelligente, fonds négocié en bourse (FNB), titre, secteur, volatilité, "
-          "capitalisation boursière, rendement, profil de risque (Faible, Moyen, Élevé), niveau (Novice, "
+          "capitalisation boursière, rendement, rejeu (never \"replay\"), machine à remonter le temps, repli maximal, stratégie, profil de risque (Faible, Moyen, Élevé), niveau (Novice, "
           "Intermédiaire, Expert), données de démonstration, simulé, échéance, the Pourquoi? panel. Write each "
           "figure with the same digits as the tool gave, in French form: decimal comma, a space before % and "
           "the $ after the amount (35,0 %, 1 500,00 $). Put a space before a colon (Source : Finnhub) and none "
@@ -47,6 +47,7 @@ CONTEXT_SLICE = {
     "watchlist_explainer": ["level", "risk", "watchlist", "locale"],
     "portfolio": ["level", "holdings", "page", "locale"],
     "rules": ["level", "holdings", "locale"],
+    "strategy": ["level", "risk", "holdings", "strategies", "page", "locale"],
     "layout": ["level", "layout", "locale"],
     "profile": ["level", "risk", "profile", "locale"],
     "glossary": ["level", "locale"],

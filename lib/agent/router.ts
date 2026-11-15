@@ -24,6 +24,8 @@ import { getEntry } from '@/lib/universe';
 import { checkProfileConflict } from '@/lib/watchlist/conflict';
 import { profileChangesSchema, toProfilePatch, type ProfileChanges } from './profile-changes';
 import { agentText } from './text';
+import { StrategyPreviewError, StrategyRefusal, applyStrategy, logStrategyConflict, previewStrategy, undoStrategy, type StrategyPreview, type StrategyUndo } from './strategy-propose';
+import { strategyWords } from './strategy-words';
 
 /** A refusal worded here, in the request's language. Any other ServiceError comes from another part of the app. */
 class RouterError extends ServiceError {
@@ -38,6 +40,9 @@ const symbol = z.string().trim().min(1).max(20);
 const tradeParams = z.object({ symbol, side: z.enum(['buy', 'sell']), amountCad: z.number().positive().optional(), quantity: z.number().positive().optional() }).strict()
     .refine((trade) => (trade.amountCad === undefined) !== (trade.quantity === undefined), 'give either amountCad or quantity');
 
+/** The action types of the web app: the shared domain types plus strategy_propose (a whole strategy, B5). */
+export type ActionType = AgentActionType | 'strategy_propose';
+
 /** The whitelist: every action type the app accepts, the schema of its params, and whether it changes anything. */
 export const ACTIONS = {
     reply: { confirm: false, params: z.object({}).passthrough() },
@@ -48,7 +53,9 @@ export const ACTIONS = {
     rule_pause: { confirm: true, params: z.object({ ruleId: z.string().min(1).max(40), status: z.enum(['paused', 'active']) }).strict() },
     profile_change: { confirm: true, params: z.object({ changes: profileChangesSchema }).strict() },
     simulated_trade: { confirm: true, params: tradeParams },
-} satisfies Record<AgentActionType, { confirm: boolean; params: z.ZodTypeAny }>;
+    // The strategy itself is checked by the strict schema of lib/strategy at preview time, so a refusal carries its issue codes
+    strategy_propose: { confirm: true, params: z.object({ strategy: z.record(z.string(), z.unknown()), replaceId: z.string().trim().min(1).max(40).optional() }).strict() },
+} satisfies Record<ActionType, { confirm: boolean; params: z.ZodTypeAny }>;
 
 const envelope = z.object({ type: z.string(), summary: z.string().max(600).default(''), params: z.record(z.string(), z.unknown()).default({}) });
 
@@ -56,7 +63,7 @@ const envelope = z.object({ type: z.string(), summary: z.string().max(600).defau
 
 export type PreviewRow = { label: string; before: string; after: string };
 export type PreviewFact = { label: string; value: string; source?: string; fetchedAt?: string; asOf?: string };
-export type Preview = { before: unknown; after: unknown; summary: string; rows: PreviewRow[]; facts: PreviewFact[] };
+export type Preview = { before: unknown; after: unknown; summary: string; rows: PreviewRow[]; facts: PreviewFact[]; strategy?: StrategyPreview };
 
 export type Routed =
     | { outcome: 'none' }
@@ -70,7 +77,8 @@ type Undo =
     | { type: 'rule_create'; ruleId: string }
     | { type: 'rule_pause'; ruleId: string; status: InvestmentRule['status'] }
     | { type: 'profile_change'; patch: { level: ProfileChanges['level']; risk: ProfileChanges['risk']; answers: OnboardingAnswers } }
-    | { type: 'simulated_trade'; tradeId: string; symbol: string; side: 'buy' | 'sell'; quantity: number };
+    | { type: 'simulated_trade'; tradeId: string; symbol: string; side: 'buy' | 'sell'; quantity: number }
+    | StrategyUndo;
 
 type Status = 'pending' | 'applying' | 'applied' | 'undoing' | 'undone' | 'cancelled';
 /** What the app-state document keeps per proposed change: the stored type's fields plus the preview and how to undo. */
@@ -277,7 +285,7 @@ export async function route(actionId: string, proposal: unknown, locale: Locale 
     if (!outer.success) return { outcome: 'dropped', type: 'unknown', reason: words.badForm };
     const { type, summary } = outer.data;
     if (!Object.hasOwn(ACTIONS, type)) return { outcome: 'dropped', type, reason: words.notAllowed(type) };
-    const kind = type as AgentActionType;
+    const kind = type as ActionType;
     // A model writes null for a field it leaves out
     const given = Object.fromEntries(Object.entries(outer.data.params).filter(([, value]) => value !== null));
     const parsed = ACTIONS[kind].params.safeParse(given);
@@ -287,7 +295,7 @@ export async function route(actionId: string, proposal: unknown, locale: Locale 
         return { outcome: 'dropped', type, reason, ...(reason.includes(detail) ? {} : { detail }) };
     }
     const params = parsed.data as Record<string, unknown>;
-    if (!ACTIONS[kind].confirm) return { outcome: 'info', proposed: { type: kind, summary, params, needsConfirm: false } };
+    if (!ACTIONS[kind].confirm) return { outcome: 'info', proposed: { type: kind as AgentActionType, summary, params, needsConfirm: false } };
 
     const s = scope ?? await currentScope();
     let preview: Preview;
@@ -297,12 +305,32 @@ export async function route(actionId: string, proposal: unknown, locale: Locale 
         else if (kind === 'rule_create') preview = await rulePreview(params.rule as z.infer<typeof ruleInputSchema>, locale, s);
         else if (kind === 'rule_pause') preview = await rulePausePreview(params.ruleId as string, params.status as InvestmentRule['status'], locale, s);
         else if (kind === 'profile_change') preview = await profilePreview(params.changes as ProfileChanges, locale, s);
-        else {
+        else if (kind === 'strategy_propose') {
+            const built = await previewStrategy(params.strategy as Record<string, unknown>, params.replaceId as string | undefined, locale, s);
+            const words = strategyWords(locale);
+            preview = {
+                before: built.preview.beforeSentences ? { strategyId: built.preview.replaceId, sentences: built.preview.beforeSentences } : null,
+                after: { strategy: built.strategy, sentences: built.preview.sentences, replay: built.preview.replay },
+                summary: built.summary,
+                rows: [{ label: words.strategyLabel, before: built.preview.beforeSentences?.join(' ') ?? words.noStrategy, after: built.strategy.name }],
+                facts: built.preview.replay ? [{ label: words.replayLabel, value: words.replayIds(built.preview.replay.replayId, built.preview.replay.snapshotId), source: words.derived }] : [],
+                strategy: built.preview,
+            };
+            conflicts = built.conflicts;
+            // The validated strategy (ids filled in, values normalised) is what a confirmation saves
+            params.strategy = { name: built.strategy.name, rules: built.strategy.rules };
+            await logStrategyConflict(s, actionId, built.conflicts, false, { strategy: built.strategy, signals: built.signals });
+        } else {
             const trade = await tradePreview(params as z.infer<typeof tradeParams>, locale, s);
             ({ preview, conflicts } = trade);
             params.symbol = trade.symbol;
         }
     } catch (error) {
+        if (error instanceof StrategyRefusal) {
+            const codes = error.issues.map((issue) => `${issue.code}@${issue.path}`).join(', ');
+            return { outcome: 'dropped', type, reason: strategyWords(locale).invalid(error.messages), detail: `strategy issues: ${codes}` };
+        }
+        if (error instanceof StrategyPreviewError) return { outcome: 'dropped', type, reason: error.message };
         if (error instanceof RouterError) return { outcome: 'dropped', type, reason: error.message, ...(error.detail && locale !== 'en' ? { detail: error.detail } : {}) };
         if (error instanceof ServiceError) {
             // Worded by another part of the app, in English: shown as is in English, replaced in French (the log keeps it)
@@ -312,7 +340,7 @@ export async function route(actionId: string, proposal: unknown, locale: Locale 
         throw error;
     }
     // The preview's sentence is written here from the app's data; the model's own summary is not shown
-    const proposed: ProposedAction = { type: kind, summary: preview.summary, before: preview.before, after: preview.after, params, needsConfirm: true };
+    const proposed: ProposedAction = { type: kind as AgentActionType, summary: preview.summary, before: preview.before, after: preview.after, params, needsConfirm: true };
     const record: StoredAction = { actionId, createdAt: new Date().toISOString(), proposed, status: 'pending', preview, conflicts };
     await updateState(s, (state) => {
         state.pendingPreviews = [...state.pendingPreviews.filter((p) => p.actionId !== actionId), record].slice(-KEPT_ACTIONS);
@@ -331,7 +359,18 @@ export async function cancel(actionId: string, locale: Locale = 'en', scope?: Sc
 
 async function perform(actionId: string, action: StoredAction, locale: Locale, scope: Scope): Promise<ApplyResult & { undo?: Undo }> {
     const words = agentText(locale);
-    const { type, params } = action.proposed;
+    const { params } = action.proposed;
+    const type = action.proposed.type as ActionType;
+    if (type === 'strategy_propose') {
+        // The user confirmed a preview that named these conflicts: logged again, as a decision to go ahead in simulation
+        await logStrategyConflict(scope, actionId, action.conflicts, true);
+        const { saved, undo: back } = await applyStrategy(params as { strategy: Record<string, unknown>; replaceId?: string }, scope);
+        return {
+            applied: true, undoable: true, result: { strategy: saved, timeMachine: `/time-machine?strategy=${encodeURIComponent(saved.id)}` },
+            before: action.preview.before, after: { strategyId: saved.id, version: saved.version },
+            message: strategyWords(locale).saved(saved.name, saved.id, saved.version), undo: back,
+        };
+    }
     if (type === 'layout_change') {
         const current = await getLayout(undefined, scope);
         const { layout } = await putLayout(params.layout, scope);
@@ -364,7 +403,7 @@ async function perform(actionId: string, action: StoredAction, locale: Locale, s
         const outcome = await simulateTrade({
             ...trade, origin: 'agent', acknowledgeConflict: action.conflicts.length > 0,
             reason: `${purchase ? 'simulated purchase' : 'simulated position reduction'} from the agent (action ${actionId})`,
-        }, undefined, scope);
+        }, locale, scope);
         if (outcome.status === 'conflict') return { applied: false, undoable: false, result: { conflicts: outcome.conflicts }, message: outcome.message };
         const { id, symbol: traded, quantity, price, valueCad, side } = outcome.trade;
         return {
@@ -398,6 +437,13 @@ export async function apply(actionId: string, locale: Locale = 'en', scope?: Sco
 
 async function restore(actionId: string, undo: Undo, locale: Locale, scope: Scope): Promise<UndoResult> {
     const words = agentText(locale);
+    if (undo.type === 'strategy_propose') {
+        const done = await undoStrategy(actionId, undo, scope);
+        const say = strategyWords(locale);
+        if (done.outcome === 'gone') return { restored: true, message: say.gone };
+        if (done.outcome === 'restored') return { restored: true, result: { strategy: done.strategy }, message: say.restored(done.strategy!.name, done.strategy!.version) };
+        return { restored: true, result: { strategyId: undo.strategyId, removed: true }, message: say.removed(done.strategy?.name ?? undo.strategyId) };
+    }
     if (undo.type === 'layout_change') {
         // "Before" may have been the level's default layout, with nothing saved
         if (undo.saved) await putLayout(undo.layout, scope);
@@ -428,7 +474,7 @@ async function restore(actionId: string, undo: Undo, locale: Locale, scope: Scop
     const outcome = await simulateTrade({
         symbol: undo.symbol, side: undo.side === 'buy' ? 'sell' : 'buy', quantity: undo.quantity, origin: 'agent', acknowledgeConflict: true,
         reason: `undo of simulated trade ${undo.tradeId} (agent action ${actionId}): compensating simulated trade at the current price`,
-    }, undefined, scope);
+    }, locale, scope);
     if (outcome.status !== 'filled') return { restored: false, message: outcome.message };
     const { quantity, price, valueCad } = outcome.trade;
     return {

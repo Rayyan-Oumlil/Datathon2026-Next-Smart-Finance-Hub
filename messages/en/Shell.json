@@ -3,7 +3,10 @@
     "portfolio": "Portfolio",
     "overview": "Overview",
     "profile": "Profile",
-    "xray": "X-ray"
+    "xray": "X-ray",
+    "strategy": "Strategy",
+    "timeMachine": "Time machine",
+    "logs": "Logs"
   },
   "logoLabel": "Next Smart Finance Hub portfolio",
   "disclaimer": "Simulation only. No real trades and no investment advice. Every number shows its source and time.",

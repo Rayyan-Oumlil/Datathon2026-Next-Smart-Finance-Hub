@@ -7,5 +7,6 @@
   "openMenu": "Open menu",
   "closeTab": "Close {label}",
   "openStock": "Open a stock",
-  "openStockHint": "Open a stock (⌘K)"
+  "openStockHint": "Open a stock (⌘K)",
+  "emptyHint": "Open a stock to keep it here"
 }

@@ -167,7 +167,7 @@
     "levelKept": "You chose {value} on the Profile tab; that choice is kept.",
     "riskKept": "You chose {value} on the Profile tab; that choice is kept.",
     "editAnswers": "Edit my answers",
-    "openDashboard": "Open my dashboard"
+    "seeSuggested": "See suggested portfolios"
   },
   "describe": {
     "questions": {

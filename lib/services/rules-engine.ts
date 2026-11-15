@@ -362,6 +362,23 @@ export async function saveStrategy(input: unknown, scope?: Scope): Promise<Store
     return saved!;
 }
 
+/**
+ * Removes one of the visitor's strategies from the app-state document (which is mutable) and records the removal as a
+ * 'user_action' row of the append-only decision log, with the strategy as it was. Throws 404 for an unknown id.
+ */
+export async function removeStrategy(id: string, scope?: Scope): Promise<StoredStrategy> {
+    const s = await scopeOr(scope);
+    let removed: StoredStrategy | undefined;
+    await updateState(s, (state) => {
+        const list = strategiesIn(state);
+        const at = list.findIndex((strategy) => strategy.id === id);
+        if (at >= 0) removed = list.splice(at, 1)[0];
+    });
+    if (!removed) throw new ServiceError(404, { key: 'strat.unknown_strategy', params: { id } });
+    await appendDecision({ userId: s.portfolioUserId, kind: 'user_action', ruleVersions: { rules: RULES_VERSION, strategy: STRATEGY_CONFIG.version }, payload: { action: 'strategy_remove', strategy: removed, simulated: true } });
+    return removed;
+}
+
 export type LiveStrategyCheck = {
     strategyId: string;
     strategyVersion: number;

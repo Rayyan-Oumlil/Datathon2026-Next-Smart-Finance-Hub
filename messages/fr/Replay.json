@@ -1,0 +1,318 @@
+{
+  "units": {
+    "pts": "{value} pt"
+  },
+  "page": {
+    "metaTitle": "Machine à remonter le temps",
+    "title": "Machine à remonter le temps",
+    "illustrative": "illustratif",
+    "sub": "Rejouez un portefeuille sur des données historiques figées, sans règles puis avec une stratégie, côte à côte. Montant fictif, aucun ordre réel.",
+    "label": "Rejeu illustratif sur données historiques. Ce n’est pas une prédiction.",
+    "ask": "Demander à l’agent d’expliquer",
+    "askMessage": "Explique-moi le rejeu {id} à partir de ses chiffres seulement : ce que la stratégie a changé, le rendement, le pire repli et la volatilité."
+  },
+  "controls": {
+    "title": "Paramètres du rejeu",
+    "sub": "Les deux séries partent du même portefeuille, du même montant et des mêmes données.",
+    "portfolio": "Portefeuille",
+    "current": "Mon portefeuille actuel (simulé)",
+    "examples": "Portefeuilles exemples",
+    "personas": {
+      "amira": "Exemple : {name} (croissance)",
+      "mateo": "Exemple : {name} (équilibre, ESG)",
+      "robert": "Exemple : {name} (préservation du capital)"
+    },
+    "models": "Portefeuilles proposés",
+    "strategy": "Stratégie",
+    "noRules": "Aucune règle",
+    "strategyOption": "{name} ({count, plural, one {# règle} other {# règles}})",
+    "noStrategies": "Aucune stratégie enregistrée pour l’instant : le rejeu se fera sans règles.",
+    "capital": "Montant fictif",
+    "cad": "$ CA",
+    "fictitious": "{amount}, montant fictif",
+    "startDate": "Date de départ",
+    "otherDate": "Autre date de départ",
+    "window": "Données disponibles du {from} au {to}",
+    "fee": "Frais par ordre",
+    "feeHint": "0 $ par défaut ; aucun impôt.",
+    "footnote": "Signal à la clôture d’un jour, exécution au cours du jour de bourse suivant.",
+    "running": "Rejeu en cours…",
+    "run": "Lancer le rejeu"
+  },
+  "states": {
+    "errorGeneric": "Le rejeu n’a pas pu être calculé.",
+    "error": "Le rejeu n’a pas abouti : {message}",
+    "retry": "Réessayer",
+    "running": "Rejeu en cours sur l’instantané figé…",
+    "nothingTitle": "Aucun titre de ce portefeuille ne peut être rejoué",
+    "nothingHint": "Choisissez un autre portefeuille ou une date de départ plus récente. La liste des titres de l’instantané figure dans « Pourquoi ces données ? »."
+  },
+  "idle": {
+    "title": "Comment ça fonctionne",
+    "one": "Choisissez un portefeuille, une stratégie (ou aucune règle), un montant fictif et une date de départ.",
+    "two": "Le moteur rejoue jour par jour deux séries sur l’instantané figé : le même portefeuille conservé tel quel, et le même portefeuille suivi par la stratégie.",
+    "three": "Vous voyez les deux courbes s’animer, chaque déclenchement de règle, le journal des opérations et une comparaison chiffrée, sans verdict."
+  },
+  "ids": {
+    "copy": "Copier {label} : {value}",
+    "unnamed": "Stratégie sans nom",
+    "window": "du {from} au {to} ({days} jours de bourse)",
+    "capital": "{amount} fictifs, frais de {fee} par ordre",
+    "snapshot": "Instantané",
+    "replay": "Rejeu",
+    "startMoved": "Date demandée : {asked}. Le rejeu commence au premier jour de bourse disponible, le {from}."
+  },
+  "chart": {
+    "title": "Les deux rejeux",
+    "sub": "Valeur en dollars canadiens. Glissez sur le graphique ou utilisez le curseur pour remonter le temps.",
+    "without": "Sans règles",
+    "with": "Avec la stratégie",
+    "gap": "Différence",
+    "sinceStart": "{pct} depuis le départ",
+    "year2022": "Année 2022",
+    "marker": "Déclenchement d’une règle",
+    "benchmarks": "Références",
+    "aria": "Valeur simulée du {from} au {to}, à partir de {capital} : {without} sans règles, {with} avec la stratégie.",
+    "gapExContributions": "Différence hors versements"
+  },
+  "player": {
+    "pause": "Mettre en pause",
+    "replay": "Rejouer l’animation",
+    "play": "Lecture",
+    "slider": "Date du rejeu",
+    "speed": "Vitesse",
+    "speedValue": "{n}×"
+  },
+  "event": {
+    "title": "Déclenchement",
+    "guard": {
+      "entered": "entrée en mode défensif",
+      "exited": "sortie du mode défensif"
+    },
+    "previous": "Déclenchement précédent",
+    "next": "Déclenchement suivant",
+    "position": "{n} sur {total}",
+    "close": "Fermer",
+    "condition": "Condition, avec ses chiffres",
+    "days": "Décision et exécution",
+    "daysValue": "décidé le {decision}, exécuté le {execution}",
+    "before": "Valeur à la clôture du jour de décision",
+    "after": "Valeur à la clôture du jour d’exécution",
+    "beforeAfterNote": "L’écart entre les deux valeurs vient surtout du mouvement des cours entre les deux clôtures, et des frais s’il y en a.",
+    "orders": "{count, plural, =0 {Aucune opération} one {# opération} other {# opérations}}",
+    "hint": "Cliquez sur un marqueur du graphique ou sur une ligne du journal pour voir l’un des {count, plural, one {# déclenchement} other {# déclenchements}}.",
+    "none": "Aucune règle ne s’est déclenchée pendant ce rejeu : les deux séries sont identiques.",
+    "noRules": "Rejeu sans règles : il n’y a aucun déclenchement à afficher."
+  },
+  "rule": {
+    "name": "{kind} ({n})",
+    "describe": {
+      "drawdown_guard": "Si le portefeuille recule de {trigger} % sous son sommet, déplacer {move} % des positions vers {symbol} ; revenir quand le repli repasse sous {recover} %.",
+      "allocation_quarterly": "Ramener les {count, plural, one {# cible} other {# cibles}} de répartition chaque trimestre.",
+      "allocation_drift": "Ramener les {count, plural, one {# cible} other {# cibles}} de répartition dès qu’un écart dépasse {drift} points.",
+      "weight_cap": "Aucun titre au-dessus de {cap} % ; l’excédent passe en liquidités.",
+      "weight_cap_to": "Aucun titre au-dessus de {cap} % ; l’excédent va vers {symbol}.",
+      "periodic_month": "Ajouter {amount} chaque mois.",
+      "periodic_days": "Ajouter {amount} tous les {n} jours de bourse.",
+      "price_threshold": "Seuil sur {symbol} : {trigger} {value}."
+    }
+  },
+  "kinds": {
+    "drawdown_guard": "Garde-fou de baisse",
+    "allocation_target": "Rééquilibrage",
+    "weight_cap": "Plafond par titre",
+    "periodic_purchase": "Versement périodique",
+    "price_threshold": "Seuil de cours"
+  },
+  "triggers": {
+    "price_below": "cours sous",
+    "price_above": "cours au-dessus de",
+    "change_pct_below": "variation sous (%)",
+    "change_pct_above": "variation au-dessus de (%)"
+  },
+  "condition": {
+    "guard_enter": "Repli de {fall} % sous le sommet (seuil : {threshold} %) : {value} contre un sommet de {peak}.",
+    "guard_exit": "Repli revenu à {fall} % (seuil de retour : {threshold} %) : {value} contre un sommet de {peak}.",
+    "rebalance_quarterly": "Trimestre {quarter} : le plus grand écart avec la cible était de {drift} points ({symbol}).",
+    "rebalance_drift": "Écart de {drift} points avec la cible ({symbol}), seuil de {threshold} points.",
+    "weight_cap": "{symbol} pesait {weight} % (plafond : {cap} %){others, plural, =0 {} one {, et # autre titre au-dessus} other {, et # autres titres au-dessus}}.",
+    "periodic_first": "Premier versement de {amount}.",
+    "periodic": "Versement de {amount}, {days} jours de bourse après le précédent.",
+    "price_threshold": "{symbol} à {price} {currency} ; condition : {trigger} {threshold}."
+  },
+  "journal": {
+    "title": "Journal des opérations",
+    "sub": "Les opérations simulées de la série avec la stratégie, une phrase par ordre.",
+    "count": "{count, plural, =0 {Aucune opération de règle} one {# opération de règle} other {# opérations de règle}}, plus {initial} ordres de départ.",
+    "filter": "Règle",
+    "allRules": "Toutes les règles",
+    "decision": "Décision",
+    "execution": "Exécution",
+    "sentence": "Opération",
+    "quantity": "Quantité",
+    "price": "Cours ($ CA)",
+    "fee": "Frais",
+    "initial": "Ordres de départ ({count}), le {date}",
+    "noRules": "Rejeu sans règles : seuls les ordres de départ figurent au journal.",
+    "empty": "Aucune opération pour cette règle."
+  },
+  "compare": {
+    "title": "Comparaison",
+    "sub": "Les mêmes mesures pour les deux séries. La différence est « avec » moins « sans ».",
+    "metric": "Mesure",
+    "difference": "Différence",
+    "fallDates": "du {peak} au {trough}",
+    "rows": {
+      "finalValue": "Valeur finale",
+      "contributed": "Versements ajoutés",
+      "valueExContributions": "Valeur finale hors versements",
+      "totalReturn": "Rendement total",
+      "annualised": "Rendement annualisé",
+      "volatility": "Volatilité annualisée",
+      "worstFall": "Pire repli",
+      "return2022": "Rendement 2022",
+      "worstDay": "Pire journée",
+      "orders": "Nombre d’opérations",
+      "turnover": "Rotation",
+      "fees": "Frais"
+    },
+    "note": "Le nombre d’opérations compte les ordres des règles ; les {initial} ordres de départ sont communs aux deux séries. Rendement pondéré dans le temps, dividendes réinvestis. Un rendement 2022 vide signifie que le rejeu ne couvre pas toute l’année.",
+    "contributionsNote": "Les rendements sont pondérés dans le temps : un versement ajouté n’est pas compté comme un gain."
+  },
+  "gap": {
+    "title": "Écart au fil du temps",
+    "at": "Au {date} : {value}",
+    "aria": "Écart entre les deux séries au fil du temps, en points d’indice ; écart final : {final}.",
+    "note": "« Avec la stratégie » moins « sans règles », en points d’indice (100 = montant de départ)."
+  },
+  "summary": {
+    "title": "Synthèse neutre",
+    "sub": "Des faits tirés des chiffres du rejeu, sans verdict.",
+    "noRules": "Sans règle, les deux séries sont identiques : c’est le portefeuille de départ conservé tel quel.",
+    "identical": "Les règles n’ont modifié aucune position : les deux séries sont identiques.",
+    "endedEqual": "Les deux séries ont terminé au même rendement total.",
+    "endedWith": "La série avec la stratégie a terminé plus haut : {with} de rendement total contre {without}, soit {pts} points de plus.",
+    "endedWithout": "La série sans règles a terminé plus haut : {without} de rendement total contre {with}, soit {pts} points de plus.",
+    "fallShallower": "Le pire repli a été moins profond de {pts} points avec la stratégie : {with} contre {without}.",
+    "fallDeeper": "Le pire repli a été plus profond de {pts} points avec la stratégie : {with} contre {without}.",
+    "fallSame": "Le pire repli est le même dans les deux séries : {value}.",
+    "volLower": "La volatilité annualisée a été plus faible de {pts} points avec la stratégie : {with} contre {without}.",
+    "volHigher": "La volatilité annualisée a été plus élevée de {pts} points avec la stratégie : {with} contre {without}.",
+    "volSame": "La volatilité annualisée est la même dans les deux séries : {with}.",
+    "tradeoffCost": "Sur cette période, la stratégie a coûté du rendement mais a réduit le pire repli : c’est un compromis entre risque et rendement, que chacun pèse selon sa propre situation.",
+    "tradeoffRisk": "Sur cette période, la stratégie a terminé plus haut, mais avec un pire repli plus profond : le rendement supplémentaire est venu avec davantage de risque.",
+    "fees": "Les frais ont différé de {cad} entre les deux séries.",
+    "fired": "{rule} : {count, plural, one {# déclenchement} other {# déclenchements}}.",
+    "neverFired": "{rule} : la règle ne s’est jamais déclenchée.",
+    "contributions": "La stratégie a ajouté {cad} de versements périodiques ; les rendements et les écarts ci-dessus les excluent.",
+    "valueGap": "Écart de valeur finale, avec moins sans : {cad}.",
+    "valueGapEx": "Écart de valeur finale hors versements, avec moins sans : {cad}."
+  },
+  "effects": {
+    "title": "Effet marché et effet de change",
+    "sub": "D’où vient la variation de valeur de chaque série.",
+    "market": "Effet marché",
+    "currency": "Effet de change",
+    "other": "Frais : {fees} · versements : {contributed}",
+    "explain": "L’effet marché est la variation des cours dans la devise de cotation ; l’effet de change est ce qu’a ajouté ou retiré le taux USD/CAD sur les actifs américains et la crypto."
+  },
+  "contrib": {
+    "title": "Contribution de chaque règle",
+    "rule": "Règle",
+    "value": "Valeur finale",
+    "return": "Rendement total",
+    "fall": "Pire repli",
+    "explain": "Ce que change chaque règle prise seule : la stratégie complète moins la même stratégie sans cette règle. Les contributions ne s’additionnent pas forcément, car les règles interagissent."
+  },
+  "caveats": {
+    "title": "Hypothèses et limites",
+    "unreplayable": "Titres qui n’ont pas pu être rejoués",
+    "assumptions": "Hypothèses du rejeu",
+    "limits": "Limites des données"
+  },
+  "sensitivity": {
+    "title": "Sensibilité",
+    "sub": "Le même rejeu sous d’autres hypothèses.",
+    "intro": "Trois dates de départ et une variante de seuil par règle. Chaque variante est un rejeu complet, journalisé avec son propre identifiant.",
+    "run": "Tester la sensibilité",
+    "rerun": "Relancer la sensibilité",
+    "needRun": "Lancez d’abord un rejeu.",
+    "base": "Rejeu de base",
+    "startDate": "Départ le {date}",
+    "threshold": "{rule} : {field} {from} → {to}",
+    "tally": "Sur {n} variantes, la série avec la stratégie a terminé plus haut {with} fois et la série sans règles {without} fois (égalité : {equal}). Écart de rendement total : de {rMin} à {rMax} ; écart de pire repli : de {fMin} à {fMax}.",
+    "variant": "Variante",
+    "returnWithout": "Rendement sans règles",
+    "returnWith": "Rendement avec la stratégie",
+    "fallGap": "Écart de pire repli",
+    "replayId": "Rejeu",
+    "window": "du {from} au {to}",
+    "note": "Un écart de pire repli positif signifie un repli moins profond avec la stratégie. Les variantes restent en mémoire du serveur pendant la session de démonstration."
+  },
+  "values": {
+    "quarterly": "trimestriel",
+    "month": "chaque mois",
+    "drift": "écart de {n} points",
+    "tradingDays": "tous les {n} jours de bourse"
+  },
+  "fields": {
+    "triggerDrawdownPct": "seuil de baisse (%)",
+    "maxWeightPct": "plafond (%)",
+    "rebalance_driftPts": "écart toléré (points)",
+    "rebalance": "rééquilibrage",
+    "every": "fréquence",
+    "trigger_value": "seuil"
+  },
+  "dataset": {
+    "title": "Pourquoi ces données ?",
+    "teaser": "Instantané {id} · {count} titres · lu depuis manifest.json",
+    "teaserLoading": "Instantané figé de données historiques",
+    "factsTitle": "L’instantané rejoué",
+    "snapshot": "Identifiant",
+    "source": "Provenance",
+    "library": "Bibliothèque",
+    "extracted": "Date d’extraction",
+    "window": "Fenêtre",
+    "windowValue": "du {from} au {to}",
+    "symbols": "Titres",
+    "warnings": "Avertissements de qualité",
+    "warningsValue": "{count} (sur {symbols, plural, one {# titre} other {# titres}}), conservés et listés dans le manifeste",
+    "excluded": "Titres exclus",
+    "excludedNone": "Aucun",
+    "notReplayable": "Non rejouables",
+    "notReplayableValue": "{symbols} : un rendement obligataire n’est pas un cours",
+    "whyTitle": "Pourquoi yfinance et un instantané figé",
+    "why": {
+      "coverage": "Couverture de tout l’univers de l’application : on peut rejouer son propre portefeuille, pas seulement un indice.",
+      "sameSource": "Même source que les cotes en direct de l’application (Yahoo Finance).",
+      "totalReturn": "Rendement total grâce au cours ajusté : dividendes et fractionnements inclus.",
+      "reproducible": "Reproductible : une nouvelle extraction changerait les valeurs ajustées passées, alors l’instantané est figé, vérifié par empreinte SHA-256 et jamais écrasé.",
+      "noLookAhead": "Aucune anticipation : seulement des cours passés, aucun fondamental actuel ; chaque décision ne lit que les données connues à la clôture du jour.",
+      "offline": "Aucun appel réseau pendant un rejeu : la démonstration ne dépend d’aucun service externe."
+    },
+    "xrayTitle": "Différence avec la radiographie",
+    "xray": "La radiographie applique les proportions d’aujourd’hui aux variations de cours passées, sans dividendes ; la machine à remonter le temps suit une stratégie dans le temps, dividendes réinvestis. Les deux chiffres ne sont pas comparables.",
+    "limitsTitle": "Limites assumées",
+    "notesTitle": "Traitement des données",
+    "filesTitle": "Fichiers vérifiés",
+    "rows": "{count} lignes"
+  },
+  "limitations": {
+    "unofficial_source": "Source non officielle : données Yahoo Finance lues avec la bibliothèque yfinance, non certifiées par les bourses.",
+    "demo_use_only": "Usage de démonstration seulement, non commercial : yfinance lit des données Yahoo destinées à un usage personnel et de recherche.",
+    "survivorship_bias": "Biais du survivant : l’univers est la liste actuelle de grandes entreprises, rejouée dans le passé ; il paraît plus favorable qu’une liste choisie en 2020.",
+    "no_fees_no_taxes": "Pas de frais ni d’impôts par défaut.",
+    "fx_effect_included": "Effet de change inclus : les actifs américains et la crypto sont convertis en dollars canadiens au taux USD/CAD du jour.",
+    "start_near_market_top": "La fenêtre commence en décembre 2020, près du sommet de 2021 qui a précédé la baisse de 2022.",
+    "frozen_snapshot": "Instantané figé : une nouvelle extraction changerait les valeurs ajustées passées ; les résultats ne se comparent que sur le même identifiant d’instantané.",
+    "not_frozen": "Données Yahoo en direct, non figées : les résultats peuvent changer d’une exécution à l’autre."
+  },
+  "notes": {
+    "total_return_adj_close": "Les rendements utilisent le cours ajusté (méthode Yahoo : ajusté pour les fractionnements et les dividendes, à rebours depuis la date d’extraction) ; les dividendes sont donc réinvestis dans le rendement.",
+    "splits_not_reapplied": "Le cours de clôture est ajusté pour les fractionnements, le cours ajusté pour les fractionnements et les dividendes ; les opérations sur titres servent de référence et ne sont jamais réappliquées.",
+    "common_calendar": "Le calendrier du rejeu réunit tous les jours où le TSX ou les marchés américains sont ouverts dans l’instantané ; un actif dont le marché est fermé ce jour-là garde sa dernière clôture.",
+    "crypto_previous_utc_day": "Les lignes crypto sont des journées UTC terminées à minuit UTC, après la clôture nord-américaine ; à une date donnée, le rejeu utilise la clôture crypto de la journée UTC précédente.",
+    "fx_last_known_rate": "Les montants en dollars américains sont convertis avec la clôture USD/CAD de Yahoo (USDCAD=X) du jour, ou le dernier taux connu avant.",
+    "quality_checks_recorded": "Les contrôles de qualité (jours manquants, variations de plus de 25 %, jours sans volume, historique incomplet, devise inconnue) sont consignés dans manifest.json ; un titre qui échoue à un contrôle strict est exclu avec sa raison, rien n’est corrigé."
+  }
+}

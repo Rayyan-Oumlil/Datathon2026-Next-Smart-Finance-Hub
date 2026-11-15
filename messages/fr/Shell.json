@@ -3,7 +3,10 @@
     "portfolio": "Portefeuille",
     "overview": "Aperçu",
     "profile": "Profil",
-    "xray": "Radiographie"
+    "xray": "Radiographie",
+    "strategy": "Stratégie",
+    "timeMachine": "Machine à remonter le temps",
+    "logs": "Journaux"
   },
   "logoLabel": "Next Smart Finance Hub, portefeuille",
   "disclaimer": "Simulation seulement. Aucune transaction réelle et aucun conseil en placement. Chaque chiffre indique sa source et son heure.",

@@ -66,10 +66,10 @@ export async function chat(input: ChatInput, onProgress?: (event: AgentProgress)
     await logStep(actionId, 'context_built', {
         dataUsed: {
             locale, localeBasis: basis, appLocale, level: context.level ?? null, risk: context.risk ?? null, agentStyle: context.agentStyle ?? null,
-            holdings: context.holdings, watchlist: context.watchlist, layout: context.layout, page: context.page ?? null, watchlistSnapshotId: snapshotId,
+            holdings: context.holdings, watchlist: context.watchlist, layout: context.layout, strategies: context.strategies, page: context.page ?? null, watchlistSnapshotId: snapshotId,
             contextSha256: sha256(JSON.stringify(context)),
         },
-        statedReason: 'Only data the app holds: profile, simulated holdings, watchlist picks, layout, and which page the user is on. No sentiment data and no news text.',
+        statedReason: 'Only data the app holds: profile, simulated holdings, watchlist picks, layout, stored strategies (names and rule kinds), and which page the user is on. No sentiment data and no news text.',
     });
 
     // A question asked on its own, answered before in the same language and settings, needs no new model call.
@@ -111,7 +111,11 @@ export async function chat(input: ChatInput, onProgress?: (event: AgentProgress)
     }
 
     // For a simulated trade the conflicts come from the app's own check at preview time
-    const ownConflicts = routed.outcome === 'preview' && routed.conflicts.length > 0 ? { symbol: String(routed.proposed.params.symbol), checks: routed.conflicts } : undefined;
+    // (for a strategy, the symbols each conflict is about, as the strategy's own check named them)
+    const conflictSymbol = (checks: FilterCheck[]) => [...new Set(checks.map((check) => (check as FilterCheck & { symbol?: string }).symbol).filter((s): s is string => Boolean(s) && s !== 'strategy'))].join(', ');
+    const ownConflicts = routed.outcome === 'preview' && routed.conflicts.length > 0
+        ? { symbol: (routed.proposed.type as string) === 'strategy_propose' ? conflictSymbol(routed.conflicts) || routed.preview.strategy?.name || '' : String(routed.proposed.params.symbol), checks: routed.conflicts }
+        : undefined;
     const fromAgent = reply.conflict ? { symbol: reply.conflict.symbol, checks: reply.conflict.checks as FilterCheck[] } : undefined;
     const conflict = withheld ? undefined : ownConflicts ?? fromAgent;
 

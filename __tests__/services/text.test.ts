@@ -159,15 +159,15 @@ describe('ServiceError and the HTTP layer', () => {
         expect(new ServiceError(400, 'given as text').messageIn('fr')).toBe('given as text');
     });
 
-    it('reads the language from the cookie, then Accept-Language, else English', async () => {
+    it('reads the language from the cookie, then Accept-Language, else French', async () => {
         expect(await requestLocale(new NextRequest('http://localhost/api', { headers: { cookie: 'a=1; NEXT_LOCALE=fr' } }))).toBe('fr');
         expect(await requestLocale(new NextRequest('http://localhost/api', { headers: { 'accept-language': 'fr-CA,fr;q=0.9,en;q=0.8' } }))).toBe('fr');
         expect(await requestLocale(new NextRequest('http://localhost/api', { headers: { cookie: 'NEXT_LOCALE=en', 'accept-language': 'fr-CA' } }))).toBe('en');
-        expect(await requestLocale(new NextRequest('http://localhost/api', { headers: { 'accept-language': 'pl,ar' } }))).toBe('en');
-        expect(await requestLocale()).toBe('en');
+        expect(await requestLocale(new NextRequest('http://localhost/api', { headers: { 'accept-language': 'pl,ar' } }))).toBe('fr');
+        expect(await requestLocale()).toBe('fr');
     });
 
-    it('answers a refusal, a validation problem and bad JSON in the request language', async () => {
+    it('answers a refusal, a validation problem and bad JSON in the request language, French without a request', async () => {
         const req = french('http://localhost/api');
         const refused = await respond(async () => { throw new ServiceError(409, ref('svc.no_profile')); }, req);
         expect(await refused.json()).toEqual({ error: 'Aucun profil n’existe encore. Remplissez d’abord le questionnaire de profil.' });
@@ -175,7 +175,7 @@ describe('ServiceError and the HTTP layer', () => {
         expect(await invalid.json()).toEqual({ error: `side${NBSP}: ne fait pas partie des valeurs acceptées` });
         const json = await respond(async () => JSON.parse('{'), req);
         expect(await json.json()).toEqual({ error: 'Le corps de la requête n’est pas un JSON valide.' });
-        expect(await (await respond(async () => JSON.parse('{'))).json()).toEqual({ error: 'The request body is not valid JSON.' });
+        expect(await (await respond(async () => JSON.parse('{'))).json()).toEqual({ error: 'Le corps de la requête n’est pas un JSON valide.' });
     });
 
     it('words zod problems in French from their code', () => {
@@ -204,7 +204,7 @@ describe('routes in French', () => {
         expect(done.trade.reason).toBe(`acquisition simulée depuis la fiche; conflit de profil consigné${NBSP}: volatilité de 50,0${NBSP}%, au-dessus du plafond de 35,0${NBSP}% pour un profil de risque Moyen`);
         // The portfolio and the decision log show it in the language asked for, whatever language it was written in
         expect((await getPortfolio('en')).portfolio.trades[0].reason).toBe('simulated purchase from the card; profile conflict logged: volatility 50.0% is above the 35.0% cap for Medium risk');
-        const rows = await (await DECISIONS(new NextRequest('http://localhost/api/decisions?kind=simulated_trade'))).json();
+        const rows = await (await DECISIONS(new NextRequest('http://localhost/api/decisions?kind=simulated_trade', { headers: { cookie: 'NEXT_LOCALE=en' } }))).json();
         expect(rows.decisions[0].payload.trade.reason).toBe('simulated purchase from the card; profile conflict logged: volatility 50.0% is above the 35.0% cap for Medium risk');
         const refused = await TRADE(french('http://localhost/api/trade', { method: 'POST', body: { symbol: 'NOPE', side: 'buy', amountCad: 5 } }));
         expect(await refused.json()).toEqual({ error: 'NOPE ne figure pas dans la liste d’actifs de l’application et ne peut donc pas être simulé.' });

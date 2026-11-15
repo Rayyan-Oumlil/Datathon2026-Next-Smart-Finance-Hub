@@ -8,11 +8,15 @@ from . import bedrock, prompts, subagents, trace, web_tools
 NEEDS_CONFIRM = {
     "reply": False, "lookup": False, "explain_pick": False,
     "layout_change": True, "rule_create": True, "rule_pause": True, "profile_change": True, "simulated_trade": True,
+    "strategy_propose": True,
 }
 REQUIRED_PARAMS = {
     "lookup": ["symbols"], "explain_pick": ["symbol"], "layout_change": ["layout"], "rule_create": [],
     "rule_pause": ["ruleId", "status"], "profile_change": ["changes"], "simulated_trade": ["symbol", "side"],
+    "strategy_propose": ["strategy"],
 }
+# A refused strategy may be corrected once from its issue codes; after that the proposal is not recorded.
+MAX_STRATEGY_REFUSALS = 2
 
 
 def _last_result(current: trace.RequestTrace, endpoint_suffix: str):
@@ -47,6 +51,10 @@ def record_proposal(current: trace.RequestTrace, action_type: str, summary: str,
             return "Not recorded: ask the rules specialist to validate the rule first, then propose again."
         # The rule the web app validated is used as is; nothing the model retyped reaches the preview.
         params["rule"] = {k: v for k, v in current.validated_rule.items() if k not in ("id", "createdAt")}
+    elif action_type == "strategy_propose":
+        note = _check_strategy(current, params)
+        if note:
+            return note
     elif action_type == "layout_change":
         layout = _last_result(current, "/layout")
         if layout:
@@ -62,12 +70,40 @@ def record_proposal(current: trace.RequestTrace, action_type: str, summary: str,
     return "Recorded."
 
 
+def _check_strategy(current: trace.RequestTrace, params: dict) -> str | None:
+    """Validates the proposed strategy with the web app's strict schema. On refusal returns the issue codes so the
+    model can correct the strategy once; on success the normalised strategy replaces what the model typed."""
+    strategy = params.get("strategy")
+    if not isinstance(strategy, dict):
+        return 'Not recorded: params.strategy must be an object {"name": "...", "rules": [...]}.'
+    if current.strategy_refusals >= MAX_STRATEGY_REFUSALS:
+        return "Not recorded: the strategy was refused twice. Tell the user which values were refused; propose nothing."
+    result = web_tools.call_web("strategies", {"locale": current.locale, "validate": strategy})
+    validation = result.get("validation") if isinstance(result, dict) else None
+    if not isinstance(validation, dict):
+        return "Not recorded: the strategy could not be checked (the app did not answer). Say the check is unavailable."
+    if not validation.get("ok"):
+        current.strategy_refusals += 1
+        issues = "; ".join(f"{i.get('code')} at {i.get('path')} {i.get('values') or ''}".strip()
+                           for i in validation.get("issues") or [])
+        return ("Not recorded: the app refused the strategy. Issues (code at path, values): " + issues
+                + ". Errors: " + " ".join(validation.get("errors") or [])
+                + " Correct exactly these fields and call propose_action again, once.")
+    params["strategy"] = validation["strategy"]
+    replace_id = params.get("replaceId")
+    if replace_id is not None and not (isinstance(replace_id, str) and replace_id.strip()):
+        params.pop("replaceId", None)
+    current.validated_strategy = validation["strategy"]
+    return None
+
+
 @tool
 def propose_action(type: str, summary: str, params: dict) -> str:
     """Records ONE proposed action for the app to preview. Nothing is applied by this call.
 
     Args:
-        type: layout_change, rule_create, rule_pause, profile_change, simulated_trade, explain_pick or lookup.
+        type: layout_change, rule_create, rule_pause, profile_change, simulated_trade, strategy_propose,
+            explain_pick or lookup.
         summary: one plain sentence describing the proposal, for the preview.
         params: the parameters for this action type, as listed in your instructions.
     """

@@ -167,7 +167,7 @@
     "levelKept": "Vous avez choisi {value} dans l’onglet Profil; ce choix est conservé.",
     "riskKept": "Vous avez choisi {value} dans l’onglet Profil; ce choix est conservé.",
     "editAnswers": "Modifier mes réponses",
-    "openDashboard": "Ouvrir mon tableau de bord"
+    "seeSuggested": "Voir des portefeuilles suggérés"
   },
   "describe": {
     "questions": {

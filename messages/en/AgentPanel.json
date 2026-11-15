@@ -124,6 +124,14 @@
     "rule": {
       "label": "Create a rule",
       "message": "Create a rule: when "
+    },
+    "strategy": {
+      "label": "Build a strategy",
+      "message": "Build me a strategy: "
+    },
+    "testStrategy": {
+      "label": "Test my strategy on history",
+      "message": "Test my strategy on the last 5 years of history"
     }
   },
   "inputLabel": "Message to the agent",
@@ -189,7 +197,21 @@
     "applied": "Applied",
     "undone": "Undone",
     "cancelled": "Cancelled",
-    "undo": "Undo"
+    "undo": "Undo",
+    "strategy": {
+      "rules": "Rules",
+      "replaces": "Replaces the current version",
+      "history": "History preview, about 5 years",
+      "window": "{from} to {to} · {days} trading days",
+      "metric": "Figure",
+      "without": "Without rules",
+      "with": "With the strategy",
+      "fired": "Rule firings",
+      "firedCount": "{label}: {count, plural, =0 {never fired} one {fired once} other {fired # times}}",
+      "conflicts": "Profile conflicts",
+      "ids": "Replay {replayId} · snapshot {snapshotId}",
+      "openTimeMachine": "Open in the time machine"
+    }
   },
   "sourceNames": {
     "demodata": "demo data",

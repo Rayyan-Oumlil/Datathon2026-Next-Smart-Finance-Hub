@@ -22,8 +22,8 @@ beforeEach(() => {
 });
 
 describe('POST /api/voice/token', () => {
-    it('returns a pre-signed Transcribe URL that identifies English or French, preferring English by default', async () => {
-        const response = await call();
+    it('returns a pre-signed Transcribe URL that identifies English or French, preferring the app language (English here)', async () => {
+        const response = await call({ cookie: 'NEXT_LOCALE=en' });
         expect(response.status).toBe(200);
         const body = await response.json();
         expect(body).toMatchObject({ languages: ['en-US', 'fr-CA'], preferred: 'en-US', sampleRate: 16000 });
@@ -75,7 +75,7 @@ describe('POST /api/voice/token', () => {
     it('mints nothing and answers 404 with an error when VOICE_ENABLED is not "true"', async () => {
         for (const value of ['false', 'no', 'TRUE ']) {
             vi.stubEnv('VOICE_ENABLED', value);
-            const response = await call();
+            const response = await call({ cookie: 'NEXT_LOCALE=en' });
             if (value === 'TRUE ') { expect(response.status).toBe(200); continue; }
             expect(response.status).toBe(404);
             expect((await response.json()).error).toMatch(/turned off/);
@@ -139,7 +139,7 @@ describe('POST /api/voice/token', () => {
         expect(response.status).toBe(429);
         expect((await response.json()).error).toMatch(/limite d'aujourd'hui/);
         expect(credentials).not.toHaveBeenCalled();
-        expect((await (await call()).json()).error).toMatch(/today's limit/);
+        expect((await (await call({ cookie: 'NEXT_LOCALE=en' })).json()).error).toMatch(/today's limit/);
     });
 
     it('starts a new daily count on the next UTC day', () => {

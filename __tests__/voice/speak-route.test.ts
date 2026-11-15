@@ -38,7 +38,7 @@ describe('POST /api/voice/speak', () => {
     it('reads in the language the app is set to', async () => {
         await call({ text: 'Bonjour.' }, { cookie: 'NEXT_LOCALE=fr' });
         expect(synthesize).toHaveBeenCalledWith(expect.objectContaining({ locale: 'fr', text: 'Bonjour.', region: 'us-east-1' }));
-        await call({ text: 'Hello.' });
+        await call({ text: 'Hello.' }, { cookie: 'NEXT_LOCALE=en' });
         expect(synthesize).toHaveBeenLastCalledWith(expect.objectContaining({ locale: 'en' }));
     });
 

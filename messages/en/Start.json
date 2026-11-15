@@ -1,0 +1,92 @@
+{
+    "metaTitle": "Let’s see how it would look",
+    "kicker": "Step 2 of 4 · Suggested portfolios",
+    "title": "Let’s see how it would look",
+    "intro": "Three example portfolios built for a {risk, select, Low {Low} Medium {Medium} High {High} other {{risk}}} risk profile, from a versioned rules table. Each line explains where its weight comes from.",
+    "label": "Teaching example, not advice",
+    "simulated": "Simulated",
+    "tableVersion": "Table {version}",
+    "amount": {
+        "label": "Fictitious amount",
+        "currency": "CAD",
+        "help": "Between {min} and {max}. No real money is used.",
+        "invalid": "Enter an amount between {min} and {max}."
+    },
+    "existing": {
+        "title": "You already have a simulated portfolio",
+        "body": "It holds {count, plural, one {# position} other {# positions}}. You can keep it and move on to the strategy, or replace it with one of these examples.",
+        "continue": "Continue to the strategy"
+    },
+    "adjustedBy": "Adjusted to your profile:",
+    "notAdjusted": "Base table, no adjustment for your profile.",
+    "linesTitle": "Lines",
+    "why": "Why?",
+    "choose": "Choose this portfolio",
+    "choosing": "Creating…",
+    "replace": "Replace with this portfolio",
+    "replaceConfirm": "The current simulated portfolio will be set aside (nothing is erased, it stays in the log). Confirm?",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "skip": "Skip this step",
+    "skippedLines": "{count, plural, one {# line could not be placed} other {# lines could not be placed}}: {symbols}.",
+    "skippedContinue": "Continue",
+    "error": {
+        "generic": "Creating the portfolio failed. Try again in a moment.",
+        "exists": "A simulated portfolio already exists."
+    },
+    "figures": {
+        "title": "Risk over the snapshot",
+        "volatility": "Annualised volatility",
+        "drawdown": "Worst drop",
+        "worstDay": "Worst day",
+        "window": "{from} to {to} · snapshot {snapshot}",
+        "note": "The example’s weights applied to the snapshot’s past prices, without dividends. This is not a forecast.",
+        "unavailable": "Risk figures not available for this option."
+    },
+    "variant": {
+        "defensive": "Defensive",
+        "core": "Core",
+        "growth": "Growth"
+    },
+    "role": {
+        "bonds": "Bonds",
+        "short_bonds": "Short-term bonds",
+        "canada_equity": "Canadian equities (fund)",
+        "us_equity": "U.S. equities (fund)",
+        "tech_equity": "Technology (fund)",
+        "esg_equity": "ESG equities (fund)",
+        "stock": "Stock",
+        "dividend_stock": "Dividend stock",
+        "gold": "Gold",
+        "crypto": "Crypto"
+    },
+    "legend": {
+        "bonds": "Bonds",
+        "funds": "Equity funds",
+        "stocks": "Stocks",
+        "gold": "Gold",
+        "crypto": "Crypto"
+    },
+    "rule": {
+        "base": "Base table",
+        "crypto_high_only": "Crypto: High profile only",
+        "esg": "ESG theme",
+        "markets_canada": "Canada only",
+        "avoid": "Avoid list",
+        "theme_ai": "AI theme",
+        "theme_dividends": "Dividends theme"
+    },
+    "whyItem": {
+        "base": "Starting weight of {weight}% in table {version} for a {risk, select, Low {Low} Medium {Medium} High {High} other {{risk}}} risk profile.",
+        "crypto_removed": "Receives {points} points from {from}: crypto is kept for the High risk profile.",
+        "esg_replaced": "Replaces {from} ({points} points): you picked the ESG theme, so {from} gives way to {to}.",
+        "canada_replaced": "Replaces {from} ({points} points): Canada only, the U.S. fund gives way to {to}, listed in Canada.",
+        "canada_stock_moved": "Receives {points} points from {from}: Canada only, the U.S. stock is removed.",
+        "canada_kept": "{symbol} is kept: no Canadian-listed gold fund in the app universe.",
+        "avoid_moved": "Receives {points} points from {from}, removed because “{item}” is on your avoid list.",
+        "ai_in": "+{points} points taken from {from}: you picked the AI theme.",
+        "ai_out": "−{points} points to {to}: you picked the AI theme.",
+        "dividends_in": "+{points} points taken from {from}: you picked the dividends theme.",
+        "dividends_out": "−{points} points to {to}: you picked the dividends theme."
+    }
+}

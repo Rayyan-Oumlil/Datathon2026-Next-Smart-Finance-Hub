@@ -109,10 +109,10 @@ describe('watchlist service', () => {
     });
 
     it('refresh does nothing when today\'s run for the current profile exists, and builds after a profile change', async () => {
-        const first = await refreshWatchlist();
+        const first = await refreshWatchlist('en');
         expect(first).toEqual({ started: true });
         await buildStatus().promise;
-        const again = await refreshWatchlist();
+        const again = await refreshWatchlist('en');
         expect(again.started).toBe(false);
         expect(again).toMatchObject({ reasonCode: 'already_current' });
         expect(again.started === false && again.reason).toContain('once a day');
@@ -126,7 +126,7 @@ describe('watchlist service', () => {
     });
 
     it('refresh rebuilds the same day after a simulated trade changes the holdings', async () => {
-        await refreshWatchlist();
+        await refreshWatchlist('en');
         await buildStatus().promise;
         expect(await refreshWatchlist()).toMatchObject({ started: false, reasonCode: 'already_current' });
 
@@ -138,7 +138,7 @@ describe('watchlist service', () => {
     });
 
     it('refresh answers a reason code while a build is running', async () => {
-        await refreshWatchlist();
+        await refreshWatchlist('en');
         const during = await refreshWatchlist('fr');
         expect(during).toMatchObject({ started: false, reasonCode: 'building', reason: 'Un calcul est déjà en cours.' });
         await buildStatus().promise;
@@ -272,7 +272,7 @@ describe('watchlist service', () => {
         expect(view.result!.picks.map((pick) => pick.symbol)).not.toContain('XIU.TO');
         expect(view.result!.picks.filter((pick) => pick.kept === 'incumbent').map((pick) => [pick.symbol, pick.total])).toEqual([['VTI', 50], ['MSFT', 46.6], ['NVDA', 46.6]]);
 
-        const why = await explainSymbol('XIU.TO');
+        const why = await explainSymbol('XIU.TO', 'en');
         expect(why).toMatchObject({ listed: false, candidate: { symbol: 'XIU.TO', passed: true, total: 50 } });
         expect(why.note).toBe('XIU.TO passed every filter with a total of 50, and was not selected: the list was full (10 picks) and these picks with a total no higher kept their places: '
             + 'VTI (total 50) was already listed, and a newcomer takes a listed pick\'s place only with a total more than 5 points higher (the difference here is 0 points); '
@@ -283,7 +283,7 @@ describe('watchlist service', () => {
         expect(fr).toContain('MSFT (pointage total de 46,6) était inscrit depuis 2 jours, à l’intérieur de la durée minimale de 7 jours');
 
         // An Energy candidate: the sector cap applies too, so no single rule is named and the limits are listed
-        const capped = (await explainSymbol('COP')).note!;
+        const capped = (await explainSymbol('COP', 'en')).note!;
         expect(capped).toContain('other picks ranked ahead of it');
         expect(capped).toContain('at most 2 per sector; a listed pick keeps its place for at least 7 days, and after that a newcomer takes its place only with a total more than 5 points higher');
     });
@@ -301,21 +301,21 @@ describe('watchlist service', () => {
     });
 
     it('explains a pick, a rejected candidate, and a symbol outside the candidates', async () => {
-        await expect(explainSymbol('AAPL')).rejects.toMatchObject({ status: 404 });
+        await expect(explainSymbol('AAPL', 'en')).rejects.toMatchObject({ status: 404 });
         await getWatchlist();
         const view = await built();
         const [run] = await runs();
 
-        const listed = await explainSymbol('aapl');
+        const listed = await explainSymbol('aapl', 'en');
         expect(listed).toMatchObject({ listed: true, pick: { symbol: 'AAPL' }, snapshotId: view.result!.snapshotId, computedAt: view.result!.computedAt, ruleVersions: run.ruleVersions });
         expect(listed.decisionIds).toHaveLength(2);
         expect(listed.decisionIds[0]).toBe(run.id);
 
-        const crypto = await explainSymbol('BTC');
+        const crypto = await explainSymbol('BTC', 'en');
         expect(crypto.listed).toBe(false);
         expect(crypto.rejected).toEqual([expect.objectContaining({ filter: 'crypto_risk', pass: false })]);
 
-        const outside = await explainSymbol('JPM');
+        const outside = await explainSymbol('JPM', 'en');
         expect(outside).toMatchObject({ listed: false, decisionIds: [run.id] });
         expect(outside.note).toContain('not among the');
     });

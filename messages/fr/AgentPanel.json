@@ -124,6 +124,14 @@
     "rule": {
       "label": "Créer une règle",
       "message": "Créer une règle : lorsque "
+    },
+    "strategy": {
+      "label": "Construire une stratégie",
+      "message": "Construis-moi une stratégie : "
+    },
+    "testStrategy": {
+      "label": "Tester ma stratégie sur l’historique",
+      "message": "Teste ma stratégie sur l’historique des 5 dernières années"
     }
   },
   "inputLabel": "Message à l’agent",
@@ -189,7 +197,21 @@
     "applied": "Appliquée",
     "undone": "Retour effectué",
     "cancelled": "Annulée",
-    "undo": "Revenir en arrière"
+    "undo": "Revenir en arrière",
+    "strategy": {
+      "rules": "Règles",
+      "replaces": "Remplace la version actuelle",
+      "history": "Aperçu historique, environ 5 ans",
+      "window": "Du {from} au {to} · {days} jours de bourse",
+      "metric": "Mesure",
+      "without": "Sans règles",
+      "with": "Avec la stratégie",
+      "fired": "Déclenchements des règles",
+      "firedCount": "{label} : {count, plural, =0 {jamais déclenchée} one {déclenchée une fois} other {déclenchée # fois}}",
+      "conflicts": "Conflits avec le profil",
+      "ids": "Rejeu {replayId} · instantané {snapshotId}",
+      "openTimeMachine": "Ouvrir dans la machine à remonter le temps"
+    }
   },
   "sourceNames": {
     "demodata": "données de démonstration",

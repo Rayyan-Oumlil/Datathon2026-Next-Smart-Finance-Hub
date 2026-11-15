@@ -31,6 +31,9 @@ class RequestTrace:
     model_calls: list = field(default_factory=list)      # the response's modelCalls
     conflict_checks: dict = field(default_factory=dict)  # symbol -> conflict-check result
     validated_rule: dict | None = None
+    validated_strategy: dict | None = None               # the last strategy the web app accepted (validate_strategy)
+    strategy_refusals: int = 0                           # strategy_propose attempts refused by the web app's schema
+    replays: list = field(default_factory=list)          # replay ids run in this request
     proposed: dict | None = None
     log_rows: int = 0
     log_errors: list = field(default_factory=list)

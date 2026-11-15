@@ -10,7 +10,7 @@ from . import checks, config, orchestrator, prompts, sources, stream, trace
 app = BedrockAgentCoreApp()
 
 LEVELS = ("Novice", "Intermediate", "Expert")
-PAGES = ("portfolio", "xray", "overview", "profile", "stock")
+PAGES = ("portfolio", "xray", "overview", "profile", "stock", "strategy", "time_machine")
 
 
 def parse_request(payload) -> trace.RequestTrace:
@@ -28,7 +28,7 @@ def parse_request(payload) -> trace.RequestTrace:
         raise ValueError("context.level must be Novice, Intermediate or Expert")
     page = context.get("page")
     if page is not None and not (isinstance(page, dict) and page.get("name") in PAGES):
-        raise ValueError("context.page.name must be portfolio, xray, overview, profile or stock")
+        raise ValueError("context.page.name must be portfolio, xray, overview, profile, stock, strategy or time_machine")
     if context.get("locale") is not None and context["locale"] not in config.LOCALES:
         raise ValueError("context.locale must be en or fr")
     if not isinstance(history, list) or not all(
@@ -71,10 +71,11 @@ def response(current: trace.RequestTrace, text: str, refused: bool, guardrail: l
 ACTION_NAMES = {
     "en": {"layout_change": "layout change", "rule_create": "new rule", "rule_pause": "rule pause or resume",
            "profile_change": "profile change", "simulated_trade": "simulated trade", "explain_pick": "explanation",
-           "lookup": "lookup"},
+           "lookup": "lookup", "strategy_propose": "strategy"},
     "fr": {"layout_change": "modification de la disposition", "rule_create": "nouvelle règle",
            "rule_pause": "suspension ou reprise d'une règle", "profile_change": "modification du profil",
-           "simulated_trade": "opération simulée", "explain_pick": "explication", "lookup": "consultation"},
+           "simulated_trade": "opération simulée", "explain_pick": "explication", "lookup": "consultation",
+           "strategy_propose": "stratégie"},
 }
 
 
@@ -168,4 +169,5 @@ def invoke(payload):
 
 
 if __name__ == "__main__":
-    app.run(port=8080)
+    # AgentCore Runtime expects 8080; PORT moves a local run elsewhere (for example next to another checkout)
+    app.run(port=int(config.env("PORT", "8080") or 8080))
