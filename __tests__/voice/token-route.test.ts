@@ -17,21 +17,26 @@ beforeEach(() => {
 });
 
 describe('POST /api/voice/token', () => {
-    it('returns a pre-signed Transcribe URL for English by default', async () => {
+    it('returns a pre-signed Transcribe URL that identifies English or French, preferring English by default', async () => {
         const response = await call();
         expect(response.status).toBe(200);
         const body = await response.json();
-        expect(body).toMatchObject({ language: 'en-US', sampleRate: 16000 });
+        expect(body).toMatchObject({ languages: ['en-US', 'fr-CA'], preferred: 'en-US', sampleRate: 16000 });
         const url = new URL(body.url);
         expect(url.protocol).toBe('wss:');
-        expect(url.searchParams.get('language-code')).toBe('en-US');
+        expect(url.searchParams.get('identify-language')).toBe('true');
+        expect(url.searchParams.get('language-options')).toBe('en-US,fr-CA');
+        expect(url.searchParams.get('preferred-language')).toBe('en-US');
+        expect(url.searchParams.has('language-code')).toBe(false);
         expect(url.searchParams.get('sample-rate')).toBe('16000');
     });
 
-    it('follows the language the app is set to', async () => {
+    it('prefers the language the app is set to, and still identifies both', async () => {
         const body = await (await call({ cookie: 'NEXT_LOCALE=fr' })).json();
-        expect(body.language).toBe('fr-CA');
-        expect(new URL(body.url).searchParams.get('language-code')).toBe('fr-CA');
+        expect(body).toMatchObject({ languages: ['en-US', 'fr-CA'], preferred: 'fr-CA' });
+        const url = new URL(body.url);
+        expect(url.searchParams.get('preferred-language')).toBe('fr-CA');
+        expect(url.searchParams.get('language-options')).toBe('en-US,fr-CA');
     });
 
     it('signs a short-lived URL and tells caches not to keep it', async () => {

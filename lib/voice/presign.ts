@@ -5,10 +5,13 @@ import { amzStamp, assertRegion, rfc3986, sha256Hex, signature, signingKey, type
 
 export type { SigningCredentials };
 
+/** One language, or the service identifies which of several is being spoken (it needs about a second of speech). */
+export type TranscribeLanguage = { code: string } | { identify: readonly string[]; preferred?: string };
+
 export type PresignInput = {
     credentials: SigningCredentials;
     region: string;
-    language: string;
+    language: TranscribeLanguage;
     sampleRate: number;
     now?: Date;
     /** Seconds the URL stays valid; the service accepts at most 300. */
@@ -19,13 +22,24 @@ const SERVICE = 'transcribe';
 const PATH = '/stream-transcription-websocket';
 const EMPTY_PAYLOAD_HASH = sha256Hex('');
 
+function languageParams(language: TranscribeLanguage): Record<string, string> {
+    if ('code' in language) return { 'language-code': language.code };
+    if (language.identify.length < 2) throw new Error('Language identification needs at least two languages to choose from');
+    if (language.preferred && !language.identify.includes(language.preferred)) throw new Error('The preferred language must be one of the languages to identify');
+    return {
+        'identify-language': 'true',
+        'language-options': language.identify.join(','),
+        ...(language.preferred ? { 'preferred-language': language.preferred } : {}),
+    };
+}
+
 export function presignTranscribeUrl({ credentials, region, language, sampleRate, now = new Date(), expiresIn = 300 }: PresignInput): string {
     const host = `transcribestreaming.${assertRegion(region)}.amazonaws.com:8443`;
     const { stamp, day } = amzStamp(now);
     const scope = `${day}/${region}/${SERVICE}/aws4_request`;
 
     const params: Record<string, string> = {
-        'language-code': language,
+        ...languageParams(language),
         'media-encoding': 'pcm',
         'sample-rate': String(sampleRate),
         'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { LOCALES } from '@/i18n/config';
 import { agentText } from '@/lib/agent/text';
 import { DEMO_USER } from '@/lib/demo-user';
 import { isRateLimited } from '@/lib/rate-limit';
@@ -18,21 +19,23 @@ const MAX_PER_MINUTE = 30;
 const MAX_CHARS_PER_HOUR = 60_000;
 // 8000 characters of JSON text is at most about 48 KB once escaped
 const MAX_BODY_BYTES = 64_000;
-// Replies are at most a couple of thousand characters; speakable() cuts what is read down further
-const schema = z.object({ text: z.string().min(1).max(8000) });
+// Replies are at most a couple of thousand characters; speakable() cuts what is read down further.
+// `language` is the reply's own (the agent answers in the language of the question); without one, the app's.
+const schema = z.object({ text: z.string().min(1).max(8000), language: z.enum(LOCALES).optional() });
 
-// An agent reply read aloud by Amazon Polly, in the app's language. The text is cleaned here (no source line, no file
-// paths) and capped, so what is billed and spoken never depends on what the browser sends.
+// An agent reply read aloud by Amazon Polly, in the language of the reply. The text is cleaned here (no source line, no
+// file paths) and capped, so what is billed and spoken never depends on what the browser sends.
 export const POST = (req: NextRequest) => respond(async () => {
-    const locale = await requestLocale(req);
+    const appLocale = await requestLocale(req);
     if (await isRateLimited(`voice-speak:user:${DEMO_USER.id}`, MAX_PER_MINUTE, 60)) {
-        throw new ServiceError(429, agentText(locale).tooMany);
+        throw new ServiceError(429, agentText(appLocale).tooMany);
     }
     // Requiring JSON also makes a cross-site form post impossible without a preflight
     if (!(req.headers.get('content-type') ?? '').toLowerCase().startsWith('application/json')) {
         throw new ServiceError(415, 'Send the text as application/json');
     }
-    const { text } = schema.parse(JSON.parse(await readLimitedText(req, MAX_BODY_BYTES)));
+    const { text, language } = schema.parse(JSON.parse(await readLimitedText(req, MAX_BODY_BYTES)));
+    const locale = language ?? appLocale;
     const speech = speakable(text);
     if (!speech) return new NextResponse(null, { status: 204 });
     if (await isRateLimited(`voice-speak-chars:user:${DEMO_USER.id}`, MAX_CHARS_PER_HOUR, 3600, speech.length)) {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, MessageSquareText, RotateCcw, SendHorizontal, Undo2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { Locale } from "@/i18n/config";
 import { formatNumber, formatDateTime } from "@/i18n/format";
 import { formatMoment, sourceLabel } from "@/components/agent/time";
 import { SpeakerButton, VoiceButton, VoiceStatus } from "@/components/agent/Voice";
@@ -20,6 +21,7 @@ type PreviewData = {
 };
 type Reply = {
     actionId: string;
+    language?: Locale;                // the language the reply is in: the question's own, not necessarily the app's
     sources: Source[];
     refused?: boolean;
     notice?: string;
@@ -283,9 +285,9 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
             if (run !== conversationRun.current) return;
             setMessages((list) => [...list, {
                 id: newId(), role: 'assistant', text: reply.text, change: reply.preview ? 'pending' : undefined,
-                reply: { actionId: reply.actionId, sources: reply.sources ?? [], refused: reply.refused, notice: reply.notice, conflict: reply.conflict, preview: reply.preview, proposedType: reply.proposed?.type },
+                reply: { actionId: reply.actionId, language: reply.language, sources: reply.sources ?? [], refused: reply.refused, notice: reply.notice, conflict: reply.conflict, preview: reply.preview, proposedType: reply.proposed?.type },
             }]);
-            if (viaVoice && !speechRef.current.muted && !voiceRef.current.active) void speechRef.current.speak(reply.text, ticket);
+            if (viaVoice && !speechRef.current.muted && !voiceRef.current.active) void speechRef.current.speak(reply.text, ticket, reply.language);
         } catch (error) {
             if (run === conversationRun.current) notice(error instanceof Error ? error.message : t('errors.request'));
         } finally {
@@ -301,10 +303,10 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
     };
 
     const decide = async (message: Message, accept: boolean) => {
-        const { actionId } = message.reply!;
+        const { actionId, language } = message.reply!;
         setBusyAction(actionId);
         try {
-            const outcome = await post<{ applied: boolean; message?: string }>('/api/agent/confirm', { actionId, accept }, t('errors.apply'));
+            const outcome = await post<{ applied: boolean; message?: string }>('/api/agent/confirm', { actionId, accept, language }, t('errors.apply'));
             patch(message.id, { change: outcome.applied ? 'applied' : 'cancelled', outcome: outcome.message });
             if (outcome.applied) dataChanged();
         } catch (error) {
@@ -315,10 +317,10 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged }: AgentPanelProps) => {
     };
 
     const undo = async (message: Message) => {
-        const { actionId } = message.reply!;
+        const { actionId, language } = message.reply!;
         setBusyAction(actionId);
         try {
-            const outcome = await post<{ restored: boolean; message?: string }>('/api/agent/undo', { actionId }, t('errors.undo'));
+            const outcome = await post<{ restored: boolean; message?: string }>('/api/agent/undo', { actionId, language }, t('errors.undo'));
             patch(message.id, { change: outcome.restored ? 'undone' : 'applied', outcome: outcome.message });
             if (outcome.restored) dataChanged();
         } catch (error) {

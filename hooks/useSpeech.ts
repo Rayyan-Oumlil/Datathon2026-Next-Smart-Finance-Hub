@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import type { Locale } from '@/i18n/config';
+
 export type SpeechState = 'idle' | 'loading' | 'playing';
 
 const MUTE_KEY = 'agent-speech-muted';
@@ -89,7 +91,8 @@ export function useSpeech() {
     /** What to give speak() later: the reply is read only if no stop() happened in between. */
     const ticket = useCallback(() => run.current, []);
 
-    const speak = useCallback(async (text: string, withTicket?: number) => {
+    /** `language` is the reply's own; the voice follows it, whatever the app is set to. */
+    const speak = useCallback(async (text: string, withTicket?: number, language?: Locale) => {
         if (withTicket !== undefined && withTicket !== run.current) return;
         stop();
         setFailed(false);
@@ -98,7 +101,7 @@ export function useSpeech() {
         request.current = controller;
         setState('loading');
         try {
-            const response = await fetch('/api/voice/speak', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }), signal: controller.signal });
+            const response = await fetch('/api/voice/speak', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, ...(language ? { language } : {}) }), signal: controller.signal });
             if (mine !== run.current) return;
             if (response.status === 204) { setState('idle'); return; }
             if (!response.ok) throw new Error(`speak request failed (${response.status})`);

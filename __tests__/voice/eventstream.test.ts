@@ -70,7 +70,21 @@ describe('parseTranscriptEvent', () => {
             { IsPartial: false, Alternatives: [{ Transcript: 'I want to add Tesla' }] },
             { IsPartial: true, Alternatives: [{ Transcript: 'to my' }] },
         ]));
-        expect(parsed).toEqual([{ partial: false, text: 'I want to add Tesla' }, { partial: true, text: 'to my' }]);
+        expect(parsed).toEqual([{ partial: false, text: 'I want to add Tesla', languagePending: false }, { partial: true, text: 'to my', languagePending: false }]);
+    });
+
+    it('marks a result whose language is still a guess: a language code but no identification yet', () => {
+        const parsed = parseTranscriptEvent(event([
+            { IsPartial: true, LanguageCode: 'en-US', Alternatives: [{ Transcript: 'Kesker' }] },
+            { IsPartial: true, LanguageCode: 'fr-CA', LanguageIdentification: [{ LanguageCode: 'en-US', Score: 0 }, { LanguageCode: 'fr-CA', Score: 1 }], Alternatives: [{ Transcript: 'Qu’est-ce qu’un' }] },
+            { IsPartial: true, LanguageCode: 'en-US', LanguageIdentification: [], Alternatives: [{ Transcript: 'still guessing' }] },
+        ]));
+        expect(parsed.map((piece) => piece.languagePending)).toEqual([true, false, true]);
+    });
+
+    it('never marks a result as pending when no language identification was asked for', () => {
+        const parsed = parseTranscriptEvent(event([{ IsPartial: true, Alternatives: [{ Transcript: 'Qu’est-ce qu’un' }] }, { IsPartial: false, Alternatives: [{ Transcript: 'Qu’est-ce qu’un FNB?' }] }]));
+        expect(parsed.map((piece) => piece.languagePending)).toEqual([false, false]);
     });
 
     it('returns nothing for an event without results', () => {

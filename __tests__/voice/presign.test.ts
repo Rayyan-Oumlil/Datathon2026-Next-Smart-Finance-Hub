@@ -3,7 +3,7 @@ import { presignTranscribeUrl } from '@/lib/voice/presign';
 
 const credentials = { accessKeyId: 'AKIDEXAMPLE', secretAccessKey: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY', sessionToken: 'tok+/=en' };
 const now = new Date('2026-11-15T08:30:00Z');
-const make = (over: object = {}) => presignTranscribeUrl({ credentials, region: 'us-east-1', language: 'fr-CA', sampleRate: 16000, now, ...over });
+const make = (over: object = {}) => presignTranscribeUrl({ credentials, region: 'us-east-1', language: { code: 'fr-CA' }, sampleRate: 16000, now, ...over });
 
 describe('presignTranscribeUrl', () => {
     it('targets the streaming WebSocket endpoint with the stream settings', () => {
@@ -14,6 +14,31 @@ describe('presignTranscribeUrl', () => {
         expect(url.searchParams.get('language-code')).toBe('fr-CA');
         expect(url.searchParams.get('media-encoding')).toBe('pcm');
         expect(url.searchParams.get('sample-rate')).toBe('16000');
+    });
+
+    it('asks Transcribe to identify the language between the ones given, with a preferred one', () => {
+        const url = new URL(make({ language: { identify: ['en-US', 'fr-CA'], preferred: 'fr-CA' } }));
+        expect(url.searchParams.get('identify-language')).toBe('true');
+        expect(url.searchParams.get('language-options')).toBe('en-US,fr-CA');
+        expect(url.searchParams.get('preferred-language')).toBe('fr-CA');
+        expect(url.searchParams.has('language-code')).toBe(false);
+    });
+
+    it('leaves out the preferred language when none is given, and never sends a fixed code along with identification', () => {
+        const url = new URL(make({ language: { identify: ['en-US', 'fr-CA'] } }));
+        expect(url.searchParams.has('preferred-language')).toBe(false);
+        expect(url.searchParams.has('language-code')).toBe(false);
+    });
+
+    it('signs the identification settings, so they cannot be changed in the browser', () => {
+        const a = make({ language: { identify: ['en-US', 'fr-CA'], preferred: 'en-US' } });
+        const b = make({ language: { identify: ['en-US', 'fr-CA'], preferred: 'fr-CA' } });
+        expect(new URL(a).searchParams.get('X-Amz-Signature')).not.toBe(new URL(b).searchParams.get('X-Amz-Signature'));
+    });
+
+    it('refuses identification between fewer than two languages, and a preferred one that is not an option', () => {
+        expect(() => make({ language: { identify: ['en-US'] } })).toThrow(/two languages/i);
+        expect(() => make({ language: { identify: ['en-US', 'fr-CA'], preferred: 'de-DE' } })).toThrow(/preferred/i);
     });
 
     it('carries a SigV4 signature scoped to the Transcribe service and a short expiry', () => {
@@ -33,7 +58,7 @@ describe('presignTranscribeUrl', () => {
 
     it('is deterministic for the same inputs and changes with the language', () => {
         expect(make()).toBe(make());
-        expect(make({ language: 'en-US' })).not.toBe(make());
+        expect(make({ language: { code: 'en-US' } })).not.toBe(make());
     });
 
     it('refuses a region that is not an AWS region name', () => {

@@ -2,11 +2,13 @@
 // check, the action router, and later confirm / cancel / undo. Every step leaves a row in the agent action log.
 
 import { createHash, randomBytes } from 'node:crypto';
+import type { Locale } from '@/i18n/config';
 import { getAppLocale } from '@/i18n/locale';
 import { DEMO_USER } from '@/lib/demo-user';
 import type { AgentReply, FilterCheck } from '@/lib/domain/types';
 import { callAgent, type AgentServiceReply } from './client';
 import { buildContext } from './context';
+import { replyLanguage } from './language';
 import { logStep } from './log';
 import { ServiceError } from '@/lib/services/errors';
 import { apply, cancel, getAction, route, undo, type Preview } from './router';
@@ -16,6 +18,7 @@ import { failsWordCheck } from './wording';
 export type Turn = { role: 'user' | 'assistant'; text: string };
 export type ChatInput = { message: string; history?: Turn[]; conversationId?: string };
 export type ChatReply = AgentReply & {
+    language: Locale;               // the language the reply is in: the message's own, not necessarily the app's
     preview?: Preview;
     notice?: string;                // why a proposed action was not shown
     promptVersion?: string;
@@ -36,12 +39,14 @@ export async function chat(input: ChatInput): Promise<ChatReply> {
     const history = (input.history ?? []).slice(-MAX_TURNS).map((turn) => ({ role: turn.role, text: turn.text.slice(0, MAX_TURN_CHARS) }));
     await logStep(actionId, 'chat_input', { dataUsed: { message: input.message, messageSha256: sha256(input.message), historyTurns: history.length } });
 
-    const { context, snapshotId } = await buildContext();
-    const { locale } = context;
+    // The reply is in the language of the message (typed or dictated); the app's language is only the last resort
+    const appLocale = await getAppLocale();
+    const { locale, basis } = replyLanguage(input.message, history, appLocale);
+    const { context, snapshotId } = await buildContext(locale);
     const words = agentText(locale);
     await logStep(actionId, 'context_built', {
         dataUsed: {
-            locale, level: context.level ?? null, risk: context.risk ?? null, agentStyle: context.agentStyle ?? null,
+            locale, localeBasis: basis, appLocale, level: context.level ?? null, risk: context.risk ?? null, agentStyle: context.agentStyle ?? null,
             holdings: context.holdings, watchlist: context.watchlist, layout: context.layout, watchlistSnapshotId: snapshotId,
             contextSha256: sha256(JSON.stringify(context)),
         },
@@ -79,6 +84,7 @@ export async function chat(input: ChatInput): Promise<ChatReply> {
 
     const out: ChatReply = {
         actionId,
+        language: locale,
         text,
         sources: withheld ? [] : reply.sources.map(({ label, source, fetchedAt, asOf }) => ({ label, source, ...(fetchedAt ? { fetchedAt } : {}), ...(asOf ? { asOf } : {}) })),
         refused,
@@ -104,8 +110,10 @@ export async function chat(input: ChatInput): Promise<ChatReply> {
     return out;
 }
 
-export async function confirm(actionId: string, accept: boolean): Promise<{ applied: boolean; undoable: boolean; result?: unknown; message: string }> {
-    const locale = await getAppLocale();
+// The messages of confirm and undo are in the language of the conversation when the caller says which (the panel does,
+// from the reply's own language), and in the app's language otherwise
+export async function confirm(actionId: string, accept: boolean, language?: Locale): Promise<{ applied: boolean; undoable: boolean; result?: unknown; message: string }> {
+    const locale = language ?? await getAppLocale();
     const words = agentText(locale);
     if (!accept) {
         const action = await cancel(actionId, locale);
@@ -128,8 +136,8 @@ export async function confirm(actionId: string, accept: boolean): Promise<{ appl
     }
 }
 
-export async function undoAction(actionId: string): Promise<{ restored: boolean; result?: unknown; message: string }> {
-    const outcome = await undo(actionId, await getAppLocale());
+export async function undoAction(actionId: string, language?: Locale): Promise<{ restored: boolean; result?: unknown; message: string }> {
+    const outcome = await undo(actionId, language ?? await getAppLocale());
     await logStep(actionId, 'undo', { result: outcome });
     return outcome;
 }

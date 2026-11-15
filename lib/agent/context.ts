@@ -21,8 +21,9 @@ export type AgentContext = {
     layout: string[];
 };
 
-export async function buildContext(): Promise<{ context: AgentContext; snapshotId: string | null }> {
-    const [profile, portfolio, watchlist, layout, locale] = await Promise.all([getProfile(), getPortfolioState(), getWatchlist(), getLayout(), getAppLocale()]);
+/** `language` is the reply language (the message's own, see language.ts); without one the app's language is used. */
+export async function buildContext(language?: Locale): Promise<{ context: AgentContext; snapshotId: string | null }> {
+    const [profile, portfolio, watchlist, layout, locale] = await Promise.all([getProfile(), getPortfolioState(), getWatchlist(), getLayout(), language ?? getAppLocale()]);
     const context: AgentContext = {
         locale,
         ...(profile ? { level: profile.level, risk: profile.risk, agentStyle: profile.answers.agentStyle, profile: profile.answers } : {}),

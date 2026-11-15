@@ -39,6 +39,18 @@ describe('POST /api/voice/speak', () => {
         expect(synthesize).toHaveBeenLastCalledWith(expect.objectContaining({ locale: 'en' }));
     });
 
+    it('reads in the language of the reply when the body says which, whatever the app is set to', async () => {
+        await call({ text: 'Un FNB est un fonds.', language: 'fr' });
+        expect(synthesize).toHaveBeenLastCalledWith(expect.objectContaining({ locale: 'fr' }));
+        await call({ text: 'An ETF is a fund.', language: 'en' }, { cookie: 'NEXT_LOCALE=fr' });
+        expect(synthesize).toHaveBeenLastCalledWith(expect.objectContaining({ locale: 'en' }));
+    });
+
+    it('refuses a language the app does not speak', async () => {
+        expect((await call({ text: 'Hallo.', language: 'de' })).status).toBe(400);
+        expect(synthesize).not.toHaveBeenCalled();
+    });
+
     it('sends Polly only what is worth reading: no source line, no file path', async () => {
         await call({ text: 'An ETF is a fund.\n\nSource: glossary, at agent/glossary/etf.md.' });
         expect(synthesize).toHaveBeenCalledWith(expect.objectContaining({ text: 'An ETF is a fund.' }));

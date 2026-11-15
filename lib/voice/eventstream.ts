@@ -82,7 +82,11 @@ export function decodeMessage(bytes: Uint8Array): EventMessage {
     return { headers, body: bytes.subarray(end, total - 4) };
 }
 
-export type TranscriptPiece = { partial: boolean; text: string };
+/**
+ * `languagePending`: language identification was asked for and has not decided yet. The service then transcribes with a
+ * guess (the preferred language), so the text can be nonsense ("Kesker" for French); it is right once identified.
+ */
+export type TranscriptPiece = { partial: boolean; text: string; languagePending: boolean };
 
 /** The transcript pieces in a frame. A service exception frame throws with the service's own message. */
 export function parseTranscriptEvent(message: EventMessage): TranscriptPiece[] {
@@ -93,6 +97,11 @@ export function parseTranscriptEvent(message: EventMessage): TranscriptPiece[] {
     if (message.headers[':message-type'] === 'error') {
         throw new Error(`${String(message.headers[':error-code'] ?? 'Error')}: ${String(message.headers[':error-message'] ?? 'no detail')}`);
     }
-    const results: Array<{ IsPartial?: boolean; Alternatives?: Array<{ Transcript?: string }> }> = payload.Transcript?.Results ?? [];
-    return results.map((result) => ({ partial: result.IsPartial !== false, text: result.Alternatives?.[0]?.Transcript ?? '' }));
+    const results: Array<{ IsPartial?: boolean; LanguageCode?: string; LanguageIdentification?: unknown[]; Alternatives?: Array<{ Transcript?: string }> }> = payload.Transcript?.Results ?? [];
+    return results.map((result) => ({
+        partial: result.IsPartial !== false,
+        text: result.Alternatives?.[0]?.Transcript ?? '',
+        // A language code with no identification behind it is the service guessing; with a fixed language there is neither
+        languagePending: !!result.LanguageCode && !(result.LanguageIdentification && result.LanguageIdentification.length > 0),
+    }));
 }

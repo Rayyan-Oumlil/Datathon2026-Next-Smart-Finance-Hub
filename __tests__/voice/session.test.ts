@@ -27,6 +27,12 @@ const frame = (headers: Array<[string, string]>, payload: unknown): ArrayBuffer 
 const transcript = (...results: Array<{ partial: boolean; text: string }>): ArrayBuffer =>
     frame([[':message-type', 'event'], [':event-type', 'TranscriptEvent']], { Transcript: { Results: results.map((r) => ({ IsPartial: r.partial, Alternatives: [{ Transcript: r.text }] })) } });
 
+// With language identification: a guess (a language code, no identification yet) or an identified language
+const identified = (partial: boolean, text: string, known: boolean): ArrayBuffer =>
+    frame([[':message-type', 'event'], [':event-type', 'TranscriptEvent']], {
+        Transcript: { Results: [{ IsPartial: partial, LanguageCode: 'fr-CA', ...(known ? { LanguageIdentification: [{ LanguageCode: 'fr-CA', Score: 1 }] } : {}), Alternatives: [{ Transcript: text }] }] },
+    });
+
 class FakeSocket implements SocketLike {
     binaryType = 'blob';
     readyState = 0;
@@ -84,6 +90,27 @@ describe('startSession', () => {
         expect(onText.mock.calls.map(([text]) => text)).toEqual(['I want', 'I want to add Tesla.', 'I want to add Tesla. to my']);
     });
 
+    it('shows no text while the language is still a guess, and shows it once identified', async () => {
+        const { onText } = setup();
+        await ready();
+        socket.message(identified(true, 'Kesker', false));
+        expect(onText).not.toHaveBeenCalled();
+        socket.message(identified(true, 'Qu’est-ce qu’un', true));
+        socket.message(identified(true, 'Qu’est-ce qu’un FNB?', true));
+        expect(onText.mock.calls.map(([text]) => text)).toEqual(['Qu’est-ce qu’un', 'Qu’est-ce qu’un FNB?']);
+    });
+
+    it('does not let a guessed result replace or add to text that was identified', async () => {
+        const { session, onText } = setup();
+        await ready();
+        socket.message(identified(false, 'Bonjour.', true));
+        socket.message(identified(true, 'garbled guess', false));
+        const result = session.finish();
+        socket.end();
+        await expect(result).resolves.toBe('Bonjour.');
+        expect(onText.mock.calls.map(([text]) => text)).toEqual(['Bonjour.']);
+    });
+
     it('on finish sends the remaining audio and an empty end frame, then resolves with the final text', async () => {
         const { session } = setup({ chunkBytes: 100 });
         await ready();
@@ -93,6 +120,32 @@ describe('startSession', () => {
         socket.receive({ partial: false, text: 'Add Tesla.' });
         socket.end();
         await expect(result).resolves.toBe('Add Tesla.');
+    });
+
+    it('sends the silence asked for after the last of the audio, then the end frame', async () => {
+        const { session } = setup({ chunkBytes: 100, tailSilenceBytes: 250 });
+        await ready();
+        session.push(audio(40));
+        void session.finish();
+        const frames = socket.audioFrames();
+        expect(frames.map((frame) => frame.length)).toEqual([40, 100, 100, 50, 0]);
+        expect(frames[0].every((byte) => byte === 7)).toBe(true);
+        expect(frames.slice(1, 4).every((frame) => frame.every((byte) => byte === 0))).toBe(true);
+    });
+
+    it('sends the silence even when finish comes before the socket has opened', async () => {
+        const { session } = setup({ chunkBytes: 100, tailSilenceBytes: 150 });
+        session.push(audio(30));
+        void session.finish();
+        await ready();
+        expect(socket.audioFrames().map((frame) => frame.length)).toEqual([30, 100, 50, 0]);
+    });
+
+    it('sends no silence by default', async () => {
+        const { session } = setup({ chunkBytes: 100 });
+        await ready();
+        void session.finish();
+        expect(socket.audioFrames().map((frame) => frame.length)).toEqual([0]);
     });
 
     it('finishes with the text heard so far if the service does not close in time', async () => {

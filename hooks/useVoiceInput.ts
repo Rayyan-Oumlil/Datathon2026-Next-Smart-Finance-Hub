@@ -22,6 +22,10 @@ type Options = {
 type Capture = { stream: MediaStream; context: AudioContext; node: AudioWorkletNode; source: MediaStreamAudioSourceNode; mute: GainNode };
 
 const TOKEN_FAILED = 'token request failed';
+// Language identification commits to a language when it hears a pause after the speech; a short question that ends the
+// stream with no pause can come back with no text at all. So 0.8 s of silence (16-bit samples, two bytes each) follow
+// the last word, before the stream ends: measured, a pause of 0.6 s was enough and 0.3 s was not.
+const TAIL_SILENCE_BYTES = TARGET_RATE * 2 * 0.8;
 const ERROR_VISIBLE_MS = 7000;
 
 const fetchUrl = async (): Promise<string> => {
@@ -162,6 +166,7 @@ export function useVoiceInput({ enabled, onText, onFinal, onStart }: Options) {
             const current = startSession({
                 getUrl: fetchUrl,
                 createSocket: (url) => new WebSocket(url),
+                tailSilenceBytes: TAIL_SILENCE_BYTES,
                 onText: (text) => { if (mine === run.current) callbacks.current.onText(text); },
                 onError: (cause) => { if (mine === run.current) fail(cause.message === TOKEN_FAILED ? 'unavailable' : 'failed'); },
             });

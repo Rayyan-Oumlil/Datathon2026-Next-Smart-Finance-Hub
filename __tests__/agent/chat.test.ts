@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as AGENT } from '@/app/api/agent/route';
+import { POST as CONFIRM } from '@/app/api/agent/confirm/route';
+import { POST as UNDO } from '@/app/api/agent/undo/route';
 import { getAppLocale } from '@/i18n/locale';
 import { NEUTRAL_REPLY, NEUTRAL_REPLY_FR, chat, confirm, undoAction } from '@/lib/agent/chat';
 import { callAgent, runtimeSessionId } from '@/lib/agent/client';
@@ -172,6 +174,93 @@ describe('chat in French', () => {
 
         agent.mockResolvedValue(answer({ proposed: { type: 'layout_change', summary: 's', params: { layout: ['total_value'] } } }));
         expect(await confirm((await chat({ message: 'bonjour' })).actionId, false)).toMatchObject({ message: 'Annulé. Rien n’a été modifié.' });
+    });
+});
+
+describe('reply language', () => {
+    const layout = ['total_value', 'holdings'];
+    const proposal = { type: 'layout_change', summary: 's', params: { layout } };
+    const context = async (actionId: string) => (await listAgentActions(DEMO_USER.id, { actionId })).find((row) => row.step === 'context_built');
+
+    it('answers a French message in French even when the app is set to English', async () => {
+        locale.mockResolvedValue('en');
+        agent.mockResolvedValue(answer({ text: 'Un FNB est un fonds.' }));
+        const reply = await chat({ message: 'Qu’est-ce qu’un FNB?' });
+        expect(agent.mock.calls[0][0].context.locale).toBe('fr');
+        expect(reply.language).toBe('fr');
+        expect(await context(reply.actionId)).toMatchObject({ dataUsed: { locale: 'fr', localeBasis: 'message', appLocale: 'en' } });
+    });
+
+    it('answers an English message in English even when the app is set to French', async () => {
+        locale.mockResolvedValue('fr');
+        agent.mockResolvedValue(answer());
+        const reply = await chat({ message: 'What is an ETF?' });
+        expect(agent.mock.calls[0][0].context.locale).toBe('en');
+        expect(reply.language).toBe('en');
+        expect(await context(reply.actionId)).toMatchObject({ dataUsed: { locale: 'en', localeBasis: 'message', appLocale: 'fr' } });
+    });
+
+    it('switches language with the message, turn after turn', async () => {
+        agent.mockResolvedValue(answer());
+        const first = await chat({ message: 'What is an ETF?' });
+        const second = await chat({ message: 'Et un fonds indiciel?', history: [{ role: 'user', text: 'What is an ETF?' }, { role: 'assistant', text: first.text }] });
+        const third = await chat({ message: 'And a bond fund?' });
+        expect([first.language, second.language, third.language]).toEqual(['en', 'fr', 'en']);
+    });
+
+    it('keeps the conversation language for a message with none of its own', async () => {
+        locale.mockResolvedValue('en');
+        agent.mockResolvedValue(answer());
+        const history = [{ role: 'user' as const, text: 'Pourquoi ce titre est sur ma liste?' }, { role: 'assistant' as const, text: 'Il figure dans votre liste de suivi.' }];
+        const reply = await chat({ message: 'TSLA', history });
+        expect(reply.language).toBe('fr');
+        expect(await context(reply.actionId)).toMatchObject({ dataUsed: { locale: 'fr', localeBasis: 'conversation' } });
+    });
+
+    it('falls back to the app language when nothing says which', async () => {
+        locale.mockResolvedValue('fr');
+        agent.mockResolvedValue(answer());
+        const reply = await chat({ message: 'TSLA' });
+        expect(reply.language).toBe('fr');
+        expect(await context(reply.actionId)).toMatchObject({ dataUsed: { locale: 'fr', localeBasis: 'app' } });
+    });
+
+    it('words every fixed sentence in the message language: the neutral reply, the preview and the notice', async () => {
+        locale.mockResolvedValue('en');
+        agent.mockResolvedValue(answer({ text: 'Vous devriez acheter AAPL.' }));
+        expect(await chat({ message: 'Qu’est-ce qu’un FNB?' })).toMatchObject({ text: NEUTRAL_REPLY_FR, refused: true, language: 'fr' });
+
+        agent.mockResolvedValue(answer({ text: 'Voici une disposition plus courte.', proposed: proposal }));
+        const reply = await chat({ message: 'montrez-m’en moins' });
+        expect(reply.preview!.rows[0].label).toBe('Onglet Portefeuille');
+
+        agent.mockResolvedValue(answer({ proposed: { type: 'wire_transfer', summary: 's', params: {} } }));
+        expect((await chat({ message: 'bonjour' })).notice).toMatch(/^Une modification proposée n’a pas été affichée/);
+        expect((await chat({ message: 'hello there' })).notice).toMatch(/^A proposed change was not shown/);
+    });
+
+    it('words the confirm and undo messages in the language of the conversation when told, else in the app language', async () => {
+        locale.mockResolvedValue('en');
+        agent.mockResolvedValue(answer({ text: 'Voici une disposition plus courte.', proposed: proposal }));
+        const reply = await chat({ message: 'montrez-m’en moins' });
+        expect(await confirm(reply.actionId, true, 'fr')).toMatchObject({ applied: true, message: 'La disposition du tableau de bord a été modifiée.' });
+        expect(await undoAction(reply.actionId, 'fr')).toMatchObject({ restored: true, message: 'La disposition précédente du tableau de bord est rétablie.' });
+
+        agent.mockResolvedValue(answer({ text: 'Voici une disposition plus courte.', proposed: proposal }));
+        const again = await chat({ message: 'montrez-m’en moins' });
+        expect(await confirm(again.actionId, true)).toMatchObject({ message: 'The dashboard layout was changed.' });
+        expect(await undoAction(again.actionId)).toMatchObject({ message: 'The previous dashboard layout is back.' });
+    });
+
+    it('takes the language on the confirm and undo routes, and refuses one the app does not speak', async () => {
+        const body = (extra: object) => ({ method: 'POST', body: JSON.stringify(extra) });
+        agent.mockResolvedValue(answer({ text: 'Voici une disposition plus courte.', proposed: proposal }));
+        const { actionId } = await chat({ message: 'montrez-m’en moins' });
+        expect((await CONFIRM(new NextRequest('http://localhost/api/agent/confirm', body({ actionId, accept: true, language: 'de' })))).status).toBe(400);
+        const confirmed = await CONFIRM(new NextRequest('http://localhost/api/agent/confirm', body({ actionId, accept: true, language: 'fr' })));
+        expect((await confirmed.json()).message).toBe('La disposition du tableau de bord a été modifiée.');
+        const undone = await UNDO(new NextRequest('http://localhost/api/agent/undo', body({ actionId, language: 'fr' })));
+        expect((await undone.json()).message).toBe('La disposition précédente du tableau de bord est rétablie.');
     });
 });
 
