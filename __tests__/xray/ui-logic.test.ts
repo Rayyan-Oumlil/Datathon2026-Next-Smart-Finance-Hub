@@ -16,15 +16,15 @@ const window = (over: Partial<AvailableWindow> = {}): AvailableWindow => ({
     ],
     ...over,
 });
-const none = (id: 'y2022' | 'last12m' | 'full'): WindowResult => ({ id, available: false, reason: 'not_enough_history' });
+const none = (id: 'last3y' | 'last1y' | 'full'): WindowResult => ({ id, available: false, reason: 'not_enough_history' });
 
 describe('window choice', () => {
     it('keeps the wanted window when it can be replayed, else the first that can', () => {
-        const windows = { full: window(), y2022: none('y2022'), last12m: window({ id: 'last12m' }) };
+        const windows = { full: window(), last3y: none('last3y'), last1y: window({ id: 'last1y' }) };
         expect(pickWindow(windows, 'full')).toBe('full');
-        expect(pickWindow(windows, 'y2022')).toBe('full');
-        expect(pickWindow({ full: none('full'), y2022: none('y2022'), last12m: window({ id: 'last12m' }) }, 'full')).toBe('last12m');
-        expect(pickWindow({ full: none('full'), y2022: none('y2022'), last12m: none('last12m') }, 'y2022')).toBe('y2022');
+        expect(pickWindow(windows, 'last3y')).toBe('full');
+        expect(pickWindow({ full: none('full'), last3y: none('last3y'), last1y: window({ id: 'last1y' }) }, 'full')).toBe('last1y');
+        expect(pickWindow({ full: none('full'), last3y: none('last3y'), last1y: none('last1y') }, 'last3y')).toBe('last3y');
         expect(isAvailable(none('full'))).toBe(false);
     });
 });
@@ -70,15 +70,15 @@ describe('the answer to the drop question', () => {
 describe('what-if rows', () => {
     const view = (over: Partial<XrayView>): XrayView => ({
         concentration: { topHolding: { symbol: 'A', sharePct: 40 }, top3SharePct: 90, effectiveHoldings: 3, groups: [], assetClasses: [], currencies: [] },
-        cashSharePct: 10, windows: { full: window(), y2022: none('y2022'), last12m: none('last12m') }, ...over,
+        cashSharePct: 10, windows: { full: window(), last3y: none('last3y'), last1y: none('last1y') }, ...over,
     } as XrayView);
     it('reads the concentration and the chosen window, and gives null where a window is unavailable', () => {
-        const after = view({ cashSharePct: 5, concentration: { topHolding: { symbol: 'A', sharePct: 45 }, top3SharePct: 95, effectiveHoldings: 2.6, groups: [], assetClasses: [], currencies: [] }, windows: { full: window({ volatilityPct: 24 }), y2022: none('y2022'), last12m: none('last12m') } });
+        const after = view({ cashSharePct: 5, concentration: { topHolding: { symbol: 'A', sharePct: 45 }, top3SharePct: 95, effectiveHoldings: 2.6, groups: [], assetClasses: [], currencies: [] }, windows: { full: window({ volatilityPct: 24 }), last3y: none('last3y'), last1y: none('last1y') } });
         const rows = metricRows(view({}), after, 'full');
         expect(rows.find((r) => r.key === 'largest')).toMatchObject({ before: 40, after: 45 });
         expect(rows.find((r) => r.key === 'volatility')).toMatchObject({ before: 20, after: 24 });
         expect(rows.find((r) => r.key === 'cash')).toMatchObject({ before: 10, after: 5 });
-        expect(metricRows(view({}), after, 'y2022').find((r) => r.key === 'volatility')).toMatchObject({ before: null, after: null });
+        expect(metricRows(view({}), after, 'last3y').find((r) => r.key === 'volatility')).toMatchObject({ before: null, after: null });
     });
     it('reads the direction of a change', () => {
         expect(direction(10, 12)).toBe('up');

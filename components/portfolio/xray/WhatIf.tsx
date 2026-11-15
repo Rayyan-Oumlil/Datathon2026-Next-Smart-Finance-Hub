@@ -11,13 +11,14 @@ import AssetSearch, { type Asset } from './AssetSearch';
 import { metricRows, type MetricRow } from './logic';
 import { Tag } from './parts';
 
-type Props = { view: XrayView; windowId: WindowId };
+export type Preset = { symbol: string; direction: 'add' | 'reduce'; amountCad: number; nonce: number };
+type Props = { view: XrayView; windowId: WindowId; preset?: Preset | null };
 
 const RUN_DELAY_MS = 650;
 
 // A hypothetical change, run through the same engine as the X-ray: pick an asset, drag the amount, and the before and
 // after update by themselves. Read-only: nothing is traded or saved.
-export default function WhatIf({ view, windowId }: Props) {
+export default function WhatIf({ view, windowId, preset }: Props) {
     const t = useTranslations('Xray');
     const fmt = useFmt();
     const [asset, setAsset] = useState<Asset | null>(null);
@@ -27,12 +28,25 @@ export default function WhatIf({ view, windowId }: Props) {
     const [problem, setProblem] = useState<string | null>(null);
     const [result, setResult] = useState<XrayWhatIf | null>(null);
     const latest = useRef(0);
+    const root = useRef<HTMLElement>(null);
 
     const held = view.holdings.map((h) => ({ symbol: h.symbol, name: h.name }));
     // The most the slider can reach: all the cash for an addition, the whole position for a reduction
     const heldValue = view.holdings.find((h) => h.symbol === asset?.symbol)?.valueCad ?? 0;
     const max = Math.floor(mode === 'add' ? view.cashCad : heldValue);
     const step = Math.max(1, Math.round(max / 200));
+
+    // A reading's test loads the lab: the asset, the direction and the amount are set, and the run follows by itself
+    useEffect(() => {
+        if (!preset) return;
+        const name = view.holdings.find((h) => h.symbol === preset.symbol)?.name ?? preset.symbol;
+        setAsset({ symbol: preset.symbol, name });
+        setMode(preset.direction);
+        setAmount(preset.amountCad);
+        root.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // only a new press (nonce) loads the lab again
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [preset?.nonce]);
 
     // A new asset or direction starts from a fresh amount inside the new range
     useEffect(() => {
@@ -70,7 +84,7 @@ export default function WhatIf({ view, windowId }: Props) {
     };
 
     return (
-        <section aria-labelledby="xray-lab-title" className="flex flex-col gap-4">
+        <section ref={root} aria-labelledby="xray-lab-title" className="flex flex-col gap-4">
             <div>
                 <div className="flex items-center gap-2"><h3 id="xray-lab-title" className="text-[14px] font-bold tracking-[-0.01em] text-foreground">{t('whatIf.title')}</h3><Tag kind="scenario" /></div>
                 <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">{t('whatIf.sub')}</p>

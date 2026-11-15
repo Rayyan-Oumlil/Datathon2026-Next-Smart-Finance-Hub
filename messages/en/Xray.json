@@ -5,16 +5,17 @@
   "labels": {
     "fact": "Fact",
     "scenario": "Scenario",
-    "assumption": "Assumption"
+    "assumption": "Assumption",
+    "reading": "Reading"
   },
   "window": {
     "label": "Period",
-    "full": "Whole history",
-    "y2022": "Calendar 2022",
-    "last12m": "Last 12 months",
+    "full": "Up to 5 years",
     "range": "{from} to {to}",
     "unavailable": "Not enough price history for this period.",
-    "noHoldings": "No positions to replay."
+    "noHoldings": "No positions to replay.",
+    "last3y": "3 years",
+    "last1y": "1 year"
   },
   "scope": {
     "measured": "Measured here",
@@ -165,5 +166,20 @@
     "title": "Portfolio X-ray",
     "lab": "What-if lab",
     "loading": "Reading the holdings and replaying them over their price history…"
+  },
+  "obs": {
+    "title": "What stands out",
+    "sub": "Plain readings of the numbers above, chosen by fixed rules. They describe the portfolio; they are not advice.",
+    "risk_gap": "{symbol} is {value} of the value but {risk} of the risk in this period.",
+    "above_band": "Volatility of {vol} is above the {limit} limit of your risk profile.",
+    "near_band": "Volatility of {vol} is close to the {limit} limit of your risk profile.",
+    "top_holding": "{symbol} alone is {share} of the portfolio.",
+    "few_holdings": "The money is spread over about {count} equal-sized positions.",
+    "close_pair": "{a} and {b} moved closely together ({corr}), so they added little cushion to each other.",
+    "currency": "{share} of the portfolio is in US dollars, so its value also moves with the exchange rate.",
+    "cash_heavy": "{share} of the portfolio is cash, which adds no growth and no risk in this replay.",
+    "little_cushion": "The holdings offset each other little (diversification ratio {ratio}).",
+    "left_out": "{list} could not be included in this period for lack of history; {share} of the value is covered.",
+    "try": "Test reducing {symbol} by {amount}"
   }
 }

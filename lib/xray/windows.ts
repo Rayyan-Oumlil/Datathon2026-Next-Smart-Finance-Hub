@@ -14,23 +14,24 @@ export function addDays(date: string, days: number): string {
     return new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 }
 
-/** The same day one year earlier (29 Feb becomes 28 Feb). */
-export function yearBefore(date: string): string {
+/** The same day `years` years earlier (29 Feb becomes 28 Feb). */
+export function yearsBefore(date: string, years: number): string {
     const d = new Date(`${date}T00:00:00Z`);
     const month = d.getUTCMonth();
-    d.setUTCFullYear(d.getUTCFullYear() - 1);
+    d.setUTCFullYear(d.getUTCFullYear() - years);
     if (d.getUTCMonth() !== month) d.setUTCDate(0);
     return d.toISOString().slice(0, 10);
 }
 
+const YEARS: Record<Exclude<WindowId, 'full'>, number> = { last3y: 3, last1y: 1 };
+
 /**
  * The bounds of a window. `earliest` and `latest` are the first and last close date of any held series: the full
- * window runs over all of it, the calendar year 2022 over that year, the last 12 months back from `latest`.
+ * window (up to five years) runs over all of it, the others back from `latest` by 3 or 1 years. With less history
+ * than that, the window is all of it.
  */
 export function windowBounds(id: WindowId, earliest: string, latest: string): { start: string; end: string } {
     if (id === 'full') return { start: earliest, end: latest };
-    if (id === 'y2022') return { start: '2022-01-01', end: '2022-12-31' };
-    // With less than a year of history the last 12 months are all of it
-    const yearAgo = yearBefore(latest);
-    return { start: yearAgo > earliest ? yearAgo : earliest, end: latest };
+    const back = yearsBefore(latest, YEARS[id]);
+    return { start: back > earliest ? back : earliest, end: latest };
 }

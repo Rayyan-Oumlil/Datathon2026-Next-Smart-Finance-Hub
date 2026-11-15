@@ -5,16 +5,17 @@
   "labels": {
     "fact": "Fait",
     "scenario": "Scénario",
-    "assumption": "Hypothèse"
+    "assumption": "Hypothèse",
+    "reading": "Lecture"
   },
   "window": {
     "label": "Période",
-    "full": "Tout l’historique",
-    "y2022": "Année 2022",
-    "last12m": "12 derniers mois",
+    "full": "Jusqu’à 5 ans",
     "range": "du {from} au {to}",
     "unavailable": "L’historique de cours est insuffisant pour cette période.",
-    "noHoldings": "Aucune position à rejouer."
+    "noHoldings": "Aucune position à rejouer.",
+    "last3y": "3 ans",
+    "last1y": "1 an"
   },
   "scope": {
     "measured": "Mesuré ici",
@@ -165,5 +166,20 @@
     "title": "Radiographie du portefeuille",
     "lab": "Laboratoire de simulations",
     "loading": "Lecture des positions et rejeu sur leur historique de cours…"
+  },
+  "obs": {
+    "title": "Ce qui ressort",
+    "sub": "Lectures simples des chiffres ci-dessus, choisies selon des règles fixes. Elles décrivent le portefeuille ; ce n’est pas un avis.",
+    "risk_gap": "{symbol} représente {value} de la valeur mais {risk} du risque sur cette période.",
+    "above_band": "La volatilité de {vol} dépasse la limite de {limit} de votre profil de risque.",
+    "near_band": "La volatilité de {vol} est proche de la limite de {limit} de votre profil de risque.",
+    "top_holding": "À lui seul, {symbol} pèse {share} du portefeuille.",
+    "few_holdings": "L’argent est réparti sur environ {count} positions de taille égale.",
+    "close_pair": "{a} et {b} ont évolué de façon très semblable ({corr}) : elles se sont peu compensées.",
+    "currency": "{share} du portefeuille est en dollars américains : sa valeur suit aussi le taux de change.",
+    "cash_heavy": "{share} du portefeuille est en liquidités, qui n’apportent ni croissance ni risque dans ce rejeu.",
+    "little_cushion": "Les positions se compensent peu (ratio de diversification {ratio}).",
+    "left_out": "{list} n’a pas pu être inclus sur cette période faute d’historique ; {share} de la valeur est couverte.",
+    "try": "Tester une réduction de {amount} de {symbol}"
   }
 }

@@ -76,7 +76,7 @@ All formulas are fixed, versioned (`xray-v1`) and written into the result's `met
 
 **Constant-weights replay (SCENARIO).** The daily return of the portfolio is Σ w_i r_i with today's weights applied to every past day. This is the standard basis for risk decomposition and keeps every statistic additive. It is not what the portfolio actually earned: the app only holds the trades since the simulation started. Always labelled.
 
-**Windows (sensitivity).** Three, computed together so the user can switch instantly: *full period available*, *calendar 2022* (the year stocks and bonds fell together), *last 12 months*. A window needs at least 60 daily returns for the covered holdings; otherwise it returns `null` with the reason, never a guess. A holding with no data in a window (BTC in 2022) is left out of that window; the result states the **coverage** (share of portfolio value included) and names what was left out. Weights are renormalised over the covered part.
+**Windows (sensitivity).** Three, computed together so the user can switch instantly: *up to 5 years* (the full history available), *3 years*, *1 year*. A window needs at least 60 daily returns for the covered holdings; otherwise it returns `null` with the reason, never a guess. A holding with no data in a window (BTC in 2022) is left out of that window; the result states the **coverage** (share of portfolio value included) and names what was left out. Weights are renormalised over the covered part.
 
 **Statistics (per window)**
 - Annualised volatility = sample stdev of daily returns × √252 (same convention as `rules/v1.json` `filters.volatility`).

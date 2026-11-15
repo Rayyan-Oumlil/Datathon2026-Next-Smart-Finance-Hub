@@ -5,7 +5,7 @@ import type { DailyClose } from '@/lib/sources/types';
 
 export const XRAY_VERSION = 'xray-v1';
 
-export const WINDOW_IDS = ['full', 'y2022', 'last12m'] as const;
+export const WINDOW_IDS = ['full', 'last3y', 'last1y'] as const;
 export type WindowId = (typeof WINDOW_IDS)[number];
 
 /** One holding as the engine reads it: its value now, and its daily closes in the listing currency (null: none). */

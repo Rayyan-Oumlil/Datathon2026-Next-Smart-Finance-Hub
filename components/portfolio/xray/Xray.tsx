@@ -13,12 +13,14 @@ import MoveChart from './MoveChart';
 import Tiles from './Tiles';
 import Together from './Together';
 import ValueVsRisk from './ValueVsRisk';
-import WhatIf from './WhatIf';
+import Observations from './Observations';
+import WhatIf, { type Preset } from './WhatIf';
 import { isAvailable, pickWindow } from './logic';
 import { Rise } from './parts';
 import { useLevel, useXray } from './useXray';
 
-const WINDOWS: WindowId[] = ['full', 'y2022', 'last12m'];
+// Shortest first, as a period picker reads
+const WINDOWS: WindowId[] = ['last1y', 'last3y', 'full'];
 
 const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <div className="hatch"><div className={`card p-5 ${className}`}>{children}</div></div>
@@ -32,6 +34,7 @@ export default function XrayPage() {
     const level = useLevel();
     const { view, error, load } = useXray();
     const [wanted, setWanted] = useState<WindowId>('full');
+    const [preset, setPreset] = useState<Preset | null>(null);
 
     const head = (picker?: React.ReactNode) => (
         <header className="page-head flex-wrap">
@@ -103,17 +106,18 @@ export default function XrayPage() {
                     {/* key: switching the period replays the motion with the new figures; the lab beside it keeps its state */}
                     <div key={id} className="flex min-w-0 flex-col gap-5">
                         <Rise index={1}><Card><Tiles view={view} window={current} level={level} /></Card></Rise>
-                        <Rise index={2}><Card className="flex flex-col gap-5">
+                        <Rise index={2}><Card><Observations view={view} window={current} onTest={(test) => setPreset({ ...test, nonce: Date.now() })} /></Card></Rise>
+                        <Rise index={3}><Card className="flex flex-col gap-5">
                             {view.band && <BandBar band={view.band} window={current} />}
                             <ValueVsRisk window={current} level={level} />
                         </Card></Rise>
-                        <Rise index={3}><Card><MoveChart view={view} window={current} level={level} /></Card></Rise>
-                        {level !== 'Novice' && <Rise index={4}><Card className="grid gap-6 md:grid-cols-2 [&>section]:border-t-0 [&>section]:pt-0"><Together window={current} /><Exposure view={view} /></Card></Rise>}
+                        <Rise index={4}><Card><MoveChart view={view} window={current} level={level} /></Card></Rise>
+                        {level !== 'Novice' && <Rise index={5}><Card className="grid gap-6 md:grid-cols-2 [&>section]:border-t-0 [&>section]:pt-0"><Together window={current} /><Exposure view={view} /></Card></Rise>}
                     </div>
                     <Rise index={2} className="lg:sticky lg:top-4">
-                        <Card><WhatIf view={view} windowId={id} /></Card>
+                        <Card><WhatIf view={view} windowId={id} preset={preset} /></Card>
                     </Rise>
-                    <Rise index={5} className="lg:col-span-2"><Card><Limits view={view} window={current} level={level} /></Card></Rise>
+                    <Rise index={6} className="lg:col-span-2"><Card><Limits view={view} window={current} level={level} /></Card></Rise>
                 </div>
             ) : (
                 <div className="flex flex-col gap-5">

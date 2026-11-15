@@ -18,7 +18,7 @@ SUBAGENTS = {
         "tools": [web_tools.get_portfolio, web_tools.get_portfolio_stats, web_tools.get_portfolio_xray],
         "description": "The simulated portfolio: holdings, value, sector split; return, drawdown or correlation "
                        "over 1m, 3m or 1y; the X-ray: concentration, each holding's share of the risk, a replay "
-                       "of past periods (full, 2022, last 12 months) as a scenario, and 'what if I add/reduce X' "
+                       "of past periods (up to 5 years, 3 years, 1 year) as a scenario, and 'what if I add/reduce X' "
                        "before and after, with profile conflicts.",
     },
     "rules": {

@@ -46,7 +46,7 @@ def test_xray_without_change_sends_only_the_locale(stub, current):
     result = web_tools.get_portfolio_xray()
     assert stub.requests[-1]["path"] == "/api/internal/tools/portfolio-xray"
     assert stub.requests[-1]["body"] == {"locale": "en", "userId": "demo-user"}
-    assert result["version"] == "xray-v1" and result["windows"]["last12m"]["available"] is False
+    assert result["version"] == "xray-v1" and result["windows"]["last1y"]["available"] is False
     assert current.tool_results[-1]["endpoint"] == "/api/internal/tools/portfolio-xray"
 
 

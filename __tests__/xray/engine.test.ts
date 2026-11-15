@@ -99,9 +99,9 @@ describe('the replay', () => {
 
     it('reports a window with too little history as unavailable, never a guess', () => {
         const out = computeEngine({ holdings: [a, b], cashCad: 0, fx: FX });
-        expect(out.windows.y2022).toEqual({ id: 'y2022', available: false, reason: 'not_enough_history' });
-        // With less than a year of history the last 12 months are all of it
-        expect(out.windows.last12m.available).toBe(true);
+        // The series do not reach back three years from today's end, so 3 years is all of them: same as the full window
+        expect(out.windows.last3y.available).toBe(true);
+        expect(out.windows.last1y.available).toBe(true);
         const short = computeEngine({ holdings: [holding({ symbol: 'S', valueCad: 100, closes: closesFrom(weekdays(30), pattern(29, 'A')) })], cashCad: 0, fx: FX });
         expect(short.windows.full).toEqual({ id: 'full', available: false, reason: 'not_enough_history' });
     });
@@ -118,7 +118,7 @@ describe('the replay', () => {
 });
 
 describe('coverage across windows', () => {
-    // Stocks: about 1.8 years of weekdays. Crypto: 380 calendar days, so it covers the last 12 months but not the whole span.
+    // Stocks: about 1.8 years of weekdays. Crypto: 380 calendar days, so it covers the last year but not the whole span.
     const stockDates = weekdays(460);
     const stock = holding({ symbol: 'S', valueCad: 6000, closes: closesFrom(stockDates, pattern(459, 'A')) });
     const cryptoDates = everyDay(380);
@@ -133,9 +133,9 @@ describe('coverage across windows', () => {
         expect(full.coverage.sharePct).toBe(60);
         expect(full.risk[0].weightPct).toBe(100);   // renormalised over what is covered
     });
-    it('includes it in the last 12 months, where its history is long enough', () => {
-        const last = out.windows.last12m;
-        if (!last.available) throw new Error('expected the last-12-months window');
+    it('includes it in the last year, where its history is long enough', () => {
+        const last = out.windows.last1y;
+        if (!last.available) throw new Error('expected the last-year window');
         expect(last.coverage.included.sort()).toEqual(['BTC', 'S']);
         expect(last.coverage.sharePct).toBe(100);
         const total = last.risk.reduce((sum, r) => sum + (r.riskSharePct ?? 0), 0);
@@ -150,17 +150,21 @@ describe('coverage across windows', () => {
     });
 });
 
-describe('calendar 2022', () => {
-    it('replays only that year for a series that covers it', () => {
+describe('the three-year window', () => {
+    it('replays only the last three years of a longer history', () => {
         const dates: string[] = [];
         for (let ms = Date.parse('2021-11-01T00:00:00Z'); ms <= END; ms += DAY) {
             const day = new Date(ms).getUTCDay();
             if (day !== 0 && day !== 6) dates.push(iso(ms));
         }
         const s = holding({ symbol: 'S', valueCad: 1000, closes: closesFrom(dates, pattern(dates.length - 1, 'A')) });
-        const w = computeEngine({ holdings: [s], cashCad: 0, fx: FX }).windows.y2022;
-        if (!w.available) throw new Error('expected the 2022 window');
-        expect(w.from >= '2022-01-01' && w.to <= '2022-12-31').toBe(true);
-        expect(w.observations).toBeGreaterThan(240);
+        const out = computeEngine({ holdings: [s], cashCad: 0, fx: FX });
+        const three = out.windows.last3y;
+        const full = out.windows.full;
+        if (!three.available || !full.available) throw new Error('expected both windows');
+        expect(three.from >= '2023-11-13').toBe(true);
+        expect(three.to).toBe(full.to);
+        expect(three.observations).toBeLessThan(full.observations);
+        expect(three.observations).toBeGreaterThan(740);
     });
 });

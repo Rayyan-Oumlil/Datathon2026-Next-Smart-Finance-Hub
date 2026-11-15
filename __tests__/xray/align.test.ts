@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { asOf, commonCalendar, levelsOn, toCadCloses } from '@/lib/xray/align';
-import { addDays, windowBounds, yearBefore } from '@/lib/xray/windows';
+import { addDays, windowBounds, yearsBefore } from '@/lib/xray/windows';
 
 const rows = (pairs: Array<[string, number]>) => pairs.map(([date, close]) => ({ date, close }));
 
@@ -57,15 +57,17 @@ describe('levelsOn', () => {
 });
 
 describe('windows', () => {
-    it('adds days and finds the same day a year earlier', () => {
+    it('adds days and finds the same day some years earlier', () => {
         expect(addDays('2026-01-30', 3)).toBe('2026-02-02');
-        expect(yearBefore('2026-11-13')).toBe('2025-11-13');
-        expect(yearBefore('2024-02-29')).toBe('2023-02-28');
+        expect(yearsBefore('2026-11-13', 1)).toBe('2025-11-13');
+        expect(yearsBefore('2026-11-13', 3)).toBe('2023-11-13');
+        expect(yearsBefore('2024-02-29', 1)).toBe('2023-02-28');
     });
-    it('gives the three bounds, and treats the last 12 months as all of a short history', () => {
+    it('gives the three bounds, and treats a period longer than the history as all of it', () => {
         expect(windowBounds('full', '2021-11-12', '2026-11-13')).toEqual({ start: '2021-11-12', end: '2026-11-13' });
-        expect(windowBounds('y2022', '2021-11-12', '2026-11-13')).toEqual({ start: '2022-01-01', end: '2022-12-31' });
-        expect(windowBounds('last12m', '2021-11-12', '2026-11-13')).toEqual({ start: '2025-11-13', end: '2026-11-13' });
-        expect(windowBounds('last12m', '2026-06-01', '2026-11-13')).toEqual({ start: '2026-06-01', end: '2026-11-13' });
+        expect(windowBounds('last3y', '2021-11-12', '2026-11-13')).toEqual({ start: '2023-11-13', end: '2026-11-13' });
+        expect(windowBounds('last1y', '2021-11-12', '2026-11-13')).toEqual({ start: '2025-11-13', end: '2026-11-13' });
+        expect(windowBounds('last1y', '2026-06-01', '2026-11-13')).toEqual({ start: '2026-06-01', end: '2026-11-13' });
+        expect(windowBounds('last3y', '2025-06-01', '2026-11-13')).toEqual({ start: '2025-06-01', end: '2026-11-13' });
     });
 });

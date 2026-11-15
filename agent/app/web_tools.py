@@ -90,8 +90,8 @@ def get_portfolio_xray(symbol: str | None = None, amount_cad: float | None = Non
     """The X-ray of the simulated portfolio. Read-only: nothing is traded or stored.
 
     Without arguments: concentration (largest holding, top 3, effective holdings, groups, asset classes,
-    currencies), each holding's share of the risk, and three replay windows (full period, calendar 2022, last
-    12 months) with volatility, maximum drawdown, worst day, worst twenty-trading-day span (worstSpan20) and correlations, plus the
+    currencies), each holding's share of the risk, and three replay windows (full period of up to 5 years, last 3 years, last
+    1 year) with volatility, maximum drawdown, worst day, worst twenty-trading-day span (worstSpan20) and correlations, plus the
     user's risk band and answer to the profile's market-drop question. The replay is a scenario: today's proportions applied
     to past days. It is not what the portfolio earned and never a forecast.
 
