@@ -11,8 +11,14 @@
     "note": "Editing re-runs both rules on the server and shows the result before and after. Starting over asks every question again; your current profile stays in place until the new answers are saved."
   },
   "modules": {
-    "level": { "title": "Level", "note": "Changes the interface." },
-    "risk": { "title": "Risk", "note": "Changes the watchlist only." },
+    "level": {
+      "title": "Level",
+      "note": "Changes the interface."
+    },
+    "risk": {
+      "title": "Risk",
+      "note": "Changes the watchlist only."
+    },
     "chosenByYou": "Chosen by you",
     "computedFromAnswers": "Computed from your answers",
     "returnToComputed": "Return to computed ({computed})",
@@ -22,7 +28,11 @@
     "howComputed": "How {computed} was computed",
     "toastLevel": "Level: {before} → {after}",
     "toastRisk": "Risk profile: {before} → {after}",
-    "changeFailed": "The change could not be saved. Nothing was changed."
+    "changeFailed": "The change could not be saved. Nothing was changed.",
+    "proposed": "The agent proposes: {value}",
+    "proposedHint": "proposed",
+    "proposalCancel": "Cancel",
+    "proposalSave": "Save"
   },
   "breakdown": {
     "points": "{count, plural, one {# point} other {# points}}",

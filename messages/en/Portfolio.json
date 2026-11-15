@@ -142,5 +142,11 @@
     "sub": "Share of the simulated portfolio's value in each sector",
     "note": "Sector tags come from the app's asset list (sector names from the Wikipedia lists it was built from, not a licensed GICS feed); an ETF or a crypto asset is grouped under its asset class. Values are the holdings' values at the last price, as listed under Holdings.",
     "unpriced": "Not included, no price available right now: {list}."
+  },
+  "draft": {
+    "add": "New · preview",
+    "remove": "Will be hidden",
+    "cancel": "Cancel",
+    "save": "Save"
   }
 }

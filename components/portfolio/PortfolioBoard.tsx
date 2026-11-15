@@ -9,6 +9,9 @@ import type { InvestmentRule, Level, ProfileConfig, SimulatedTrade } from '@/lib
 import type { PortfolioView } from '@/lib/services/portfolio';
 import type { RuleCheck } from '@/lib/services/rules-engine';
 import Panel from '@/components/Panel';
+import DraftFrame from '@/components/agent/DraftFrame';
+import ScrollToDraft from '@/components/agent/ScrollToDraft';
+import { usePendingProposal } from '@/hooks/usePendingProposal';
 import RulesModule from '@/components/rules/RulesModule';
 import Holdings from './Holdings';
 import PerformanceChart from './PerformanceChart';
@@ -38,6 +41,8 @@ export default function PortfolioBoard() {
     const [saving, setSaving] = useState(false);
     const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
     const [checkError, setCheckError] = useState<{ failure: unknown } | null>(null);
+    // A layout change the agent proposed, still waiting for Save: its modules are previewed in place
+    const proposal = usePendingProposal('/portfolio');
 
     const tRef = useRef(t);
     tRef.current = t;
@@ -102,6 +107,21 @@ export default function PortfolioBoard() {
     const fixed = new Set(['total_value', ...library.filter((item) => item.fixed).map((item) => item.id)]);
     const order = draft ?? modulesOf(layout);
     const hidden = PORTFOLIO_MODULES.filter((id) => !order.includes(id));
+    // The modules the proposal would add appear where they would sit, marked as a preview; the ones it would hide stay, dimmed
+    const proposedOrder = proposal?.layout ? modulesOf(proposal.layout) : null;
+    const previewOrder = (() => {
+        if (!proposedOrder || draft) return order;
+        if (order.length === proposedOrder.length && order.every((id) => proposedOrder.includes(id))) return proposedOrder;   // only moved
+        const merged: ModuleId[] = [...order];
+        proposedOrder.forEach((id, i) => {
+            if (merged.includes(id)) return;
+            const before = proposedOrder[i - 1];
+            merged.splice(before ? merged.indexOf(before) + 1 : 0, 0, id);
+        });
+        return merged;
+    })();
+    const firstDraft = previewOrder.find((id) => (!proposedOrder || draft ? null : !order.includes(id) ? 'add' : !proposedOrder.includes(id) ? 'remove' : null));
+    const draftOf = (id: ModuleId): 'add' | 'remove' | null => (!proposedOrder || draft ? null : !order.includes(id) ? 'add' : !proposedOrder.includes(id) ? 'remove' : null);
 
     const saveLayout = async () => {
         if (!draft) return;
@@ -214,7 +234,8 @@ export default function PortfolioBoard() {
                             })}
                         </p>
                     )}
-                    {order.map((id) => <div key={id}>{modules[id]()}</div>)}
+                    {proposal && proposedOrder && <ScrollToDraft id={proposal.actionId} />}
+                    {previewOrder.map((id) => <DraftFrame key={id} state={draftOf(id)} primary={id === firstDraft} actionId={proposal?.actionId} labels={{ add: t('draft.add'), remove: t('draft.remove'), cancel: t('draft.cancel'), save: t('draft.save') }}><div>{modules[id]()}</div></DraftFrame>)}
                 </>
             )}
         </>

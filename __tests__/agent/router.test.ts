@@ -133,6 +133,27 @@ describe('preview, apply, undo', () => {
         expect(overview?.after).not.toContain('Carte thermique');
     });
 
+    it('names the page where each kind of change is reviewed and saved, and none for a trade', async () => {
+        const all = (await getLayout()).layout;
+        expect((await preview('pg1', 'layout_change', { layout: all.filter((id) => id !== 'overview_heatmap') })).preview.page).toBe('/overview');
+        expect((await preview('pg2', 'layout_change', { layout: all.filter((id) => id !== 'xray') })).preview.page).toBe('/portfolio');
+        // A change that touches both tabs goes to the Portfolio, where the other half is
+        expect((await preview('pg3', 'layout_change', { layout: all.filter((id) => id !== 'xray' && id !== 'overview_news') })).preview.page).toBe('/portfolio');
+        expect((await preview('pg4', 'rule_create', { rule: { ...rule, status: 'active' } })).preview.page).toBe('/portfolio');
+        expect((await preview('pg5', 'simulated_trade', { symbol: 'AAPL', side: 'buy', amountCad: 100 })).preview.page).toBeUndefined();
+    });
+
+    it('a new proposal for a page replaces the one still waiting on that page, and leaves other pages alone', async () => {
+        const all = (await getLayout()).layout;
+        await preview('s1', 'layout_change', { layout: all.filter((id) => id !== 'overview_heatmap') });
+        await preview('s2', 'layout_change', { layout: all.filter((id) => id !== 'overview_news') });
+        await preview('s3', 'layout_change', { layout: all.filter((id) => id !== 'xray') });   // the Portfolio page
+        expect((await getAction('s1'))?.status).toBe('cancelled');
+        expect((await getAction('s2'))?.status).toBe('pending');
+        expect((await getAction('s3'))?.status).toBe('pending');
+        await expect(apply('s1')).rejects.toMatchObject({ status: 409 });
+    });
+
     it('rule_create', async () => {
         const routed = await preview('r1', 'rule_create', { rule: { ...rule, status: 'active' } });
         expect(routed.preview.rows[0].after).toBe('When the price of AAPL is below 90.00 USD, simulate a purchase of 200.00 CAD of AAPL, one time only.');

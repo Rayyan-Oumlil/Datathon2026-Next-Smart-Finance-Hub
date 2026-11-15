@@ -215,7 +215,16 @@
       "conflicts": "Conflits avec le profil",
       "ids": "Rejeu {replayId} · instantané {snapshotId}",
       "openTimeMachine": "Ouvrir dans la machine à remonter le temps"
-    }
+    },
+    "save": "Enregistrer",
+    "saved": "Enregistré",
+    "pageKicker": "Proposé par l’agent · rien n’est enregistré avant d’appuyer sur Enregistrer · simulé",
+    "onPage": "Je vous ai amené sur la page {page} : vérifiez le changement et enregistrez-le là-bas.",
+    "openPage": "Ouvrir {page}",
+    "waiting": "Un changement proposé par l’agent vous attend sur la page {page}.",
+    "dismiss": "Fermer",
+    "saveSimulation": "Enregistrer en simulation",
+    "pageKickerChat": "Changement proposé · à enregistrer sur sa page"
   },
   "sourceNames": {
     "demodata": "données de démonstration",
@@ -251,5 +260,26 @@
     }
   },
   "resize": "Redimensionner le panneau de l’agent : glisser, balayer l’en-tête ou utiliser les flèches gauche et droite. Double-clic pour réinitialiser.",
-  "resizeShort": "Redimensionner"
+  "resizeShort": "Redimensionner",
+  "pageName": {
+    "strategy": "Stratégie",
+    "overview": "Aperçu",
+    "portfolio": "Portefeuille",
+    "profile": "Profil"
+  },
+  "dock": {
+    "region": "Changement proposé par l’agent",
+    "by": "Proposé par l’agent",
+    "details": "Détails",
+    "hideDetails": "Masquer",
+    "kind": {
+      "layout_overview": "Page Aperçu",
+      "layout_portfolio": "Page Portefeuille",
+      "strategy_propose": "Stratégie",
+      "profile_change": "Profil",
+      "rule_create": "Nouvelle règle simulée",
+      "rule_pause": "Règle simulée"
+    },
+    "hint": "Rien n’est enregistré tant que vous n’appuyez pas sur Enregistrer."
+  }
 }

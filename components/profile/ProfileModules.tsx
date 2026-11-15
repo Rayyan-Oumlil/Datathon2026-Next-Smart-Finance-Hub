@@ -1,5 +1,7 @@
 'use client';
 
+import InlineProposal from '@/components/agent/InlineProposal';
+import { usePendingProposal } from '@/hooks/usePendingProposal';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
@@ -24,10 +26,11 @@ type ModuleProps = {
     busy: boolean;
     edit: Edit | null;
     onChoose: (value: string | null) => void;
+    proposal?: { value: string; actionId?: string };
     children: React.ReactNode;
 };
 
-function Module({ id, values, chosen, computed, overridden, busy, edit, onChoose, children }: ModuleProps) {
+function Module({ id, values, chosen, computed, overridden, busy, edit, onChoose, proposal, children }: ModuleProps) {
     const t = useTranslations('Profile');
     // The stored values are the English enum names; the screen shows them in the active language
     const word = (value: string) => t(id, { [id]: value });
@@ -48,11 +51,13 @@ function Module({ id, values, chosen, computed, overridden, busy, edit, onChoose
 
             <Chips
                 labelledBy={`${id}-label`}
-                options={values.map((value) => ({ value, label: word(value), hint: value === computed ? t('modules.computedHint') : undefined }))}
+                options={values.map((value) => ({ value, label: word(value), hint: proposal?.value === value ? t('modules.proposedHint') : value === computed ? t('modules.computedHint') : undefined }))}
                 selected={[chosen]}
                 disabled={busy}
                 onToggle={(value) => value !== chosen && onChoose(value)}
             />
+
+            {proposal && <InlineProposal text={t('modules.proposed', { value: word(proposal.value) })} actionId={proposal.actionId} labels={{ cancel: t('modules.proposalCancel'), save: t('modules.proposalSave') }} />}
 
             {overridden && (
                 <p className="rounded-[10px] bg-brand-soft px-3 py-2 text-[13px] text-brand-ink">
@@ -81,6 +86,10 @@ export default function ProfileModules({ profile: initial, bands }: { profile: P
     const t = useTranslations('Profile');
     const locale = useLocale();
     const [profile, setProfile] = useState(initial);
+    // A level or risk the agent proposed, still waiting for Save: marked on its card, with the buttons beside it
+    const pending = usePendingProposal('/profile');
+    const proposedLevel = pending?.profile?.level && pending.profile.level !== profile.level ? pending.profile.level : null;
+    const proposedRisk = pending?.profile?.risk && pending.profile.risk !== profile.risk ? pending.profile.risk : null;
     const [busy, setBusy] = useState(false);
     const [edits, setEdits] = useState<{ level: Edit | null; risk: Edit | null }>({ level: null, risk: null });
 
@@ -119,6 +128,7 @@ export default function ProfileModules({ profile: initial, bands }: { profile: P
                 busy={busy}
                 edit={edits.level}
                 onChoose={(value) => change('level', value)}
+                proposal={proposedLevel ? { value: proposedLevel, actionId: pending?.actionId } : undefined}
             >
                 <LevelBreakdown profile={profile} bands={bands} />
             </Module>
@@ -131,6 +141,7 @@ export default function ProfileModules({ profile: initial, bands }: { profile: P
                 busy={busy}
                 edit={edits.risk}
                 onChoose={(value) => change('risk', value)}
+                proposal={proposedRisk ? { value: proposedRisk, actionId: pending?.actionId } : undefined}
             >
                 <RiskBreakdown profile={profile} bands={bands} />
             </Module>

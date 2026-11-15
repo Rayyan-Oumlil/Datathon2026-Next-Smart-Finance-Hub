@@ -11,8 +11,14 @@
     "note": "La modification relance les deux règles sur le serveur et affiche le résultat avant et après. Recommencer repose toutes les questions; votre profil actuel reste en place jusqu’à l’enregistrement des nouvelles réponses."
   },
   "modules": {
-    "level": { "title": "Niveau", "note": "Modifie l’interface." },
-    "risk": { "title": "Risque", "note": "Modifie seulement la liste de suivi." },
+    "level": {
+      "title": "Niveau",
+      "note": "Modifie l’interface."
+    },
+    "risk": {
+      "title": "Risque",
+      "note": "Modifie seulement la liste de suivi."
+    },
     "chosenByYou": "Choisi par vous",
     "computedFromAnswers": "Calculé à partir de vos réponses",
     "returnToComputed": "Revenir à la valeur calculée ({computed})",
@@ -22,7 +28,11 @@
     "howComputed": "Comment {computed} a été calculé",
     "toastLevel": "Niveau : {before} → {after}",
     "toastRisk": "Profil de risque : {before} → {after}",
-    "changeFailed": "La modification n’a pas pu être enregistrée. Rien n’a été modifié."
+    "changeFailed": "La modification n’a pas pu être enregistrée. Rien n’a été modifié.",
+    "proposed": "L’agent propose : {value}",
+    "proposedHint": "proposé",
+    "proposalCancel": "Annuler",
+    "proposalSave": "Enregistrer"
   },
   "breakdown": {
     "points": "{count, plural, =0 {0 point} one {# point} other {# points}}",

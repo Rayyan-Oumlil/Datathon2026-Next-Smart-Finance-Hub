@@ -215,7 +215,16 @@
       "conflicts": "Profile conflicts",
       "ids": "Replay {replayId} · snapshot {snapshotId}",
       "openTimeMachine": "Open in the time machine"
-    }
+    },
+    "save": "Save",
+    "saved": "Saved",
+    "pageKicker": "Proposed by the agent · nothing is saved until you press Save · simulated",
+    "onPage": "I took you to the {page} page: review the change there and save it.",
+    "openPage": "Open {page}",
+    "waiting": "A change from the agent is waiting on the {page} page.",
+    "dismiss": "Close",
+    "saveSimulation": "Save in simulation",
+    "pageKickerChat": "Proposed change · saved on its page"
   },
   "sourceNames": {
     "demodata": "demo data",
@@ -251,5 +260,26 @@
     }
   },
   "resize": "Resize the agent panel: drag, swipe the header, or use the left and right arrow keys. Double-click to reset.",
-  "resizeShort": "Resize"
+  "resizeShort": "Resize",
+  "pageName": {
+    "strategy": "Strategy",
+    "overview": "Overview",
+    "portfolio": "Portfolio",
+    "profile": "Profile"
+  },
+  "dock": {
+    "region": "Change proposed by the agent",
+    "by": "Proposed by the agent",
+    "details": "Details",
+    "hideDetails": "Hide",
+    "kind": {
+      "layout_overview": "Overview page",
+      "layout_portfolio": "Portfolio page",
+      "strategy_propose": "Strategy",
+      "profile_change": "Profile",
+      "rule_create": "New simulated rule",
+      "rule_pause": "Simulated rule"
+    },
+    "hint": "Nothing is saved until you press Save."
+  }
 }

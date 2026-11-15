@@ -1,5 +1,11 @@
 {
   "title": "Overview",
   "sub": "Your smart watchlist, then the markets. Simulation only, not investment advice.",
-  "hiddenNote": "{count, plural, one {# panel is hidden.} other {# panels are hidden.}} Ask the agent to bring {count, plural, one {it} other {them}} back."
+  "hiddenNote": "{count, plural, one {# panel is hidden.} other {# panels are hidden.}} Ask the agent to bring {count, plural, one {it} other {them}} back.",
+  "draft": {
+    "add": "New · preview",
+    "remove": "Will be hidden",
+    "cancel": "Cancel",
+    "save": "Save"
+  }
 }
