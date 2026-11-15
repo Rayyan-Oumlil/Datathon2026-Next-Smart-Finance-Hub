@@ -612,7 +612,7 @@ const AgentPanel = ({ open, onOpenChange, onDataChanged, width = PANEL_DEFAULT, 
                                                             ))}
                                                         </ul>
                                                     )}
-                                                    {message.reply.sources.length === 0 && !message.reply.refused && !message.reply.preview && <p className="mt-2 text-[11px] text-faint">{t('noSource')}</p>}
+                                                    {message.reply.sources.length === 0 && !message.reply.refused && !message.reply.preview && /\d/.test(message.text) && <p className="mt-2 text-[11px] text-faint">{t('noSource')}</p>}
                                                     {message.reply.conflict && message.reply.conflict.checks.length > 0 && <ConflictBlock conflict={message.reply.conflict} />}
                                                     {message.reply.notice && <p className="mt-2 text-[13px] text-muted-foreground">{message.reply.notice}</p>}
                                                     {message.reply.preview && (
