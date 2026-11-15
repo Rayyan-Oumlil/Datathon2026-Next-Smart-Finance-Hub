@@ -53,7 +53,7 @@
       "context_built_noProfile": "J’ai lu vos données, sans profil de risque : {holdings, plural, =0 {aucune position} one {# position} other {# positions}}, {picks, plural, =0 {aucun titre suivi} one {# titre suivi} other {# titres suivis}}",
       "prompt_built": "J’ai préparé les instructions du modèle",
       "orchestrator_call": "J’ai appelé le modèle {model} ({input, number} jetons en entrée, {output, number} en sortie)",
-      "subagent_call": "J’ai fait appel à {agent} (modèle {model})",
+      "subagent_call": "J’ai sollicité {agent} (modèle {model})",
       "tool_call": "J’ai consulté {tool} ({time})",
       "tool_call_symbols": "J’ai consulté {tool} ({symbols}, {time})",
       "guardrail_passed": "Garde-fou : aucun problème relevé dans les chiffres et le vocabulaire",
