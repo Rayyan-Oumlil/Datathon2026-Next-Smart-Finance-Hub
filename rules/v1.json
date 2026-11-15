@@ -1,0 +1,203 @@
+{
+  "version": "v1",
+  "status": "untested first values",
+  "source": "Tech stack & documentation board (sections 6, 7, 12), changed by the owner's review answers on 2026-11-14. Each block says where its values come from: 'board' = printed on the board; 'owner' = decided by the owner in review; 'proposed' = chosen by Claude at the owner's request ('you implement it, best option') and still to be reviewed.",
+
+  "level": {
+    "version": "level-v1",
+    "origin": "board, minus the quick check (owner: 'we don't care about the knowledge test'); bands redrawn (proposed)",
+    "not_traded": "Novice",
+    "points": {
+      "experience": { "<1y": 0, "1-5y": 1, "5+y": 2 },
+      "tools": { "limit_or_stop": 1, "options": 1, "margin_or_shorting": 1 }
+    },
+    "max_points": 5,
+    "bands": [
+      { "min": 0, "max": 1, "level": "Novice" },
+      { "min": 2, "max": 3, "level": "Intermediate" },
+      { "min": 4, "max": 5, "level": "Expert" }
+    ],
+    "bands_note": "The board's bands (0-2 / 3-5 / 6-7) assumed 7 points. With 5 points, Expert still needs nearly everything: 5+ years alone gives 2 (Intermediate), as the board intended ('years alone are not enough').",
+    "user_can_override_on_profile_tab": true
+  },
+
+  "risk": {
+    "version": "risk-v1",
+    "origin": "board; échéance mapping confirmed by the owner",
+    "asked_to": "everyone",
+    "points": {
+      "goal": { "income": 0, "growth": 1, "trading": 2 },
+      "echeance": { "weeks": 0, "months": 0, "1 yr": 1, "5+ yrs": 2 },
+      "drop_20pct": { "sell": 0, "wait": 1, "buy_more": 2 },
+      "self_rating": { "low": 0, "medium": 1, "high": 2 }
+    },
+    "max_points": 8,
+    "bands": [
+      { "min": 0, "max": 2, "risk": "Low" },
+      { "min": 3, "max": 5, "risk": "Medium" },
+      { "min": 6, "max": 8, "risk": "High" }
+    ],
+    "caps": [
+      { "when": { "drop_20pct": "sell" }, "max_risk": "Medium", "board_text": "\"Sell\" on the drop question can never give High" }
+    ],
+    "if_self_rating_differs_from_result": "show both"
+  },
+
+  "filters": {
+    "version": "filters-v1",
+    "origin": "board, except 'asset_class_rules' (proposed, from the owner's direction: market cap matters; blue-chip ETFs for novices)",
+    "avoid_list": "excluded",
+    "markets": "only the markets picked (US / Canada / global = both)",
+    "volatility": {
+      "measure": "standard deviation of daily returns over 1 year, annualized with sqrt(252)",
+      "min_days_of_data": 20,
+      "cap_by_risk": { "Low": 0.20, "Medium": 0.35, "High": 0.80 },
+      "comparison": "pass if volatility <= cap"
+    },
+    "market_cap_floor_usd": {
+      "by_risk": { "Low": 10000000000, "Medium": 2000000000, "High": 300000000 },
+      "comparison": "pass if market cap >= floor",
+      "currency_note": "Canadian market caps are converted to USD with the Bank of Canada FXUSDCAD rate of the snapshot day before comparing"
+    },
+    "liquidity": { "measure": "average traded value per day (10-day average volume x last price)", "min_usd_per_day": 1000000 },
+    "esg": {
+      "tags": ["screened", "not screened", "controversy"],
+      "when_esg_theme_picked": "only 'screened' passes",
+      "data": "mock, set by hand per asset; labelled 'demo data' in the UI"
+    },
+    "asset_class_rules": {
+      "stock": { "filters": ["avoid_list", "markets", "volatility", "market_cap_floor", "liquidity", "esg"] },
+      "etf": {
+        "filters": ["avoid_list", "markets", "volatility", "liquidity", "esg"],
+        "market_cap_floor": "not applied: a fund has assets, not a company market cap",
+        "blue_chip": "an ETF on the hand-kept list data/blue-chip-etfs.json: tracks a broad index (S&P 500, total US market, S&P/TSX 60, S&P/TSX Composite, all-in-one), each entry with the issuer's page as its source"
+      },
+      "novice": {
+        "stocks": "market cap >= US$10B, whatever the risk band",
+        "etfs": "blue-chip ETFs only",
+        "crypto": "never"
+      },
+      "low_risk": { "etfs": "blue-chip ETFs only" },
+      "crypto": { "assets": ["BTC", "ETH"], "allowed_risk": ["High"], "max_slots": 1, "filters": ["avoid_list", "volatility"] },
+      "gold": { "allowed_risk": ["Low", "Medium", "High"], "shown_as": "reference card, not ranked", "filters": ["avoid_list"] },
+      "bond_yields": { "allowed_risk": ["Low", "Medium", "High"], "shown_as": "reference card, not ranked (a yield is not a price)", "filters": ["avoid_list"] }
+    }
+  },
+
+  "score": {
+    "version": "score-v1",
+    "origin": "weights and factor meanings: board. Formulas: proposed.",
+    "scale_per_factor": [0, 100],
+    "weights": { "profile_fit": 40, "risk_fit": 25, "fundamentals": 20, "diversification": 15 },
+    "total": "sum(weight x factor) / 100, rounded to 1 decimal",
+    "removed_from_score": ["momentum", "news_flow"],
+    "never_an_input": ["adanos_sentiment"],
+    "factor_formulas": {
+      "profile_fit": {
+        "meaning": "sector, niche, theme and brand match",
+        "formula": "sum of the parts that apply, capped at 100",
+        "parts": { "sector_picked": 40, "niche_picked": 20, "theme_match": 20, "on_brands_list": 20 }
+      },
+      "risk_fit": {
+        "meaning": "how close volatility sits to the band",
+        "band_intervals": { "Low": [0.0, 0.20], "Medium": [0.20, 0.35], "High": [0.35, 0.80] },
+        "formula": "100 if volatility is inside the user's band interval; if below the interval's lower bound L: 100 - 50 x (L - volatility) / L; above the upper bound never happens (filtered out)"
+      },
+      "fundamentals": {
+        "meaning": "P/E vs sector, growth",
+        "formula": "mean of the parts that have data; 50 and flagged 'no data' if none (ETFs, crypto)",
+        "parts": {
+          "pe_vs_sector": "r = company P/E (Finnhub peTTM) / median P/E of the candidates in the same sector in this snapshot; score = 100 if r <= 0.5, 0 if r >= 2.0, linear in between; no score if P/E is missing or negative",
+          "growth": "g = revenue growth, trailing twelve months, year over year (Finnhub revenueGrowthTTMYoy, in %); score = 0 if g <= -10, 100 if g >= 20, linear in between"
+        }
+      },
+      "diversification": {
+        "meaning": "adds a sector or class not yet held",
+        "formula": "100 if neither its sector nor its asset class is in the simulated holdings; 50 if the sector is held but is under 20% of the portfolio value; 0 otherwise. An empty portfolio gives 100 to everything, so the factor does not change the order then."
+      }
+    }
+  },
+
+  "selection": {
+    "version": "selection-v1",
+    "origin": "board (tie-break from the design board)",
+    "top_n_by_level": { "Novice": 5, "Intermediate": 10, "Expert": 20 },
+    "max_per_sector": 2,
+    "max_crypto": 1,
+    "seed_tickers": "kept if they pass the filters",
+    "tie_break": ["higher total score", "lower volatility", "ticker A-Z"],
+    "slow_moving": {
+      "recompute": "once a day",
+      "window": "1 year",
+      "newcomer_margin_points": 5,
+      "min_days_listed": 7,
+      "min_days_listed_exception": "removed earlier if it fails a filter"
+    }
+  },
+
+  "representation": {
+    "same_ranking_for_every_level": true,
+    "Novice": "factual link + % move, no scores",
+    "Intermediate": "rank, score, top 2 drivers, 1-month sparkline",
+    "Expert": "every factor, raw values, sources, versions, sortable",
+    "all_levels": "\"Why?\" opens score, sources, timestamp"
+  },
+
+  "reasons": {
+    "version": "reasons-v1",
+    "origin": "board",
+    "allowed_templates": [
+      { "id": "same_sector_as_holding", "text": "Same sector as {ticker}, which you hold", "source": "holdings + sector source" },
+      { "id": "picked_sector", "text": "In {sector}, a sector you picked", "source": "Profile config" },
+      { "id": "brands_list", "text": "On your brands list", "source": "Profile config" },
+      { "id": "etf_tracks", "text": "ETF that tracks {index} / holds {n} companies", "source": "fund profile" },
+      { "id": "moved", "text": "Moved {x}% today / over {window}", "source": "quote source" }
+    ],
+    "if_none_applies": "the card shows facts only (sector, % move)",
+    "never_words": ["buy", "sell", "should", "good", "safe", "will rise", "fits you", "recommended"],
+    "never_words_apply_to": ["reason sentences", "agent replies"]
+  },
+
+  "data_freshness": {
+    "quote_stale_after_seconds": 60,
+    "news_count_window_days": 7,
+    "news_use": "shown on the card, never scored"
+  },
+
+  "simulated_portfolio": {
+    "starting_cash": 10000,
+    "currency": "CAD",
+    "positions_from": ["simulated buy on a card", "a rule"],
+    "fill_price": "last price",
+    "chart_baseline": "starting amount",
+    "label": "simulated"
+  },
+
+  "agent": {
+    "origin": "board; models and region changed by the owner",
+    "whitelisted_actions": [
+      "reply with cited data",
+      "look up a quote or company",
+      "move / swap a widget",
+      "create / pause a simulated rule",
+      "explain a watchlist pick"
+    ],
+    "guardrail_failures_before_safe_refusal": 2,
+    "models": {
+      "orchestrator": "us.anthropic.claude-sonnet-5-5",
+      "subagents": "us.anthropic.claude-haiku-5-5",
+      "note": "Board said Claude + Amazon Nova; the owner chose Sonnet 5.5 and Haiku. Both answered a test call on 2026-11-15 UTC. Use the 'us.' profiles: the 'global.' profile routed a test call to ap-northeast-1."
+    },
+    "bedrock_region": "us-east-1",
+    "bedrock_region_note": "Board says Montréal; the workshop account denies Bedrock in ca-central-1. Changed by the owner on 2026-11-14.",
+    "runtime": "Bedrock AgentCore Runtime (owner)",
+    "glossary": "Bedrock Knowledge Base (owner)"
+  },
+
+  "unspecified": [
+    "Data sources for Canadian quotes, history and sector: see docs/spec.md section 5 for the options and their terms. Awaiting the owner's choice.",
+    "Sector list, niches per sector and theme membership: depend on the universe source chosen.",
+    "The blue-chip ETF list itself (data/blue-chip-etfs.json) is to be written and reviewed.",
+    "Profile-conflict check: uses the profile's own filter values; no extra threshold defined."
+  ]
+}
