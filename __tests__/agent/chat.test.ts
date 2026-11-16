@@ -68,6 +68,7 @@ describe('chat', () => {
         agent.mockResolvedValue(answer({ proposed: { type: 'wire_transfer', summary: 's', params: {} } }));
         const reply = await chat({ message: 'hello' });
         expect(reply.notice).toContain('not an action the app allows');
+        expect(reply.text).toBe('I could not prepare this change. Nothing was changed.');   // never the model's "confirm with the button"
         expect(reply).not.toHaveProperty('proposed');
         const routed = (await listAgentActions(TEST_SCOPE.scopeId, { actionId: reply.actionId })).find((row) => row.step === 'action_routed');
         expect(routed).toMatchObject({ result: { outcome: 'dropped', type: 'wire_transfer' }, dataUsed: { proposed: { type: 'wire_transfer' } } });

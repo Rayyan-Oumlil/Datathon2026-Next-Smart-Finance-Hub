@@ -136,10 +136,12 @@ export async function chat(input: ChatInput, onProgress?: (event: AgentProgress)
     const fromAgent = reply.conflict ? { symbol: reply.conflict.symbol, checks: reply.conflict.checks as FilterCheck[] } : undefined;
     const conflict = withheld ? undefined : ownConflicts ?? fromAgent;
 
+    // A proposal the app set aside leaves nothing to confirm: the model's wording ("confirm with the button") would be wrong
+    const shownText = routed.outcome === 'dropped' && !withheld ? words.droppedReply : text;
     const out: ChatReply = {
         actionId,
         language: locale,
-        text,
+        text: shownText,
         sources: withheld ? [] : reply.sources.map(({ label, source, fetchedAt, asOf }) => ({ label, source, ...(fetchedAt ? { fetchedAt } : {}), ...(asOf ? { asOf } : {}) })),
         refused,
         ...('proposed' in routed ? { proposed: routed.proposed } : {}),
@@ -153,7 +155,7 @@ export async function chat(input: ChatInput, onProgress?: (event: AgentProgress)
     };
     await logStep(actionId, 'result', {
         promptVersion: reply.promptVersion,
-        replySha256: sha256(text),
+        replySha256: sha256(shownText),
         result: {
             refused, withheldByWordCheck: withheld, sources: out.sources.length, proposed: out.proposed?.type ?? null,
             pendingConfirm: routed.outcome === 'preview', conflict: Boolean(conflict), modelCalls: reply.modelCalls.length,
