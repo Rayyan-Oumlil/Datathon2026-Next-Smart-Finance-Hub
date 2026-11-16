@@ -1,6 +1,6 @@
 # Documentation
 
-Start with the [project README](../README.md) ([en français](../README.fr.md)). This folder holds the reference documents and the working notes.
+Start with the [project README](../README.md) ([en français](../README.fr.md)). This folder contains the reference documents and the working notes.
 
 ## Reference
 
