@@ -73,11 +73,6 @@ const Sidebar = ({ user, persona = null }: SidebarProps) => {
                     {ts('disclaimer')}
                 </p>
                 <LanguageSwitcher />
-                <p className="px-2.5 text-[11.5px] text-faint">
-                    {ts.rich('credit', {
-                        link: (chunks) => <a href="https://github.com/Open-Dev-Society/OpenStock" target="_blank" rel="noreferrer" className="underline">{chunks}</a>,
-                    })}
-                </p>
             </div>
 
             <div className="border-t border-line pt-3">
