@@ -76,4 +76,4 @@ La liste complète est dans le [README en anglais](README.md#known-limits).
 
 ## Licence et crédits
 
-Ce projet est une version modifiée de [OpenStock](https://github.com/Open-Dev-Society/OpenStock) de l'Open Dev Society et de ses contributeurs, distribuée sous la même licence, la GNU Affero General Public License v3.0 ([LICENSE](LICENSE)). Les listes d'entreprises viennent de Wikipédia (« Liste des sociétés du S&P 500 », « S&P/TSX 60 »), sous licence CC BY-SA 4.0. Les graphiques sont des widgets TradingView.
+Ce projet est distribué sous la GNU Affero General Public License v3.0 ([LICENSE](LICENSE)). Les listes d'entreprises viennent de Wikipédia (« Liste des sociétés du S&P 500 », « S&P/TSX 60 »), sous licence CC BY-SA 4.0. Les graphiques sont des widgets TradingView.

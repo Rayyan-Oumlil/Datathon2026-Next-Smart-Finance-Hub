@@ -9,7 +9,7 @@ import { openSearch } from "@/components/SearchCommand";
 import { cn } from "@/lib/utils";
 
 const PINNED: string[] = [];
-const STORAGE_KEY = 'openstock-tabs';
+const STORAGE_KEY = 'nsfh-tabs';
 const MAX_TABS = 12;
 
 // Tabs are only for opened stocks, labelled by their symbol.
@@ -121,7 +121,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                 })}
             </div>
 
-            <button type="button" onClick={openSearch} className="chrome-btn -ms-2" aria-label={t('openStock')} title={t('openStockHint')}>
+            <button type="button" onClick={openSearch} className="chrome-btn -ms-2" aria-label={t('openTicker')} title={t('openTickerHint')}>
                 <Plus />
             </button>
         </div>

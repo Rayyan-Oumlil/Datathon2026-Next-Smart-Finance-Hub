@@ -42,7 +42,7 @@ The brief says CloudTrail was added to the tech board. The PNG in this folder do
 
 ## 3. Starting point and what is removed
 
-Fork of OpenStock: Next.js 15, React 19, TypeScript, Tailwind, shadcn/ui, Vitest. Licence AGPL-3.0: the licence and the credit to the original authors stay, and a modified or deployed version must publish its source under the same licence.
+Next.js 15, React 19, TypeScript, Tailwind, shadcn/ui, Vitest. Licence AGPL-3.0: the licence stays, and a modified or deployed version must publish its source under the same licence.
 
 - **Reuse:** Finnhub and Yahoo data code, `/api/quotes`, TradingView widgets, the stock page, search.
 - **Remove**, with dependencies and env vars: better-auth and the middleware check, Inngest jobs, Nodemailer, Kit, `lib/ai-provider.ts`, MongoDB/Mongoose.

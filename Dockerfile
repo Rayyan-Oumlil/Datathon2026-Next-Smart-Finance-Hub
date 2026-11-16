@@ -10,8 +10,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # The build needs no secrets: every key is read at runtime. The one build-time setting is not a secret:
 # "cached" (hourly quotes, the default) or "realtime" (every 15 seconds).
-ARG NEXT_PUBLIC_OPENSTOCK_DATA_MODE=realtime
-ENV NEXT_PUBLIC_OPENSTOCK_DATA_MODE=$NEXT_PUBLIC_OPENSTOCK_DATA_MODE
+ARG NEXT_PUBLIC_DATA_MODE=realtime
+ENV NEXT_PUBLIC_DATA_MODE=$NEXT_PUBLIC_DATA_MODE
 ENV NEXT_TELEMETRY_DISABLED=1
 # The provider cache may be absent on a fresh clone; the folder must exist for the copy below
 RUN mkdir -p .data/cache && npm run build

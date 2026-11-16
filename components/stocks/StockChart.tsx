@@ -20,7 +20,7 @@ const INDICATORS = [
     { id: 'STD;Stochastic', labelKey: 'stochastic' },
     { id: 'STD;Average_True_Range', labelKey: 'atr' },
 ] as const;
-const STORAGE_KEY = 'openstock:chart-indicators';
+const STORAGE_KEY = 'nsfh:chart-indicators';
 const CHART_HEIGHT = 560;
 
 const readSaved = (): string[] => {

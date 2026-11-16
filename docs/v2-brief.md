@@ -5,7 +5,7 @@ Langue de travail : français (interface, textes, documentation). Code et identi
 ======================================================================
 1. MISSION
 ======================================================================
-Tu reprends la V1 de NEXT SMART FINANCE HUB (nom du produit ; « AlphaForge AI » est seulement le nom du défi). C'est une application de cotations adaptée au profil de l'investisseur, avec un agent traçable : fork d'OpenStock, Next.js 15, React 19, TypeScript, Tailwind 4, shadcn/ui, next-intl, DynamoDB, service agent Python (Strands, Claude Sonnet 5.5 en orchestrateur, Haiku 5.5 en sous-agents, Bedrock + Guardrail). Lis d'abord : README.md, docs/spec.md, docs/agent-api.md, docs/data-sources.md, rules/v1.json, lib/domain/types.ts, lib/agent/router.ts, lib/services/layout.ts, lib/services/rules-engine.ts.
+Tu reprends la V1 de NEXT SMART FINANCE HUB (nom du produit ; « AlphaForge AI » est seulement le nom du défi). C'est une application de cotations adaptée au profil de l'investisseur, avec un agent traçable : Next.js 15, React 19, TypeScript, Tailwind 4, shadcn/ui, next-intl, DynamoDB, service agent Python (Strands, Claude Sonnet 5.5 en orchestrateur, Haiku 5.5 en sous-agents, Bedrock + Guardrail). Lis d'abord : README.md, docs/spec.md, docs/agent-api.md, docs/data-sources.md, rules/v1.json, lib/domain/types.ts, lib/agent/router.ts, lib/services/layout.ts, lib/services/rules-engine.ts.
 
 Objectif : passer à la V2 ci-dessous, bloc par bloc, en gardant ce qui fait la force de la V1 : simulation seulement, chaque chiffre avec source et heure, actions de l'agent soumises à aperçu, confirmation et annulation, journaux en ajout seul.
 
@@ -34,7 +34,7 @@ R6. Connecteur BNC fictif (« Connecteur simulé, architecture cible »). Aucun 
 R7. Les calculs vivent dans des fonctions pures testées. Le LLM explique, il ne calcule pas.
 R8. Tout texte via next-intl ou textRef. Français par défaut, aucun anglais visible en mode français.
 R9. Chaque bloc livré avec des tests Vitest (pytest côté agent si touché). Lance npm test avant de rendre la main.
-R10. Aucun secret commité. Garder le crédit AGPL-3.0 d'OpenStock.
+R10. Aucun secret commité. Garder la licence AGPL-3.0.
 
 ======================================================================
 4. DEUX FAMILLES DE DONNÉES

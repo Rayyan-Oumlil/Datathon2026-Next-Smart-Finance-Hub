@@ -7,7 +7,7 @@ const optional = {
     ADANOS_API_KEY: 'Adanos sentiment card on stock pages (display only)',
     ADANOS_API_BASE_URL: 'Adanos base URL override (default https://api.adanos.org)',
     APP_URL: 'Public URL of the app, used in the sitemap and robots.txt',
-    NEXT_PUBLIC_OPENSTOCK_DATA_MODE: '"cached" (default) or "realtime"; fixed at build time',
+    NEXT_PUBLIC_DATA_MODE: '"cached" (default) or "realtime"; fixed at build time',
 };
 
 let failed = false;

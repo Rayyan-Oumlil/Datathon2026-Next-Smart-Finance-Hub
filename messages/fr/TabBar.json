@@ -6,7 +6,7 @@
   },
   "openMenu": "Ouvrir le menu",
   "closeTab": "Fermer {label}",
-  "openStock": "Ouvrir un titre",
-  "openStockHint": "Ouvrir un titre (⌘K)",
+  "openTicker": "Ouvrir un titre",
+  "openTickerHint": "Ouvrir un titre (⌘K)",
   "emptyHint": "Ouvrez un titre pour le garder ici"
 }

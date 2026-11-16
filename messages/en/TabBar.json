@@ -6,7 +6,7 @@
   },
   "openMenu": "Open menu",
   "closeTab": "Close {label}",
-  "openStock": "Open a stock",
-  "openStockHint": "Open a stock (⌘K)",
+  "openTicker": "Open a stock",
+  "openTickerHint": "Open a stock (⌘K)",
   "emptyHint": "Open a stock to keep it here"
 }

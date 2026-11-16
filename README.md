@@ -151,7 +151,7 @@ sequenceDiagram
 
 ## Built during the hackathon
 
-The project started from the open-source OpenStock app (see [Licence and credits](#licence-and-credits)) on 14 November 2026 and was rebuilt around an assistant that explains but never calculates.
+The project was started on 14 November 2026 and built around an assistant that explains but never calculates.
 
 ```mermaid
 timeline
@@ -374,7 +374,7 @@ Details, endpoints and terms of use are in [docs/data-sources.md](docs/data-sour
 
 ## Licence and credits
 
-This project is a modified version of [OpenStock](https://github.com/Open-Dev-Society/OpenStock) by Open Dev Society and its contributors, and is distributed under the same licence, the GNU Affero General Public License v3.0 ([LICENSE](LICENSE)). The Finnhub and Yahoo data code, the quotes route, the TradingView widgets, the stock page and the search come from OpenStock. Sign-in, background jobs, email, the marketing site and MongoDB were removed.
+This project is distributed under the GNU Affero General Public License v3.0 ([LICENSE](LICENSE)).
 
 Under the AGPL, anyone who runs a modified version as a network service must offer its source to its users under the same licence.
 
