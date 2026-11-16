@@ -18,7 +18,7 @@ import { computeEngine } from '@/lib/xray/engine';
 import type { EngineHolding } from '@/lib/xray/types';
 import { createViewCache } from './cache';
 import { ServiceError, round2 } from './errors';
-import { getPortfolioState, simulateTrade } from './portfolio';
+import { getPortfolioState, setStartingCash, simulateTrade } from './portfolio';
 
 // ---------------------------------------------------------------- the table
 
@@ -334,7 +334,8 @@ export async function getModelPortfolios(locale: Locale, scope?: Scope): Promise
     const options = buildModelOptions({ risk: profile.risk, answers: profile.answers });
     const figures = await Promise.all(options.map(figuresOf));
     const hasPortfolio = portfolio.positions.length > 0 || portfolio.trades.length > 0;
-    const maxAmountCad = Math.floor(hasPortfolio ? RULES.simulated_portfolio.starting_cash : portfolio.cashCad);
+    // A new portfolio starts with the amount its owner picks, up to the rules file's starting cash
+    const maxAmountCad = Math.floor(RULES.simulated_portfolio.starting_cash);
     return {
         version: MODEL_PORTFOLIOS_VERSION,
         simulated: true,
@@ -388,9 +389,12 @@ export async function applyModelPortfolio(input: { optionId: string; amountCad: 
         replaced = true;
     }
     const amountCad = round2(input.amountCad);
-    if (!(amountCad >= MIN_APPLY_CAD) || amountCad > portfolio.cashCad + 1e-6) {
-        throw new ServiceError(400, `The amount must be between ${MIN_APPLY_CAD} and ${round2(portfolio.cashCad)} CAD (the simulated cash).`);
+    const maxCad = RULES.simulated_portfolio.starting_cash;
+    if (!(amountCad >= MIN_APPLY_CAD) || amountCad > maxCad + 1e-6) {
+        throw new ServiceError(400, `The amount must be between ${MIN_APPLY_CAD} and ${maxCad} CAD.`);
     }
+    // The portfolio is worth what its owner chose: that amount is its starting cash, not a share of a fixed 10 000
+    await setStartingCash(amountCad, s);
 
     // Every symbol must still be in the snapshot and tradable: the table is checked by a test, this keeps it honest at run time
     const replayable = new Set((await listReplaySymbols()).map((r) => r.symbol));

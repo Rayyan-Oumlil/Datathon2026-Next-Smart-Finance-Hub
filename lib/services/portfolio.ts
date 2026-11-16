@@ -101,7 +101,7 @@ export function replayTrades(trades: SimulatedTrade[], startingCashCad: number =
 // Reading the log means reading every row of the portfolio, so the trades are read once per process and each new
 // trade is added as it is appended. This process is the log's only writer. One entry per portfolio generation
 // (`${sessionId}:f${n}`): a portfolio reset moves to a new id, whose replay starts from the starting cash alone.
-const holder = globalThis as { __simulatedTrades?: Map<string, Promise<SimulatedTrade[]>>; __tradeQueue?: Promise<unknown> };
+const holder = globalThis as { __simulatedTrades?: Map<string, Promise<SimulatedTrade[]>>; __startingCash?: Map<string, Promise<number>>; __tradeQueue?: Promise<unknown> };
 // Each visitor adds an entry; the oldest are forgotten (and read again from the log if that visitor comes back)
 const MAX_CACHED_PORTFOLIOS = 1000;
 
@@ -121,9 +121,51 @@ function loadTrades(portfolioUserId: string): Promise<SimulatedTrade[]> {
     return trades;
 }
 
+// The amount a portfolio started with: the one its owner chose when creating it (a row of the same log, written once
+// by setStartingCash), or the rules file's starting cash when none was chosen. Read once per process, like the trades.
+function loadStartingCash(portfolioUserId: string): Promise<number> {
+    const cache = (holder.__startingCash ??= new Map());
+    let start = cache.get(portfolioUserId);
+    if (!start) {
+        start = listDecisions(portfolioUserId, { kind: 'user_action' })
+            .then((rows) => {
+                const chosen = [...rows].reverse().map((row) => row.payload as { action?: string; startingCashCad?: number })
+                    .find((payload) => payload?.action === 'portfolio_start');
+                return chosen && Number.isFinite(chosen.startingCashCad) && chosen.startingCashCad! > 0 ? round2(chosen.startingCashCad!) : STARTING_CASH;
+            })
+            .catch((error) => {
+                cache.delete(portfolioUserId);
+                throw error;
+            });
+        if (cache.size >= MAX_CACHED_PORTFOLIOS) cache.delete(cache.keys().next().value as string);
+        cache.set(portfolioUserId, start);
+    }
+    return start;
+}
+
+/**
+ * Sets the amount this portfolio starts with (what its owner chose, up to the rules file's starting cash). Only for
+ * a portfolio with no trade yet: the log keeps the choice as one row, so the portfolio is always a replay of the log.
+ */
+export async function setStartingCash(amountCad: number, scope?: Scope): Promise<void> {
+    const s = await scopeOr(scope);
+    const amount = round2(amountCad);
+    if (!(amount > 0) || amount > STARTING_CASH) throw new ServiceError(400, `The starting amount must be between 0 and ${STARTING_CASH} CAD.`);
+    if ((await loadTrades(s.portfolioUserId)).length > 0) throw new ServiceError(409, 'This portfolio already has trades: its starting amount can no longer change.');
+    await appendDecision({
+        userId: s.portfolioUserId,
+        kind: 'user_action',
+        ruleVersions: { rules: RULES_VERSION },
+        payload: { action: 'portfolio_start', startingCashCad: amount, simulated: true },
+    });
+    (holder.__startingCash ??= new Map()).set(s.portfolioUserId, Promise.resolve(amount));
+    views.clear();
+}
+
 /** Forgets the trades held in memory; the next read replays the log. */
 export function resetPortfolioCache(): void {
     holder.__simulatedTrades = new Map();
+    holder.__startingCash = new Map();
     views.clear();
 }
 
@@ -131,7 +173,9 @@ const scopeOr = async (scope?: Scope): Promise<Scope> => scope ?? currentScope()
 
 /** The simulated portfolio of the scope's portfolio generation (default: the current request's session). */
 export async function getPortfolioState(scope?: Scope): Promise<Portfolio> {
-    return replayTrades([...(await loadTrades((await scopeOr(scope)).portfolioUserId))]);
+    const { portfolioUserId } = await scopeOr(scope);
+    const [trades, startingCash] = await Promise.all([loadTrades(portfolioUserId), loadStartingCash(portfolioUserId)]);
+    return replayTrades([...trades], startingCash);
 }
 
 // ---------------------------------------------------------------- view
