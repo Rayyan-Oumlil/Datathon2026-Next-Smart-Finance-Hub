@@ -4,7 +4,7 @@
 
 [Français](README.fr.md) · [Specification](docs/spec.md) · [Agent API](docs/agent-api.md) · [Data sources](docs/data-sources.md)
 
-![AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-blue) ![Next.js](https://img.shields.io/badge/web-Next.js-black) ![Python](https://img.shields.io/badge/agent-Python%20%2B%20Strands-3776AB) ![AWS](https://img.shields.io/badge/AWS-Bedrock%20%C2%B7%20AgentCore%20%C2%B7%20DynamoDB-FF9900) ![Simulation](https://img.shields.io/badge/money-simulated%20only-red)
+[![CI](https://github.com/Rayyan-Oumlil/Datathon2026-Next-Smart-Finance-Hub/actions/workflows/ci.yml/badge.svg)](https://github.com/Rayyan-Oumlil/Datathon2026-Next-Smart-Finance-Hub/actions/workflows/ci.yml) ![AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-blue) ![Next.js](https://img.shields.io/badge/web-Next.js-black) ![Python](https://img.shields.io/badge/agent-Python%20%2B%20Strands-3776AB) ![AWS](https://img.shields.io/badge/AWS-Bedrock%20%C2%B7%20AgentCore%20%C2%B7%20DynamoDB-FF9900) ![Simulation](https://img.shields.io/badge/money-simulated%20only-red)
 
 Smart Finance Hub is a stock and portfolio app with an AI assistant. It takes market data that is scattered, full of jargon and hard to trust, and turns it into plain explanations matched to each investor's experience and risk profile. Every figure it shows can be traced back to where it came from.
 
